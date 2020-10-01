@@ -1,0 +1,20 @@
+---
+
+project_id:     'hiv-tra-20'
+project_name:   'patientservice'
+
+hub_registry:   'hub.web-essentials.co'
+hub_user:       'docker'
+hub_pass:       '{{ hub_pass_vault }}'
+image_name:     'hub.web-essentials.co/we/{{ project_id }}/{{ project_name }}'
+base_image:     'hub.web-essentials.co/webessentials/nginx-php:7.4'
+workspace:      '{{ lookup("env", "WORKSPACE") or lookup("env", "PWD") }}'
+
+php_bin:        '/opt/php-versions/php74/bin/php'
+composer_bin:   '/usr/local/bin/composer'
+composer_flags: '--no-dev --prefer-dist --no-interaction'
+
+mysql_host:     '10.10.10.25'
+mysql_db:       '{{ stage }}_{{ project_name }}'
+mysql_user:     '{{ stage }}_{{ project_name }}'
+mysql_pass:     '{{ mysql_pass_vault }}'
