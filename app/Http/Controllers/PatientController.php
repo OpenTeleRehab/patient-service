@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,10 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-    }
+        $users = User::all();
 
+        return ['success' => true, 'data' => UserResource::collection($users)];
+    }
 
     /**
      * @param Request $request
@@ -36,8 +39,8 @@ class PatientController extends Controller
         $gender = $request->get('gender');
         $note = $request->get('note');
         $dateOfBirth = $request->get('date_of_birth');
-        $dateOfBirth = $dateOfBirth ? date_time_format($dateOfBirth, config('settings.defaultTimestampFormat')) : '';
-
+        $dateOfBirth = $dateOfBirth ? date_time_format($dateOfBirth, config('settings.defaultTimestampFormat')) : null;
+        $clinicIdentity = $request->get('clinic_identity');
         $availablePhone = User::where('phone', $phone)->count();
         if ($availablePhone) {
             // Todo: message will be replaced.
@@ -55,9 +58,8 @@ class PatientController extends Controller
             'note' => $note
         ]);
 
-
         // Todo create function in model to generate this identity.
-        $identity = 'P' . $user->clinic_id .
+        $identity = 'P' . $clinicIdentity .
             str_pad($user->id, 4, '0', STR_PAD_LEFT);
         $user->fill(['identity' => $identity]);
         $user->save();
