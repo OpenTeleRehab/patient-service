@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'defaultTimestampFormat' => 'Y-m-d'
+    'defaultTimestampFormat' => 'Y-m-d',
 ];

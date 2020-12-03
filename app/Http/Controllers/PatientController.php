@@ -38,8 +38,10 @@ class PatientController extends Controller
         $clinic = $request->get('clinic_id');
         $gender = $request->get('gender');
         $note = $request->get('note');
-        $dateOfBirth = $request->get('date_of_birth');
-        $dateOfBirth = $dateOfBirth ? date_time_format($dateOfBirth, config('settings.defaultTimestampFormat')) : null;
+        if ($request->get('date_of_birth')) {
+            $dateOfBirth = date_create_from_format('d/m/Y', $request->get('date_of_birth'));
+        }
+
         $clinicIdentity = $request->get('clinic_identity');
         $availablePhone = User::where('phone', $phone)->count();
         if ($availablePhone) {
@@ -54,7 +56,7 @@ class PatientController extends Controller
             'country_id' => $country,
             'gender' => $gender,
             'clinic_id' => $clinic,
-            'date_of_birth' => $dateOfBirth,
+            'date_of_birth' => $dateOfBirth ? date_format($dateOfBirth, config('settings.defaultTimestampFormat')) : null,
             'note' => $note
         ]);
 
@@ -87,14 +89,17 @@ class PatientController extends Controller
             $dataUpdate = [
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'gender' => $data['gender']
+                'gender' => $data['gender'],
+                'phone' => $data['phone']
             ];
 
             if (isset($data['note'])) {
                 $dataUpdate['note'] = $data['note'];
             }
+
             if (isset($data['date_of_birth'])) {
-                $dataUpdate['date_of_birth'] = date_time_format($data['date_of_birth'], config('settings.defaultTimestampFormat'));
+                $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
+                $dataUpdate['date_of_birth'] = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
             }
 
             $user->update($dataUpdate);
