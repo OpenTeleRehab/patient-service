@@ -1,63 +1,13 @@
 ---
 
-- name: Login to nexus docker private repo
-  docker_login:
-    registry: '{{ hub_registry }}'
-    username: '{{ hub_user }}'
-    password: '{{ hub_pass }}'
-
-- name: Create Dockerfile, vhost, env from template
-  template:
-    src: '{{ item }}.j2'
-    dest: '{{ workspace }}/{{ item }}'
-    mode: 0755
-  loop:
-    - Dockerfile
-    - .env
-    - vhost.conf
-
-- name: Run composer to install dependencies
-  shell: '{{ php_bin }} {{ composer_bin }} install {{ composer_flags }}'
-  args:
-    chdir: '{{ workspace }}'
-
-- name: Pull base image to get latest version
-  shell: 'docker pull {{ base_image }}'
-  retries: 3
-  delay: 10
-
-- name: Build docker image
-  shell: 'docker build -t {{ project_name }}:latest .'
-  args:
-    chdir: '{{ workspace }}'
-  when: lookup('env', 'JENKINS_HOME')
-
-- name: Tag docker image to hub.web-essentials.co
-  shell: 'docker tag {{ project_name }}:latest {{ image_name }}:{{ item }}'
-  args:
-    chdir: '{{ workspace }}'
-  loop:
-    - '{{ version }}'
-    - latest
-  when: lookup('env', 'JENKINS_HOME')
-
-- name: Push docker image to hub.web-essentials.co
-  shell: 'docker push {{ image_name }}:{{ item }}'
-  args:
-    chdir: '{{ workspace }}'
-  loop:
-    - '{{ version }}'
-    - latest
-  when: lookup('env', 'JENKINS_HOME')
-
-- name: Create project directory
+- name: Create build file
   file:
-    path: '/var/tmp/{{ project_id }}'
-    state: directory
+    path: '/var/tmp/{{ project_id }}/latest-{{ project_name }}-build'
+    state: touch
     mode: 0755
 
-- name: Write build version to file
-  template:
-    src: ci-build-id.txt.j2
-    dest: '/var/tmp/{{ project_id }}/{{ project_name }}-build-id.txt'
+- name: Create build file
+  file:
+    path: '/var/tmp/{{ project_id }}/demo-{{ project_name }}-build'
+    state: touch
     mode: 0755
