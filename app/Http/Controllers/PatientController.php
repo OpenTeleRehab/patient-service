@@ -17,9 +17,40 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $users = User::all();
+        $data = $request->all();
+        $query = User::where(function ($query) use ($data) {
+            $query->where('identity', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
+        });
 
-        return ['success' => true, 'data' => UserResource::collection($users)];
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    $excludedColumns = ['country', 'clinic'];
+                    if (in_array($filterObj->columnName, $excludedColumns)) {
+                        continue;
+                    } elseif ($filterObj->columnName === 'date_of_birth') {
+                        $dates = explode(' - ', $filterObj->value);
+                        $startDate = date_create_from_format('d/m/Y', $dates[0]);
+                        $endDate = date_create_from_format('d/m/Y', $dates[1]);
+                        $query->where('date_of_birth', '>=', date_format($startDate, config('settings.defaultTimestampFormat')))
+                            ->where('date_of_birth', '<=', date_format($endDate, config('settings.defaultTimestampFormat')));
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $users = $query->paginate($data['page_size']);
+        $info = [
+            'current_page' => $users->currentPage(),
+            'total_count' => $users->total(),
+        ];
+        return ['success' => true, 'data' => UserResource::collection($users), 'info' => $info];
     }
 
     /**
