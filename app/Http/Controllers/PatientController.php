@@ -69,8 +69,10 @@ class PatientController extends Controller
         $clinic = $request->get('clinic_id');
         $gender = $request->get('gender');
         $note = $request->get('note');
+        $dateOfBirth = null;
         if ($request->get('date_of_birth')) {
             $dateOfBirth = date_create_from_format('d/m/Y', $request->get('date_of_birth'));
+            $dateOfBirth = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
         }
 
         $clinicIdentity = $request->get('clinic_identity');
@@ -87,7 +89,7 @@ class PatientController extends Controller
             'country_id' => $country,
             'gender' => $gender,
             'clinic_id' => $clinic,
-            'date_of_birth' => $dateOfBirth ? date_format($dateOfBirth, config('settings.defaultTimestampFormat')) : null,
+            'date_of_birth' => $dateOfBirth,
             'note' => $note
         ]);
 
