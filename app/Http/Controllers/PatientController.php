@@ -18,7 +18,13 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $query = User::where(function ($query) use ($data) {
+        $query = User::query();
+
+        if (isset($data['therapist_id'])) {
+            $query = User::where('therapist_id', $data['therapist_id']);
+        }
+
+        $query->where(function ($query) use ($data) {
             $query->where('identity', 'like', '%' . $data['search_value'] . '%')
                 ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
                 ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
@@ -62,6 +68,7 @@ class PatientController extends Controller
     {
         DB::beginTransaction();
 
+        $therapistId = $request->get('therapist_id');
         $firstName = $request->get('first_name');
         $lastName = $request->get('last_name');
         $phone = $request->get('phone');
@@ -83,6 +90,7 @@ class PatientController extends Controller
         }
 
         $user = User::create([
+            'therapist_id' => $therapistId,
             'phone' => $phone,
             'first_name' => $firstName,
             'last_name' => $lastName,
