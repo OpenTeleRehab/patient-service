@@ -41,10 +41,7 @@ class PatientController extends Controller
                 $query->where(function ($query) use ($filters) {
                     foreach ($filters as $filter) {
                         $filterObj = json_decode($filter);
-                        $excludedColumns = ['country', 'clinic'];
-                        if (in_array($filterObj->columnName, $excludedColumns)) {
-                            continue;
-                        } elseif ($filterObj->columnName === 'date_of_birth') {
+                        if ($filterObj->columnName === 'date_of_birth') {
                             $dates = explode(' - ', $filterObj->value);
                             $startDate = date_create_from_format('d/m/Y', $dates[0]);
                             $endDate = date_create_from_format('d/m/Y', $dates[1]);
