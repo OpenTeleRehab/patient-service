@@ -20,7 +20,7 @@ class SMSHelper
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verifications
-            ->create('+' . $to, 'sms', ['locale' => $locale]);
+            ->create($to, 'sms', ['locale' => $locale]);
     }
 
     /**
@@ -36,6 +36,6 @@ class SMSHelper
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         return $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verificationChecks
-            ->create($code, ['to' => '+' . $to]);
+            ->create($code, ['to' => $to]);
     }
 }

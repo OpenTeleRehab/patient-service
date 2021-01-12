@@ -15,7 +15,7 @@ class RegistrationController extends Controller
      */
     public function sendCode(Request $request)
     {
-        $to = $request->get('to');
+        $to = '+' . $request->get('to');
         $patientCount = User::where('phone', $to)->count();
 
         if ($patientCount === 0) {
@@ -38,7 +38,7 @@ class RegistrationController extends Controller
     public function verifyCode(Request $request)
     {
         try {
-            $to = $request->get('to');
+            $to = '+' . $request->get('to');
             $code = $request->get('code');
             $verification = SMSHelper::verifyCode($to, $code);
             if ($verification->valid) {
