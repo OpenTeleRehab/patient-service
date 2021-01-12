@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,4 +15,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('register/send-code', [RegistrationController::class, 'sendCode']);
+Route::post('register/verify-code', [RegistrationController::class, 'verifyCode']);
 Route::apiResource('patient', PatientController::class);
