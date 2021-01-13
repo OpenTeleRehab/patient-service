@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,8 +46,19 @@ class AuthController extends Controller
             'password' => $request->pin,
             'enabled' => 1,
         ];
+
         if (Auth::attempt($credentials)) {
-            return ['success' => true, 'data' => Auth::user()];
+            /** @var User $user */
+            $user = Auth::user();
+            // Always make sure old access token is cleared
+            $user->tokens()->delete();
+
+            $token = $user->createToken(config('auth.guards.api.tokenName'))->accessToken;
+            $data = [
+                'profile' => new UserResource($user),
+                'token' => $token,
+            ];
+            return ['success' => true, 'data' => $data];
         }
 
         return ['success' => false, 'message' => 'error.invalid_credentials'];
@@ -74,9 +86,9 @@ class AuthController extends Controller
             return ['success' => false, 'message' => 'error.invalid_pin_code'];
         }
 
-        $user->fill([
-            'password' => Hash::make($pinCode)
-        ])->save();
+        $user->update([
+            'password' => Hash::make($pinCode),
+        ]);
 
         return ['success' => true];
     }

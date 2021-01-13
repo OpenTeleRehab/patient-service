@@ -45,6 +45,7 @@ return [
             'driver' => 'passport',
             'provider' => 'users',
             'hash' => false,
+            'tokenName' => 'HI Access Token',
         ],
     ],
 
