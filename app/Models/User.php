@@ -29,6 +29,8 @@ class User extends Authenticatable
         'identity',
         'therapist_id',
         'enabled',
+        'password',
+        'otp_code',
     ];
 
     /**
