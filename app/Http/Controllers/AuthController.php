@@ -17,8 +17,9 @@ class AuthController extends Controller
      */
     public function addNewPinCode(Request $request)
     {
-        $user = User::where('phone'. $request->phone)
-            ->where('opt_code', $request->opt_code)
+        $phone = '+' . $request->phone;
+        $user = User::where('phone', $phone)
+            ->where('otp_code', $request->otp_code)
             ->firstOrFail();
 
         return $this->savePinCode($user, $request->pin);
@@ -42,7 +43,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = [
-            'phone' => $request->phone,
+            'phone' => '+' . $request->phone,
             'password' => $request->pin,
             'enabled' => 1,
         ];
@@ -50,7 +51,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             /** @var User $user */
             $user = Auth::user();
-            // Always make sure old access token is cleared
+            // Always make sure old access token is cleared.
             $user->tokens()->delete();
 
             $token = $user->createToken(config('auth.guards.api.tokenName'))->accessToken;
