@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('register/send-code', [RegistrationController::class, 'sendCode']);
+Route::post('register/send-code', [RegistrationController::class, 'sendCode']);
 Route::post('register/verify-code', [RegistrationController::class, 'verifyCode']);
 Route::apiResource('patient', PatientController::class);
 Route::post('auth/login', [AuthController::class, 'login']);
