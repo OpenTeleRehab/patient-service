@@ -14,7 +14,7 @@ class AddOtpCodeColumnToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('otp_code')->nullable();
+            $table->string('otp_code')->nullable();
         });
     }
 
