@@ -31,6 +31,7 @@ class User extends Authenticatable
         'enabled',
         'password',
         'otp_code',
+        'language_id',
     ];
 
     /**
