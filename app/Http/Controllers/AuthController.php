@@ -91,6 +91,15 @@ class AuthController extends Controller
             'password' => Hash::make($pinCode),
         ]);
 
-        return ['success' => true];
+        // Always make sure old access token is cleared.
+        $user->tokens()->delete();
+
+        $token = $user->createToken(config('auth.guards.api.tokenName'))->accessToken;
+        $data = [
+            'profile' => new UserResource($user),
+            'token' => $token,
+        ];
+
+        return ['success' => true, 'data' => $data];
     }
 }
