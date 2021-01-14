@@ -70,9 +70,27 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        Auth::logout();
+        /** @var User $user */
+        $user = Auth::user();
+        $user->tokens()->delete();
 
         return ['success' => true];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array|bool[]
+     */
+    public function comparePinCode(Request $request)
+    {
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+        $user = Auth::user();
+        if (Hash::check($request->pin, $user->getAuthPassword())) {
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'message' => 'error.invalid_pin'];
     }
 
     /**

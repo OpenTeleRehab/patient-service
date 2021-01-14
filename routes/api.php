@@ -24,5 +24,6 @@ Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
 
 Route::group(['middleware' => 'auth:api'], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);
-    Route::get('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
+    Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
+    Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
 });
