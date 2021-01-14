@@ -135,8 +135,11 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
-                'phone' => $data['phone']
             ];
+
+            if (isset($data['phone'])) {
+                $dataUpdate['phone'] = $data['phone'];
+            }
 
             if (isset($data['note'])) {
                 $dataUpdate['note'] = $data['note'];
@@ -145,6 +148,10 @@ class PatientController extends Controller
             if (isset($data['date_of_birth'])) {
                 $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
                 $dataUpdate['date_of_birth'] = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
+            }
+
+            if (isset($data['language_id'])) {
+                $dataUpdate['language_id'] = $data['language_id'];
             }
 
             $user->update($dataUpdate);
