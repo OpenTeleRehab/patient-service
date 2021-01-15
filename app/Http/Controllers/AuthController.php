@@ -22,6 +22,11 @@ class AuthController extends Controller
             ->where('otp_code', $request->otp_code)
             ->firstOrFail();
 
+        // Accept terms of services.
+        $user->update([
+            'term_and_condition_id' => $request->get('term_and_condition_id'),
+        ]);
+
         return $this->savePinCode($user, $request->pin);
     }
 
@@ -119,5 +124,20 @@ class AuthController extends Controller
         ];
 
         return ['success' => true, 'data' => $data];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function acceptTermCondition(Request $request)
+    {
+        $user = Auth::user();
+        $user->update([
+            'term_and_condition_id' => $request->get('term_and_condition_id'),
+        ]);
+
+        return ['success' => true, 'data' => ['token' => $user->token()]];
     }
 }
