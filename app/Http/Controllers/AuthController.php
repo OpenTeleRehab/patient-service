@@ -17,7 +17,7 @@ class AuthController extends Controller
      */
     public function addNewPinCode(Request $request)
     {
-        $phone = '+' . $request->phone;
+        $phone = $request->phone;
         $user = User::where('phone', $phone)
             ->where('otp_code', $request->otp_code)
             ->firstOrFail();
@@ -48,7 +48,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = [
-            'phone' => '+' . $request->phone,
+            'phone' => $request->phone,
             'password' => $request->pin,
             'enabled' => 1,
         ];

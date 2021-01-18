@@ -18,6 +18,7 @@ class SMSHelper
      */
     public static function sendCode($to, $hash, $locale = 'en')
     {
+        $to = '+' . $to;
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         $options = ['locale' => $locale];
         if ($hash) {
@@ -38,6 +39,7 @@ class SMSHelper
      */
     public static function verifyCode($to, $code)
     {
+        $to = '+' . $to;
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         return $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verificationChecks
