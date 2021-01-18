@@ -16,6 +16,7 @@ class RegistrationController extends Controller
     public function sendCode(Request $request)
     {
         $to = '+' . $request->get('to');
+        $hash = $request->get('hash');
         $patientCount = User::where('phone', $to)->count();
 
         if ($patientCount === 0) {
@@ -23,7 +24,7 @@ class RegistrationController extends Controller
         }
 
         try {
-            SMSHelper::sendCode($to);
+            SMSHelper::sendCode($to, $hash);
             return ['success' => true, 'message' => 'success.code_sent'];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'error.sms_gateway'];
