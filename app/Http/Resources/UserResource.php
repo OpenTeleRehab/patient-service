@@ -28,6 +28,7 @@ class UserResource extends JsonResource
             'therapist_id' => $this->therapist_id,
             'enabled' => $this->enabled,
             'language_id' => $this->language_id,
+            'term_and_condition_id' => $this->term_and_condition_id,
         ];
     }
 }

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'password',
         'otp_code',
         'language_id',
+        'term_and_condition_id',
     ];
 
     /**
