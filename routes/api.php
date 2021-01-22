@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\TreatmentPlanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,3 +29,5 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
 });
+
+Route::apiResource('treatment-plan', TreatmentPlanController::class);
