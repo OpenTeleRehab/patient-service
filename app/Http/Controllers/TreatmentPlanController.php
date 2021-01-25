@@ -162,4 +162,22 @@ class TreatmentPlanController extends Controller
             ->whereNotIn('id', $activityIds)
             ->delete();
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Activity $activity
+     *
+     * @return bool[]
+     */
+    public function completeActivity(Request $request, Activity $activity)
+    {
+        $activity->update([
+            'completed' => true,
+            'pain_level' => $request->get('pain_level'),
+            'sets' => $request->get('sets'),
+            'reps' => $request->get('reps'),
+        ]);
+
+        return ['success' => true];
+    }
 }
