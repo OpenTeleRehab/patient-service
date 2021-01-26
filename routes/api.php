@@ -29,6 +29,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
     Route::post('treatment-plan/complete_activity/{activity}', [TreatmentPlanController::class, 'completeActivity']);
+    Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
