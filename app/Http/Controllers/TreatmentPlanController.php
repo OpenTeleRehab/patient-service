@@ -6,6 +6,8 @@ use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
 use App\Models\TreatmentPlan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class TreatmentPlanController extends Controller
 {
@@ -179,5 +181,47 @@ class TreatmentPlanController extends Controller
         ]);
 
         return ['success' => true];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getActivities(Request $request)
+    {
+        $result = [];
+        $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
+            ->where('start_date', '<=', date_create_from_format(config('settings.date_format'), $request->get('today')))
+            ->where('end_date', '>', date_create_from_format(config('settings.date_format'), $request->get('today')))
+            ->firstOrFail();
+        $activities = $treatmentPlan->activities;
+
+        foreach ($activities as $activity) {
+            $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
+                ->modify('+' . ($activity->day - 1) . ' day')
+                ->format(config('settings.defaultTimestampFormat'));
+            $exercise = [];
+            $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
+                'exercise_ids' => [$activity->exercise_id],
+            ]);
+
+            if ($response->successful()) {
+                $exercise = $response->json()['data'][0];
+                $exercise['id'] = $activity->id;
+            }
+
+            $result[] = array_merge([
+                'date' => $date,
+                'completed' => $activity->completed,
+                'pain_level' => $activity->pain_level,
+                'sets' => $activity->sets,
+                'reps' => $activity->reps,
+            ], $exercise);
+        }
+
+        $data = array_merge($treatmentPlan->toArray(), ['activities' => $result]);
+
+        return ['success' => true, 'data' => $data];
     }
 }
