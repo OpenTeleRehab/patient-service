@@ -213,6 +213,7 @@ class TreatmentPlanController extends Controller
 
             $result[] = array_merge([
                 'date' => $date,
+                'exercise_id' => $activity->exercise_id,
                 'completed' => $activity->completed,
                 'pain_level' => $activity->pain_level,
                 'sets' => $activity->sets,
