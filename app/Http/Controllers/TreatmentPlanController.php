@@ -190,10 +190,11 @@ class TreatmentPlanController extends Controller
      */
     public function getActivities(Request $request)
     {
+        $date = date_create_from_format(config('settings.date_format'), $request->get('today'));
         $result = [];
         $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
-            ->where('start_date', '<=', date_create_from_format(config('settings.date_format'), $request->get('today')))
-            ->where('end_date', '>', date_create_from_format(config('settings.date_format'), $request->get('today')))
+            ->where('start_date', '<=', $date)
+            ->where('end_date', '>', $date)
             ->firstOrFail();
         $activities = $treatmentPlan->activities;
 
@@ -222,6 +223,31 @@ class TreatmentPlanController extends Controller
         }
 
         $data = array_merge($treatmentPlan->toArray(), ['activities' => $result]);
+
+        return ['success' => true, 'data' => $data];
+    }
+
+    public function getSummary(Request $request)
+    {
+        $date = date_create_from_format(config('settings.date_format'), $request->get('today'));
+        $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
+            ->where('start_date', '<=', $date)
+            ->where('end_date', '>', $date)
+            ->firstOrFail();
+
+        $startDate = $treatmentPlan->start_date;
+        $diff = $date->diff($startDate);
+        $days = $diff->days;
+        $day = $days % 7 + 1;
+        $week = floor($days / 7) + 1 ;
+        $activities = Activity::where('week', $week)
+            ->where('day', $day)
+            ->where('treatment_plan_id', $treatmentPlan->id)
+            ->get();
+        $data = [
+            'all' => $activities->count(),
+            'completed' => $activities->sum('completed'),
+        ];
 
         return ['success' => true, 'data' => $data];
     }

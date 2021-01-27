@@ -30,6 +30,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
     Route::post('treatment-plan/complete_activity/{activity}', [TreatmentPlanController::class, 'completeActivity']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
+    Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
