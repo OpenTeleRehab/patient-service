@@ -138,6 +138,6 @@ class AuthController extends Controller
             'term_and_condition_id' => $request->get('term_and_condition_id'),
         ]);
 
-        return ['success' => true, 'data' => ['token' => $user->token()]];
+        return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
 }
