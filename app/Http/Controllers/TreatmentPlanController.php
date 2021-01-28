@@ -190,11 +190,11 @@ class TreatmentPlanController extends Controller
      */
     public function getActivities(Request $request)
     {
-        $date = date_create_from_format(config('settings.date_format'), $request->get('today'));
+        $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
         $result = [];
         $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
             ->where('start_date', '<=', $date)
-            ->where('end_date', '>', $date)
+            ->where('end_date', '>=', $date)
             ->firstOrFail();
         $activities = $treatmentPlan->activities;
 
@@ -231,8 +231,8 @@ class TreatmentPlanController extends Controller
     {
         $date = date_create_from_format(config('settings.date_format'), $request->get('today'));
         $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
-            ->where('start_date', '<=', $date)
-            ->where('end_date', '>', $date)
+            ->where('start_date', '<=', $date->format(config('settings.defaultTimestampFormat')))
+            ->where('end_date', '>=', $date->format(config('settings.defaultTimestampFormat')))
             ->firstOrFail();
 
         $startDate = $treatmentPlan->start_date;
