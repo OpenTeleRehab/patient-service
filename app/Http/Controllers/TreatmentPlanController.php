@@ -144,6 +144,7 @@ class TreatmentPlanController extends Controller
         $activityIds = [];
         foreach ($activities as $activity) {
             $exercises = $activity['exercises'];
+            $materials = $activity['materials'];
             if (count($exercises) > 0) {
                 foreach ($exercises as $exercise) {
                     $activityObj = Activity::firstOrCreate(
@@ -151,7 +152,23 @@ class TreatmentPlanController extends Controller
                             'treatment_plan_id' => $treatmentPlanId,
                             'week' => $activity['week'],
                             'day' => $activity['day'],
-                            'exercise_id' => $exercise,
+                            'activity_id' => $exercise,
+                            'type' => Activity::ACTIVITY_TYPE_EXERCISE,
+                        ],
+                    );
+                    $activityIds[] = $activityObj->id;
+                }
+            }
+
+            if (count($materials) > 0) {
+                foreach ($materials as $material) {
+                    $activityObj = Activity::firstOrCreate(
+                        [
+                            'treatment_plan_id' => $treatmentPlanId,
+                            'week' => $activity['week'],
+                            'day' => $activity['day'],
+                            'activity_id' => $material,
+                            'type' => Activity::ACTIVITY_TYPE_MATERIAL,
                         ],
                     );
                     $activityIds[] = $activityObj->id;
@@ -204,7 +221,7 @@ class TreatmentPlanController extends Controller
                 ->format(config('settings.defaultTimestampFormat'));
             $exercise = [];
             $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
-                'exercise_ids' => [$activity->exercise_id],
+                'exercise_ids' => [$activity->activity_id],
             ]);
 
             if ($response->successful()) {
@@ -214,7 +231,7 @@ class TreatmentPlanController extends Controller
 
             $result[] = array_merge([
                 'date' => $date,
-                'exercise_id' => $activity->exercise_id,
+                'activity_id' => $activity->activity_id,
                 'completed' => $activity->completed,
                 'pain_level' => $activity->pain_level,
                 'sets' => $activity->sets,
@@ -227,6 +244,11 @@ class TreatmentPlanController extends Controller
         return ['success' => true, 'data' => $data];
     }
 
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
     public function getSummary(Request $request)
     {
         $date = date_create_from_format(config('settings.date_format'), $request->get('today'));

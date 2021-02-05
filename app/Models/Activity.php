@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activity extends Model
 {
+    const ACTIVITY_TYPE_EXERCISE = 'exercise';
+    const ACTIVITY_TYPE_MATERIAL = 'material';
+
     use HasFactory;
 
     /**
@@ -18,11 +21,12 @@ class Activity extends Model
         'treatment_plan_id',
         'week',
         'day',
-        'exercise_id',
+        'activity_id',
         'completed',
         'pain_level',
         'sets',
         'reps',
+        'type',
     ];
 
     /**
