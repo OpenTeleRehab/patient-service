@@ -232,8 +232,12 @@ class TreatmentPlanController extends Controller
             }
 
             if ($response->successful()) {
-                $activityObj = $response->json()['data'][0];
-                $activityObj['id'] = $activity->id;
+                if ($response->json()['data']) {
+                    $activityObj = $response->json()['data'][0];
+                    $activityObj['id'] = $activity->id;
+                } else {
+                    continue;
+                }
             }
 
             $result[] = array_merge([
