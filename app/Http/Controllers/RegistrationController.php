@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\SMSHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RegistrationController extends Controller
 {
@@ -27,6 +28,7 @@ class RegistrationController extends Controller
             SMSHelper::sendCode($to, $hash);
             return ['success' => true, 'message' => 'success.code_sent'];
         } catch (\Exception $e) {
+            Log::error('error.sms_gateway.send', [$e->getMessage()]);
             return ['success' => false, 'message' => 'error.sms_gateway'];
         }
     }
@@ -48,6 +50,7 @@ class RegistrationController extends Controller
             }
             return ['success' => false, 'message' => 'error.invalid_code'];
         } catch (\Exception $e) {
+            Log::error('error.sms_gateway.verify', [$e->getMessage()]);
             return ['success' => false, 'message' => 'error.sms_gateway'];
         }
     }
