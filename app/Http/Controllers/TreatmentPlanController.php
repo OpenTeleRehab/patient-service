@@ -219,14 +219,21 @@ class TreatmentPlanController extends Controller
             $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
                 ->modify('+' . ($activity->day - 1) . ' day')
                 ->format(config('settings.defaultTimestampFormat'));
-            $exercise = [];
-            $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
-                'exercise_ids' => [$activity->activity_id],
-            ]);
+            $activityObj = [];
+
+            if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
+                    'exercise_ids' => [$activity->activity_id],
+                ]);
+            } else {
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
+                    'material_ids' => [$activity->activity_id],
+                ]);
+            }
 
             if ($response->successful()) {
-                $exercise = $response->json()['data'][0];
-                $exercise['id'] = $activity->id;
+                $activityObj = $response->json()['data'][0];
+                $activityObj['id'] = $activity->id;
             }
 
             $result[] = array_merge([
@@ -236,7 +243,8 @@ class TreatmentPlanController extends Controller
                 'pain_level' => $activity->pain_level,
                 'sets' => $activity->sets,
                 'reps' => $activity->reps,
-            ], $exercise);
+                'type' => $activity->type,
+            ], $activityObj);
         }
 
         $data = array_merge($treatmentPlan->toArray(), ['activities' => $result]);
