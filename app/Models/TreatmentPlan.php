@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TreatmentPlan extends Model
 {
-    const TYPE_PRESET = 'preset';
-    const TYPE_NORMAL = 'normal';
     const STATUS_PLANNED = 'planned';
     const STATUS_ON_GOING = 'on-going';
     const STATUS_FINISHED = 'finished';
@@ -19,7 +17,13 @@ class TreatmentPlan extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'description', 'type', 'patient_id', 'start_date', 'end_date', 'status',
+        'name',
+        'description',
+        'patient_id',
+        'start_date',
+        'end_date',
+        'status',
+        'total_of_weeks',
     ];
 
     /**
