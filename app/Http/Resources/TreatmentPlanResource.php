@@ -29,12 +29,12 @@ class TreatmentPlanResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'type' => $this->type,
             'patient_id' => $this->patient_id,
             'start_date' => $this->start_date ? $this->start_date->format(config('settings.date_format')) : '',
             'end_date' => $this->end_date ? $this->end_date->format(config('settings.date_format')) : '',
             'status' => $this->status,
             'activities' => ActivityResource::collection($activities),
+            'total_of_weeks' => $this->total_of_weeks,
         ];
     }
 }

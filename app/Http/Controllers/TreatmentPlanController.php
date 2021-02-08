@@ -95,11 +95,11 @@ class TreatmentPlanController extends Controller
         $treatmentPlan = TreatmentPlan::create([
             'name' => $name,
             'description' => $description,
-            'type' => TreatmentPlan::TYPE_NORMAL,
             'patient_id' => $patientId,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'status' => TreatmentPlan::STATUS_PLANNED,
+            'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
 
         if (!$treatmentPlan) {
@@ -127,6 +127,7 @@ class TreatmentPlanController extends Controller
             'description' => $description,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
 
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
