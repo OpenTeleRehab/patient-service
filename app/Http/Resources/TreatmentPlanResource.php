@@ -19,6 +19,7 @@ class TreatmentPlanResource extends JsonResource
             ->selectRaw('ANY_VALUE(activities.id) AS id')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = "exercise" THEN activity_id END) AS exercises')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = "material" THEN activity_id END) AS materials')
+            ->selectRaw('GROUP_CONCAT(CASE WHEN type = "questionnaire" THEN activity_id END) AS questionnaires')
             ->where('treatment_plan_id', $this->id)
             ->groupBy('treatment_plan_id')
             ->groupBy('week')
