@@ -146,6 +146,7 @@ class TreatmentPlanController extends Controller
         foreach ($activities as $activity) {
             $exercises = $activity['exercises'];
             $materials = $activity['materials'];
+            $questionnaires = $activity['questionnaires'];
             if (count($exercises) > 0) {
                 foreach ($exercises as $exercise) {
                     $activityObj = Activity::firstOrCreate(
@@ -170,6 +171,21 @@ class TreatmentPlanController extends Controller
                             'day' => $activity['day'],
                             'activity_id' => $material,
                             'type' => Activity::ACTIVITY_TYPE_MATERIAL,
+                        ],
+                    );
+                    $activityIds[] = $activityObj->id;
+                }
+            }
+
+            if (count($questionnaires) > 0) {
+                foreach ($questionnaires as $questionnaire) {
+                    $activityObj = Activity::firstOrCreate(
+                        [
+                            'treatment_plan_id' => $treatmentPlanId,
+                            'week' => $activity['week'],
+                            'day' => $activity['day'],
+                            'activity_id' => $questionnaire,
+                            'type' => Activity::ACTIVITY_TYPE_QUESTIONNAIRE,
                         ],
                     );
                     $activityIds[] = $activityObj->id;
@@ -226,9 +242,13 @@ class TreatmentPlanController extends Controller
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
                     'exercise_ids' => [$activity->activity_id],
                 ]);
-            } else {
+            } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
                     'material_ids' => [$activity->activity_id],
+                ]);
+            } else {
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
+                    'questionnaire_ids' => [$activity->activity_id],
                 ]);
             }
 

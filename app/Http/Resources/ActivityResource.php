@@ -20,6 +20,7 @@ class ActivityResource extends JsonResource
             'day' => $this->day,
             'exercises' => $this->exercises ? array_map('intval', explode(',', $this->exercises)): [],
             'materials' => $this->materials ? array_map('intval', explode(',', $this->materials)) : [],
+            'questionnaires' => $this->questionnaires ? array_map('intval', explode(',', $this->questionnaires)) : [],
         ];
     }
 }
