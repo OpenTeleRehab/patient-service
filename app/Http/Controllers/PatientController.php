@@ -148,6 +148,8 @@ class PatientController extends Controller
             if (isset($data['date_of_birth'])) {
                 $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
                 $dataUpdate['date_of_birth'] = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
+            } else {
+                $dataUpdate['date_of_birth'] = null;
             }
 
             if (isset($data['language_id'])) {
