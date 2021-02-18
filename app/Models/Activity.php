@@ -28,6 +28,7 @@ class Activity extends Model
         'sets',
         'reps',
         'type',
+        'submitted_date',
     ];
 
     /**
@@ -36,4 +37,22 @@ class Activity extends Model
      * @var boolean
      */
     public $timestamps = false;
+
+    /**
+     * The attributes that should be cast to native types.
+     * This format will be used when the model is serialized to an array or JSON
+     *
+     * @var array
+     */
+    protected $casts = [
+        'submitted_date' => 'datetime:d/m/Y',
+    ];
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function answers()
+    {
+        return $this->hasMany(QuestionnaireAnswer::class);
+    }
 }

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
+use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -281,6 +283,8 @@ class TreatmentPlanController extends Controller
                 'sets' => $activity->sets,
                 'reps' => $activity->reps,
                 'type' => $activity->type,
+                'submitted_date' => $activity->submitted_date,
+                'answers' => QuestionnaireAnswerResource::collection($activity->answers),
             ], $activityObj);
         }
 
@@ -317,5 +321,29 @@ class TreatmentPlanController extends Controller
         ];
 
         return ['success' => true, 'data' => $data];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Activity $activity
+     *
+     * @return bool[]
+     */
+    public function completeQuestionnaire(Request $request, Activity $activity)
+    {
+        foreach ($request->get('answers', []) as $key => $answer) {
+            QuestionnaireAnswer::create([
+                'activity_id' => $activity->id,
+                'question_id' => $key,
+                'answer' => serialize($answer),
+            ]);
+        }
+
+        $activity->update([
+            'completed' => true,
+            'submitted_date' => now(),
+        ]);
+
+        return ['success' => true];
     }
 }
