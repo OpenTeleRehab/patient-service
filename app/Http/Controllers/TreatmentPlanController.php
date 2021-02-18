@@ -238,12 +238,17 @@ class TreatmentPlanController extends Controller
      */
     public function getActivities(Request $request)
     {
-        $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
         $result = [];
-        $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
-            ->where('start_date', '<=', $date)
-            ->where('end_date', '>=', $date)
-            ->firstOrFail();
+        $treatmentPlan = null;
+        if ($request->get('today')) {
+            $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
+            $treatmentPlan = TreatmentPlan::where('patient_id',Auth::id())
+                ->where('start_date', '<=', $date)
+                ->where('end_date', '>=', $date)
+                ->firstOrFail();
+        }else {
+            $treatmentPlan = TreatmentPlan::where('id',$request->get('id'))->firstOrFail();
+        }
         $activities = $treatmentPlan->activities;
 
         foreach ($activities as $activity) {
@@ -255,14 +260,17 @@ class TreatmentPlanController extends Controller
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
                     'exercise_ids' => [$activity->activity_id],
+                    'lang' => $request->get('lang')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
                     'material_ids' => [$activity->activity_id],
+                    'lang' => $request->get('lang')
                 ]);
             } else {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
                     'questionnaire_ids' => [$activity->activity_id],
+                    'lang' => $request->get('lang')
                 ]);
             }
 
@@ -285,6 +293,8 @@ class TreatmentPlanController extends Controller
                 'type' => $activity->type,
                 'submitted_date' => $activity->submitted_date,
                 'answers' => QuestionnaireAnswerResource::collection($activity->answers),
+                'week' => $activity->week,
+                'day' => $activity->day,
             ], $activityObj);
         }
 
