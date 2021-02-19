@@ -7,6 +7,7 @@ use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
 use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -43,7 +44,18 @@ class TreatmentPlanController extends Controller
                     foreach ($filters as $filter) {
                         $filterObj = json_decode($filter);
                         if ($filterObj->columnName === 'treatment_status') {
-                            $query->where('status', trim($filterObj->value));
+                            $status = trim($filterObj->value);
+                            switch ($status) {
+                                case TreatmentPlan::STATUS_PLANNED:
+                                    $query->whereDate('start_date', '>', Carbon::now());
+                                    break;
+                                case TreatmentPlan::STATUS_FINISHED:
+                                    $query->where('end_date', '<', Carbon::now());
+                                    break;
+                                case TreatmentPlan::STATUS_ON_GOING:
+                                    $query->where('start_date', '<=', Carbon::now());
+                                    $query->where('end_date', '>=', Carbon::now());
+                            }
                         } elseif ($filterObj->columnName === 'start_date' || $filterObj->columnName === 'end_date') {
                             $dates = explode(' - ', $filterObj->value);
                             $startDate = date_create_from_format('d/m/Y', $dates[0]);
@@ -242,11 +254,11 @@ class TreatmentPlanController extends Controller
         $treatmentPlan = null;
         if ($request->get('today')) {
             $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
-            $treatmentPlan = TreatmentPlan::where('patient_id',Auth::id())
+            $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
                 ->where('start_date', '<=', $date)
                 ->where('end_date', '>=', $date)
                 ->firstOrFail();
-        }else {
+        } else {
             $treatmentPlan = TreatmentPlan::where('id',$request->get('id'))->firstOrFail();
         }
         $activities = $treatmentPlan->activities;

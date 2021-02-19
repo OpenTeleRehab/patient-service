@@ -69,4 +69,12 @@ class User extends Authenticatable
             $builder->orderBy('first_name');
         });
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function treatmentPlans()
+    {
+        return $this->hasMany(TreatmentPlan::class, 'patient_id', 'id');
+    }
 }

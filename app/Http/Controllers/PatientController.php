@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PatientResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -60,7 +61,7 @@ class PatientController extends Controller
                 'total_count' => $users->total(),
             ];
         }
-        return ['success' => true, 'data' => UserResource::collection($users), 'info' => $info];
+        return ['success' => true, 'data' => PatientResource::collection($users), 'info' => $info];
     }
 
     /**

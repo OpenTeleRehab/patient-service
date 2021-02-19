@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 class TreatmentPlan extends Model
 {
     const STATUS_PLANNED = 'planned';
-    const STATUS_ON_GOING = 'on-going';
+    const STATUS_ON_GOING = 'on_going';
     const STATUS_FINISHED = 'finished';
 
     /**
@@ -44,13 +44,11 @@ class TreatmentPlan extends Model
     protected static function boot()
     {
         parent::boot();
-        $orderValues = [self::STATUS_ON_GOING, self::STATUS_PLANNED, self::STATUS_FINISHED];
 
         // Set default order.
-        static::addGlobalScope('order', function (Builder $builder) use ($orderValues) {
-            $builder->orderByRaw('FIELD(status, "' . implode('", "', $orderValues) . '")');
-            $builder->orderBy('name', 'asc');
-            $builder->orderBy('start_date', 'asc');
+        static::addGlobalScope('order', function (Builder $builder) {
+            $builder->orderBy('start_date', 'desc');
+            $builder->orderBy('name');
         });
     }
 
