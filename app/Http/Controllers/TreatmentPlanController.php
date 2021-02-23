@@ -132,9 +132,22 @@ class TreatmentPlanController extends Controller
      */
     public function update(Request $request, TreatmentPlan $treatmentPlan)
     {
+        $patientId = $request->get('patient_id');
         $description = $request->get('description');
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
+
+        // Check if there is any overlap schedule.
+        $overlapRecords = TreatmentPlan::where('patient_id', $patientId)
+            ->where('id', '<>', $treatmentPlan->id)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+            })->get();
+        
+        if (count($overlapRecords)) {
+            return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient_overlap_schedule'];
+        }
 
         $treatmentPlan->update([
             'name' => $request->get('name'),
