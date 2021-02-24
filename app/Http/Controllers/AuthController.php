@@ -23,9 +23,13 @@ class AuthController extends Controller
             ->firstOrFail();
 
         // Accept terms of services.
-        $user->update([
-            'term_and_condition_id' => $request->get('term_and_condition_id'),
-        ]);
+        $data = ['term_and_condition_id' => $request->get('term_and_condition_id')];
+
+        // Update user language.
+        if ($request->has('language')) {
+            $data['language_id'] = $request->get('language');
+        }
+        $user->update($data);
 
         return $this->savePinCode($user, $request->pin);
     }
