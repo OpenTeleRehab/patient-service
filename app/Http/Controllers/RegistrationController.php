@@ -43,8 +43,8 @@ class RegistrationController extends Controller
         try {
             $to = $request->get('to');
             $code = $request->get('code');
-            $verification = SMSHelper::verifyCode($to, $code);
-            if ($verification->valid) {
+            $isVerified = SMSHelper::verifyCode($to, $code);
+            if ($isVerified) {
                 User::where('phone', $to)->update(['otp_code' => $code, 'enabled' => true]);
                 return ['success' => true, 'message' => 'success.code_verified'];
             }
