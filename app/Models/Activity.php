@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activity extends Model
 {
+    use HasFactory;
+
     const ACTIVITY_TYPE_EXERCISE = 'exercise';
     const ACTIVITY_TYPE_MATERIAL = 'material';
     const ACTIVITY_TYPE_QUESTIONNAIRE = 'questionnaire';
-
-    use HasFactory;
 
     /**
      * The attributes that are mass assignable.

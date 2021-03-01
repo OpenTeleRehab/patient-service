@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
+use App\Models\Goal;
 use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
 use Carbon\Carbon;
@@ -120,6 +121,7 @@ class TreatmentPlanController extends Controller
             return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient'];
         }
 
+        $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
         return ['success' => true, 'message' => 'success_message.treatment_plan_assign_to_patient', 'data' => $treatmentPlan];
     }
@@ -144,7 +146,7 @@ class TreatmentPlanController extends Controller
                 $query->whereBetween('start_date', [$startDate, $endDate])
                     ->orWhereBetween('end_date', [$startDate, $endDate]);
             })->get();
-        
+
         if (count($overlapRecords)) {
             return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient_overlap_schedule'];
         }
@@ -157,8 +159,38 @@ class TreatmentPlanController extends Controller
             'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
 
+        $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
+    }
+
+    /**
+     * @param int $treatmentPlanId
+     * @param array $goals
+     *
+     * @return void
+     */
+    private function updateOrCreateGoals(int $treatmentPlanId, array $goals = [])
+    {
+        $goalIds = [];
+        foreach ($goals as $goal) {
+            $goalObj = Goal::updateOrCreate(
+                [
+                    'id' => isset($goal['id']) ? $goal['id'] : null,
+                ],
+                [
+                    'treatment_plan_id' => $treatmentPlanId,
+                    'title' => $goal['title'],
+                    'frequency' => $goal['frequency'],
+                ]
+            );
+            $goalIds[] = $goalObj->id;
+        }
+
+        // Remove deleted goals.
+        Goal::where('treatment_plan_id', $treatmentPlanId)
+            ->whereNotIn('id', $goalIds)
+            ->delete();
     }
 
     /**
