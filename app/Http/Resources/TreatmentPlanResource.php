@@ -34,6 +34,7 @@ class TreatmentPlanResource extends JsonResource
             'start_date' => $this->start_date ? $this->start_date->format(config('settings.date_format')) : '',
             'end_date' => $this->end_date ? $this->end_date->format(config('settings.date_format')) : '',
             'status' => $this->status,
+            'goals' => GoalResource::collection($this->goals),
             'activities' => ActivityResource::collection($activities),
             'total_of_weeks' => $this->total_of_weeks,
         ];
