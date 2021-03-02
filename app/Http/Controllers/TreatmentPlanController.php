@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\GoalResource;
 use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
@@ -327,14 +328,14 @@ class TreatmentPlanController extends Controller
                     'material_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang')
                 ]);
-            } else {
+            } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
                     'questionnaire_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang')
                 ]);
             }
 
-            if ($response->successful()) {
+            if (isset($response) && $response->successful()) {
                 if ($response->json()['data']) {
                     $activityObj = $response->json()['data'][0];
                     $activityObj['id'] = $activity->id;
@@ -350,6 +351,7 @@ class TreatmentPlanController extends Controller
                 'pain_level' => $activity->pain_level,
                 'sets' => $activity->sets,
                 'reps' => $activity->reps,
+                'satisfaction' => $activity->satisfaction,
                 'type' => $activity->type,
                 'submitted_date' => $activity->submitted_date,
                 'answers' => QuestionnaireAnswerResource::collection($activity->answers),
@@ -404,7 +406,10 @@ class TreatmentPlanController extends Controller
             $previousActivity = clone $activity;
         }
 
-        $data = array_merge($treatmentPlan->toArray(), ['activities' => $result]);
+        $data = array_merge($treatmentPlan->toArray(), [
+            'goals' => GoalResource::collection($treatmentPlan->goals),
+            'activities' => $result
+        ]);
 
         return ['success' => true, 'data' => $data];
     }
