@@ -297,18 +297,21 @@ class TreatmentPlanController extends Controller
     {
         $result = [];
         $treatmentPlan = null;
-        if ($request->get('today')) {
+        if ($request->has('today')) {
             $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
             $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
                 ->where('start_date', '<=', $date)
                 ->where('end_date', '>=', $date)
                 ->firstOrFail();
+            $dailyGoals = $treatmentPlan->goals->where('frequency', 'daily')->all();
+            $weeklyGoals = $treatmentPlan->goals->where('frequency', 'weekly')->all();
         } else {
             $treatmentPlan = TreatmentPlan::where('id',$request->get('id'))->firstOrFail();
         }
-        $activities = $treatmentPlan->activities;
+        $activities = $treatmentPlan->activities->sortBy('week')->sortBy('day');
 
-        foreach ($activities as $activity) {
+        $previousActivity = $activities ? $activities->first() : null;
+        foreach ($activities as $key => $activity) {
             $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
                 ->modify('+' . ($activity->day - 1) . ' day')
                 ->format(config('settings.defaultTimestampFormat'));
@@ -353,6 +356,52 @@ class TreatmentPlanController extends Controller
                 'week' => $activity->week,
                 'day' => $activity->day,
             ], $activityObj);
+
+            // Add daily goals.
+            if (!empty($dailyGoals)
+                && ($previousActivity->day !== $activity->day || $previousActivity->week !== $activity->week || $key === array_key_last($activities->toArray()))
+            ) {
+                $previousActivity = $key === array_key_last($activities->toArray()) ? $activity : $previousActivity;
+                $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
+                    ->modify('+' . ($previousActivity->day - 1) . ' day')
+                    ->format(config('settings.defaultTimestampFormat'));
+                foreach ($dailyGoals as $goal) {
+                    $result[] = [
+                        'date' => $previousDate,
+                        'goal_id' => $goal->id,
+                        'title' => $goal->title,
+                        'completed' => false,
+                        'type' => Activity::ACTIVITY_TYPE_GOAL,
+                        'frequency' => 'daily',
+                        'week' => $previousActivity->week,
+                        'day' => $previousActivity->day,
+                    ];
+                }
+            }
+
+            // Add weekly goals.
+            if (!empty($weeklyGoals)
+                && ($previousActivity->week !== $activity->week || $key === array_key_last($activities->toArray()))
+            ) {
+                $previousActivity = $key === array_key_last($activities->toArray()) ? $activity : $previousActivity;
+                $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
+                    ->modify('+' . ($previousActivity->day - 1) . ' day')
+                    ->format(config('settings.defaultTimestampFormat'));
+                foreach ($weeklyGoals as $goal) {
+                    $result[] = [
+                        'date' => $previousDate,
+                        'goal_id' => $goal->id,
+                        'title' => $goal->title,
+                        'completed' => false,
+                        'type' => Activity::ACTIVITY_TYPE_GOAL,
+                        'frequency' => 'weekly',
+                        'week' => $previousActivity->week,
+                        'day' => $previousActivity->day,
+                    ];
+                }
+            }
+
+            $previousActivity = clone $activity;
         }
 
         $data = array_merge($treatmentPlan->toArray(), ['activities' => $result]);
