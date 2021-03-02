@@ -33,6 +33,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
     Route::post('treatment-plan/complete_questionnaire/{activity}', [TreatmentPlanController::class, 'completeQuestionnaire']);
+    Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
