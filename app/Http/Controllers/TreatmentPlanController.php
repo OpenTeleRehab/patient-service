@@ -317,6 +317,7 @@ class TreatmentPlanController extends Controller
                 ->modify('+' . ($activity->day - 1) . ' day')
                 ->format(config('settings.defaultTimestampFormat'));
             $activityObj = [];
+            $response = null;
 
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
@@ -333,9 +334,18 @@ class TreatmentPlanController extends Controller
                     'questionnaire_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang')
                 ]);
+            } else {
+                $goal = Goal::find($activity->activity_id);
+                if ($goal) {
+                    $activityObj = [
+                        'id' => $activity->id,
+                        'title' => $goal->title,
+                        'frequency' => $goal->frequency,
+                    ];
+                }
             }
 
-            if (isset($response) && $response->successful()) {
+            if (!empty($response) && $response->successful()) {
                 if ($response->json()['data']) {
                     $activityObj = $response->json()['data'][0];
                     $activityObj['id'] = $activity->id;
@@ -357,6 +367,7 @@ class TreatmentPlanController extends Controller
                 'answers' => QuestionnaireAnswerResource::collection($activity->answers),
                 'week' => $activity->week,
                 'day' => $activity->day,
+                'satisfaction' => $activity->satisfaction,
             ], $activityObj);
 
             // Add daily goals.
@@ -368,16 +379,24 @@ class TreatmentPlanController extends Controller
                     ->modify('+' . ($previousActivity->day - 1) . ' day')
                     ->format(config('settings.defaultTimestampFormat'));
                 foreach ($dailyGoals as $goal) {
-                    $result[] = [
-                        'date' => $previousDate,
-                        'goal_id' => $goal->id,
-                        'title' => $goal->title,
-                        'completed' => false,
-                        'type' => Activity::ACTIVITY_TYPE_GOAL,
-                        'frequency' => 'daily',
-                        'week' => $previousActivity->week,
-                        'day' => $previousActivity->day,
-                    ];
+                    $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
+                        ->where('activity_id', $goal->id)
+                        ->where('week', $previousActivity->week)
+                        ->where('day', $previousActivity->day)
+                        ->count();
+                    if (!$completed) {
+                        $result[] = [
+                            'date' => $previousDate,
+                            'activity_id' => $goal->id,
+                            'title' => $goal->title,
+                            'completed' => false,
+                            'type' => Activity::ACTIVITY_TYPE_GOAL,
+                            'frequency' => 'daily',
+                            'week' => $previousActivity->week,
+                            'day' => $previousActivity->day,
+                            'treatment_plan_id' => $previousActivity->treatment_plan_id,
+                        ];
+                    }
                 }
             }
 
@@ -390,19 +409,26 @@ class TreatmentPlanController extends Controller
                     ->modify('+' . ($previousActivity->day - 1) . ' day')
                     ->format(config('settings.defaultTimestampFormat'));
                 foreach ($weeklyGoals as $goal) {
-                    $result[] = [
-                        'date' => $previousDate,
-                        'goal_id' => $goal->id,
-                        'title' => $goal->title,
-                        'completed' => false,
-                        'type' => Activity::ACTIVITY_TYPE_GOAL,
-                        'frequency' => 'weekly',
-                        'week' => $previousActivity->week,
-                        'day' => $previousActivity->day,
-                    ];
+                    $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
+                        ->where('activity_id', $goal->id)
+                        ->where('week', $previousActivity->week)
+                        ->where('day', $previousActivity->day)
+                        ->count();
+                    if (!$completed) {
+                        $result[] = [
+                            'date' => $previousDate,
+                            'activity_id' => $goal->id,
+                            'title' => $goal->title,
+                            'completed' => false,
+                            'type' => Activity::ACTIVITY_TYPE_GOAL,
+                            'frequency' => 'weekly',
+                            'week' => $previousActivity->week,
+                            'day' => $previousActivity->day,
+                            'treatment_plan_id' => $previousActivity->treatment_plan_id,
+                        ];
+                    }
                 }
             }
-
             $previousActivity = clone $activity;
         }
 
@@ -465,6 +491,25 @@ class TreatmentPlanController extends Controller
             'submitted_date' => now(),
         ]);
 
+        return ['success' => true];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function completeGoal(Request $request)
+    {
+        Activity::create([
+            'satisfaction' => $request->get('satisfaction'),
+            'week' => $request->get('week'),
+            'day' => $request->get('day'),
+            'type' => Activity::ACTIVITY_TYPE_GOAL,
+            'completed' => true,
+            'activity_id' => $request->get('goal_id'),
+            'treatment_plan_id' => $request->get('treatment_plan_id'),
+        ]);
         return ['success' => true];
     }
 }

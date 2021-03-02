@@ -30,6 +30,7 @@ class Activity extends Model
         'reps',
         'type',
         'submitted_date',
+        'satisfaction',
     ];
 
     /**
