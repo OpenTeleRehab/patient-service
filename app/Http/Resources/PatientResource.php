@@ -16,9 +16,17 @@ class PatientResource extends JsonResource
     public function toArray($request)
     {
         $upcomingTreatmentPlan = $this->treatmentPlans()
-            ->whereDate('end_date', '>=', Carbon::now())
+            ->whereDate('end_date', '>', Carbon::now())
             ->orderBy('start_date')
             ->first();
+
+        // Get last treatment if there is no upcoming
+        if (!$upcomingTreatmentPlan) {
+            $upcomingTreatmentPlan = $this->treatmentPlans()
+                ->orderBy('end_date', 'desc')
+                ->first();
+        }
+
         return [
             'id' => $this->id,
             'identity' => $this->identity,
