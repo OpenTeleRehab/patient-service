@@ -367,66 +367,39 @@ class TreatmentPlanController extends Controller
                 'answers' => QuestionnaireAnswerResource::collection($activity->answers),
                 'week' => $activity->week,
                 'day' => $activity->day,
-                'satisfaction' => $activity->satisfaction,
             ], $activityObj);
 
             // Add daily goals.
-            if (!empty($dailyGoals)
-                && ($previousActivity->day !== $activity->day || $previousActivity->week !== $activity->week || $key === array_key_last($activities->toArray()))
-            ) {
-                $previousActivity = $key === array_key_last($activities->toArray()) ? $activity : $previousActivity;
-                $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
-                    ->modify('+' . ($previousActivity->day - 1) . ' day')
-                    ->format(config('settings.defaultTimestampFormat'));
-                foreach ($dailyGoals as $goal) {
-                    $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
-                        ->where('activity_id', $goal->id)
-                        ->where('week', $previousActivity->week)
-                        ->where('day', $previousActivity->day)
-                        ->count();
-                    if (!$completed) {
-                        $result[] = [
-                            'date' => $previousDate,
-                            'activity_id' => $goal->id,
-                            'title' => $goal->title,
-                            'completed' => false,
-                            'type' => Activity::ACTIVITY_TYPE_GOAL,
-                            'frequency' => 'daily',
-                            'week' => $previousActivity->week,
-                            'day' => $previousActivity->day,
-                            'treatment_plan_id' => $previousActivity->treatment_plan_id,
-                        ];
-                    }
+            if (!empty($dailyGoals)) {
+                if ($previousActivity->day !== $activity->day || $previousActivity->week !== $activity->week) {
+                    $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
+                        ->modify('+' . ($previousActivity->day - 1) . ' day')
+                        ->format(config('settings.defaultTimestampFormat'));
+                    $this->addGoals($dailyGoals, $activities, $previousActivity, $previousDate, 'daily', $result);
+                }
+
+                if ($key === array_key_last($activities->toArray())) {
+                    $previousDate = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
+                        ->modify('+' . ($activity->day - 1) . ' day')
+                        ->format(config('settings.defaultTimestampFormat'));
+                    $this->addGoals($dailyGoals, $activities, $activity, $previousDate, 'daily', $result);
                 }
             }
 
             // Add weekly goals.
-            if (!empty($weeklyGoals)
-                && ($previousActivity->week !== $activity->week || $key === array_key_last($activities->toArray()))
-            ) {
-                $previousActivity = $key === array_key_last($activities->toArray()) ? $activity : $previousActivity;
-                $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
-                    ->modify('+' . ($previousActivity->day - 1) . ' day')
-                    ->format(config('settings.defaultTimestampFormat'));
-                foreach ($weeklyGoals as $goal) {
-                    $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
-                        ->where('activity_id', $goal->id)
-                        ->where('week', $previousActivity->week)
-                        ->where('day', $previousActivity->day)
-                        ->count();
-                    if (!$completed) {
-                        $result[] = [
-                            'date' => $previousDate,
-                            'activity_id' => $goal->id,
-                            'title' => $goal->title,
-                            'completed' => false,
-                            'type' => Activity::ACTIVITY_TYPE_GOAL,
-                            'frequency' => 'weekly',
-                            'week' => $previousActivity->week,
-                            'day' => $previousActivity->day,
-                            'treatment_plan_id' => $previousActivity->treatment_plan_id,
-                        ];
-                    }
+            if (!empty($weeklyGoals)) {
+                if ($previousActivity->week !== $activity->week) {
+                    $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
+                        ->modify('+' . ($previousActivity->day - 1) . ' day')
+                        ->format(config('settings.defaultTimestampFormat'));
+                    $this->addGoals($weeklyGoals, $activities, $previousActivity, $previousDate, 'weekly', $result);
+                }
+
+                if ($key === array_key_last($activities->toArray())) {
+                    $previousDate = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
+                        ->modify('+' . ($activity->day - 1) . ' day')
+                        ->format(config('settings.defaultTimestampFormat'));
+                    $this->addGoals($weeklyGoals, $activities, $activity, $previousDate, 'weekly', $result);
                 }
             }
             $previousActivity = clone $activity;
@@ -511,5 +484,39 @@ class TreatmentPlanController extends Controller
             'treatment_plan_id' => $request->get('treatment_plan_id'),
         ]);
         return ['success' => true];
+    }
+
+    /**
+     * @param array $goals
+     * @param array $activities
+     * @param array $previousActivity
+     * @param Date $previousDate
+     * @param string  $frequency
+     * @param array $result
+     *
+     * @return void
+     */
+    private function addGoals($goals, $activities, $previousActivity, $previousDate, $frequency, &$result)
+    {
+        foreach ($goals as $goal) {
+            $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
+                ->where('activity_id', $goal->id)
+                ->where('week', $previousActivity->week)
+                ->where('day', $previousActivity->day)
+                ->count();
+            if (!$completed) {
+                $result[] = [
+                    'date' => $previousDate,
+                    'activity_id' => $goal->id,
+                    'title' => $goal->title,
+                    'completed' => false,
+                    'type' => Activity::ACTIVITY_TYPE_GOAL,
+                    'frequency' => $frequency,
+                    'week' => $previousActivity->week,
+                    'day' => $previousActivity->day,
+                    'treatment_plan_id' => $previousActivity->treatment_plan_id,
+                ];
+            }
+        }
     }
 }
