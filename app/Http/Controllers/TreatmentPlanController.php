@@ -12,6 +12,7 @@ use App\Models\TreatmentPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Http;
 
 class TreatmentPlanController extends Controller
@@ -159,9 +160,11 @@ class TreatmentPlanController extends Controller
             'end_date' => $endDate,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
-
-        $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
-        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
+        
+        if ($startDate > date('Y-m-d')) {
+            $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
+            $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
+        }
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
     }
 
