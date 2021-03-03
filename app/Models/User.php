@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Helpers\RocketChatHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
@@ -33,6 +35,9 @@ class User extends Authenticatable
         'otp_code',
         'language_id',
         'term_and_condition_id',
+        'chat_user_id',
+        'chat_password',
+        'chat_rooms'
     ];
 
     /**
@@ -51,6 +56,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'chat_rooms' => 'array',
     ];
 
     /**
@@ -67,6 +73,25 @@ class User extends Authenticatable
             // Add treatment status order here.
             $builder->orderBy('last_name');
             $builder->orderBy('first_name');
+        });
+
+        self::updated(function ($user) {
+            try {
+                RocketChatHelper::updateUser($user->chat_user_id, [
+                    'active' => boolval($user->enabled),
+                    'name' => $user->last_name . ' ' . $user->first_name
+                ]);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
+
+        self::deleted(function ($user) {
+            try {
+                RocketChatHelper::updateUser($user->chat_user_id, ['active' => false]);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
         });
     }
 

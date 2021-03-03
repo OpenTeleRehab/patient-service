@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\RocketChatHelper;
+use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientResource;
-use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PatientController extends Controller
 {
-
     /**
      * @param \Illuminate\Http\Request $request
      *
@@ -72,44 +72,47 @@ class PatientController extends Controller
     public function store(Request  $request)
     {
         DB::beginTransaction();
-
-        $therapistId = $request->get('therapist_id');
-        $firstName = $request->get('first_name');
-        $lastName = $request->get('last_name');
-        $phone = $request->get('phone');
-        $country = $request->get('country_id');
-        $clinic = $request->get('clinic_id');
-        $gender = $request->get('gender');
-        $note = $request->get('note');
+        $data = $request->all();
         $dateOfBirth = null;
-        if ($request->get('date_of_birth')) {
-            $dateOfBirth = date_create_from_format('d/m/Y', $request->get('date_of_birth'));
+        if ($data['date_of_birth']) {
+            $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
             $dateOfBirth = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
         }
 
-        $clinicIdentity = $request->get('clinic_identity');
-        $availablePhone = User::where('phone', $phone)->count();
-        if ($availablePhone) {
+        $phoneExist = User::where('phone', $data['phone'])->first();
+        if ($phoneExist) {
             // Todo: message will be replaced.
             return abort(409, 'error_message.phone_exists');
         }
 
         $user = User::create([
-            'therapist_id' => $therapistId,
-            'phone' => $phone,
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'country_id' => $country,
-            'gender' => $gender,
-            'clinic_id' => $clinic,
+            'therapist_id' => $data['therapist_id'],
+            'phone' => $data['phone'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'country_id' => $data['country_id'],
+            'gender' => $data['gender'],
+            'clinic_id' => $data['clinic_id'],
             'date_of_birth' => $dateOfBirth,
-            'note' => $note
+            'note' => $data['note']
         ]);
 
-        // Todo create function in model to generate this identity.
+        // create unique identity
+        $clinicIdentity = $data['clinic_identity'];
         $identity = 'P' . $clinicIdentity .
             str_pad($user->id, 4, '0', STR_PAD_LEFT);
-        $user->fill(['identity' => $identity]);
+
+        // create chat user
+        $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
+
+        // create chat room
+        $therapistIdentity = $data['therapist_identity'];
+        $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
+        TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId);
+
+        $updateData['identity'] = $identity;
+        $updateData['chat_rooms'] = [$chatRoomId];
+        $user->fill($updateData);
         $user->save();
 
         if (!$user) {
@@ -163,5 +166,34 @@ class PatientController extends Controller
         }
 
         return ['success' => true, 'message' => 'success_message.user_update'];
+    }
+
+    /**
+     * @param string $username
+     * @param string $name
+     *
+     * @return array
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    private function createChatUser($username, $name)
+    {
+        $password = $username . 'PWD';
+        $chatUser = [
+            'name' => $name,
+            'email' => $username . '@hi.org',
+            'username' => $username,
+            'password' => $password,
+            'joinDefaultChannels' => false,
+            'verified' => true,
+            'active' => false
+        ];
+        $chatUserId = RocketChatHelper::createUser($chatUser);
+        if (is_null($chatUserId)) {
+            throw new \Exception('error_message.create_chat_user');
+        }
+        return [
+            'chat_user_id' => $chatUserId,
+            'chat_password' => hash('sha256', $password)
+        ];
     }
 }

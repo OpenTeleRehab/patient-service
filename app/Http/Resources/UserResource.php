@@ -29,6 +29,9 @@ class UserResource extends JsonResource
             'enabled' => $this->enabled,
             'language_id' => $this->language_id,
             'term_and_condition_id' => $this->term_and_condition_id,
+            'chat_user_id' => $this->chat_user_id,
+            'chat_password' => $this->chat_password,
+            'chat_rooms' => $this->chat_rooms
         ];
     }
 }
