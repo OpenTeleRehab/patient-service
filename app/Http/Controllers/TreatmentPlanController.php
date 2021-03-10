@@ -160,7 +160,7 @@ class TreatmentPlanController extends Controller
             'end_date' => $endDate,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
-        
+
         if ($startDate > date('Y-m-d')) {
             $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
             $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
@@ -310,9 +310,11 @@ class TreatmentPlanController extends Controller
             $dailyGoals = $treatmentPlan->goals->where('frequency', 'daily')->all();
             $weeklyGoals = $treatmentPlan->goals->where('frequency', 'weekly')->all();
         } else {
-            $treatmentPlan = TreatmentPlan::where('id',$request->get('id'))->firstOrFail();
+            $treatmentPlan = TreatmentPlan::where('id', $request->get('id'))->firstOrFail();
         }
-        $activities = $treatmentPlan->activities->sortBy('week')->sortBy('day');
+        $activities = $treatmentPlan->activities->sortBy(function ($activity) {
+            return [$activity->week, $activity->day];
+        });
 
         $previousActivity = $activities ? $activities->first() : null;
         foreach ($activities as $key => $activity) {
