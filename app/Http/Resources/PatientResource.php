@@ -41,6 +41,8 @@ class PatientResource extends JsonResource
             'therapist_id' => $this->therapist_id,
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
+            'chat_user_id' => $this->chat_user_id,
+            'chat_rooms' => $this->chat_rooms ?: [],
         ];
     }
 }
