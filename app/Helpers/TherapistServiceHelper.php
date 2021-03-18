@@ -15,7 +15,7 @@ class TherapistServiceHelper
         Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken
         ])->asJson()->put(
-            env('ADMIN_THERAPIST_URL') . '/api/user/add-new-chatroom',
+            env('THERAPIST_SERVICE_URL') . '/api/user/add-new-chatroom',
             ['chat_room_id' => $chatRoomId]
         );
     }
