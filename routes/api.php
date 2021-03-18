@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\TreatmentPlanController;
+use \App\Http\Controllers\AppointmentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,3 +38,4 @@ Route::group(['middleware' => 'auth:api'], function () {
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
+Route::apiResource('appointment', AppointmentController::class);
