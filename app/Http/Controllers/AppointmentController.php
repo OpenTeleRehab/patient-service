@@ -39,15 +39,17 @@ class AppointmentController extends Controller
 
         $requests = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('status', Appointment::STATUS_PENDING)
+            ->orderBy('created_at')
             ->get();
 
         $cancelRequests = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('status', Appointment::STATUS_REQUEST_CANCELLATION)
+            ->orderBy('start_date')
             ->get();
 
         $data = [
             'calendarData' => $calendarData,
-            'approves' => AppointmentResource::collection($appointments->get()),
+            'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
             'requests' => AppointmentResource::collection($requests),
             'cancelRequests' => AppointmentResource::collection($cancelRequests),
         ];
