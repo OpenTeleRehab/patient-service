@@ -9,6 +9,8 @@ class TherapistServiceHelper
     /**
      * @param string $accessToken
      * @param string $chatRoomId
+     *
+     * @return void
      */
     public static function AddNewChatRoom($accessToken, $chatRoomId)
     {

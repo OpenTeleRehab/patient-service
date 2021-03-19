@@ -15,6 +15,9 @@ class RocketChatHelper
 {
     /**
      * @see https://docs.rocket.chat/api/rest-api/methods/authentication/login
+     * @param string $username
+     * @param string $password
+     *
      * @return array
      * @throws \Illuminate\Http\Client\RequestException
      */
@@ -134,7 +137,7 @@ class RocketChatHelper
     /**
      * @see https://docs.rocket.chat/api/rest-api/methods/im/messages
      * @param string $therapist The therapist identity
-     * @param string $patient The patient identity
+     * @param string $patient   The patient identity
      *
      * @return mixed|null
      * @throws \Illuminate\Http\Client\RequestException
@@ -149,7 +152,7 @@ class RocketChatHelper
             'X-User-Id' => $userId,
         ])->asJson()->post(ROCKET_CHAT_CREATE_ROOM_URL, ['usernames' => $patient]);
 
-        // always logout to clear local login token on completion
+        // Always logout to clear local login token on completion.
         self::logout($userId, $authToken);
 
         if ($response->successful()) {

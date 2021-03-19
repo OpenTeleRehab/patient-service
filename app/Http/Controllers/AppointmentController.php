@@ -55,4 +55,44 @@ class AppointmentController extends Controller
         ];
         return ['success' => true, 'data' => $data];
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function store(Request $request)
+    {
+        $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
+        $fromDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+
+        Appointment::create([
+            'therapist_id' => $request->get('therapist_id'),
+            'patient_id' => $request->get('patient_id'),
+            'status' => Appointment::STATUS_APPROVED,
+            'start_date' => $startDate,
+            'end_date' => $fromDate,
+        ]);
+
+        return ['success' => true, 'message' => 'success_message.user_add'];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Appointment $appointment
+     *
+     * @return array
+     */
+    public function update(Request $request, Appointment $appointment)
+    {
+        $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
+        $fromDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+
+        $appointment->update([
+            'start_date' => $startDate,
+            'end_date' => $fromDate,
+        ]);
+
+        return ['success' => true, 'message' => 'success_message.appointment_update'];
+    }
 }
