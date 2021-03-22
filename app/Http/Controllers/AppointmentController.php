@@ -6,7 +6,6 @@ use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class AppointmentController extends Controller
 {
@@ -18,6 +17,7 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $date = date_create_from_format(config('settings.date_format'), $request->get('date'));
+        $now = $request->get('now');
 
         $calendarData = DB::table('appointments')
             ->select(DB::raw('ANY_VALUE(DATE(start_date)) AS date'), DB::raw('COUNT(*) AS total'))
@@ -28,13 +28,15 @@ class AppointmentController extends Controller
             ->get();
 
         $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('therapist_id', $request->get('therapist_id'))
-            ->whereYear('start_date', $date->format('Y'))
-            ->whereMonth('start_date', $date->format('m'));
+            ->where('therapist_id', $request->get('therapist_id'));
 
         if ($request->get('selected_date')) {
             $selectedDate = date_create_from_format(config('settings.date_format'), $request->get('selected_date'));
-            $appointments->whereDay('start_date', $selectedDate->format('d'));
+            $appointments->whereYear('start_date', $date->format('Y'))
+                ->whereMonth('start_date', $date->format('m'))
+                ->whereDay('start_date', $selectedDate->format('d'));
+        } else {
+            $appointments->where('end_date', '>', $now);
         }
 
         $requests = Appointment::where('therapist_id', $request->get('therapist_id'))
@@ -44,6 +46,7 @@ class AppointmentController extends Controller
 
         $cancelRequests = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('status', Appointment::STATUS_REQUEST_CANCELLATION)
+            ->where('end_date', '>', $now)
             ->orderBy('start_date')
             ->get();
 
