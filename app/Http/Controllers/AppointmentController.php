@@ -67,17 +67,23 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
-        $fromDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+        $endDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+
+        // Check if overlap with any appointment.
+        $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
+        if ($overlap) {
+            return ['success' => false, 'message' => 'error_message.appointment_overlap'];
+        }
 
         Appointment::create([
             'therapist_id' => $request->get('therapist_id'),
             'patient_id' => $request->get('patient_id'),
             'status' => Appointment::STATUS_APPROVED,
             'start_date' => $startDate,
-            'end_date' => $fromDate,
+            'end_date' => $endDate,
         ]);
 
-        return ['success' => true, 'message' => 'success_message.user_add'];
+        return ['success' => true, 'message' => 'success_message.appointment_add'];
     }
 
     /**
@@ -89,13 +95,56 @@ class AppointmentController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
-        $fromDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+        $endDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+
+        // Check if overlap with any appointment.
+        $overlap = $this->validateOverlap($startDate, $endDate, $appointment->therapist_id, $appointment->patient_id, $appointment->id);
+        if ($overlap) {
+            return ['success' => false, 'message' => 'error_message.appointment_overlap'];
+        }
 
         $appointment->update([
             'start_date' => $startDate,
-            'end_date' => $fromDate,
+            'end_date' => $endDate,
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_update'];
+    }
+
+    /**
+     * @param \Illuminate\Support\Facades\Date $startDate
+     * @param \Illuminate\Support\Facades\Date $endDate
+     * @param integer $therapistId
+     * @param integer $patientId
+     * @param integer|null $appointmentId
+     *
+     * @return boolean
+     */
+    private function validateOverlap($startDate, $endDate, $therapistId, $patientId, $appointmentId = null)
+    {
+        $overlap = Appointment::where(function ($query) use ($therapistId, $patientId) {
+            $query->where('therapist_id', $therapistId)
+                ->orWhere('patient_id', $patientId);
+        })->where(function ($query) use ($startDate, $endDate) {
+            $query->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<=', $startDate)
+                    ->where('end_date', '>', $startDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '>', $startDate)
+                    ->where('end_date', '<', $endDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '>=', $startDate)
+                    ->where('end_date', '<', $startDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<', $endDate)
+                    ->where('end_date', '>=', $endDate);
+            });
+        });
+
+        if ($appointmentId) {
+            $overlap->where('id', '!=', $appointmentId);
+        }
+
+        return $overlap->count();
     }
 }
