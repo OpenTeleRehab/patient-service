@@ -327,17 +327,20 @@ class TreatmentPlanController extends Controller
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
                     'exercise_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang')
+                    'lang' => $request->get('lang'),
+                    'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
                     'material_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang')
+                    'lang' => $request->get('lang'),
+                    'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
                 $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
                     'questionnaire_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang')
+                    'lang' => $request->get('lang'),
+                    'therapist_id' => $request->get('therapist_id')
                 ]);
             } else {
                 $goal = Goal::find($activity->activity_id);
