@@ -97,15 +97,15 @@ class PatientController extends Controller
             'note' => $data['note']
         ]);
 
-        // create unique identity
+        // Create unique identity.
         $clinicIdentity = $data['clinic_identity'];
         $identity = 'P' . $clinicIdentity .
             str_pad($user->id, 4, '0', STR_PAD_LEFT);
 
-        // create chat user
+        // Create chat user.
         $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
 
-        // create chat room
+        // Create chat room.
         $therapistIdentity = $data['therapist_identity'];
         $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
         TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId);
