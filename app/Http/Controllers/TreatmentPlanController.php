@@ -161,10 +161,8 @@ class TreatmentPlanController extends Controller
             'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
 
-        if ($startDate > date('Y-m-d')) {
-            $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
-            $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
-        }
+        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
+        $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
     }
 
@@ -270,6 +268,7 @@ class TreatmentPlanController extends Controller
 
         // Remove not selected activities.
         Activity::where('treatment_plan_id', $treatmentPlanId)
+            ->where('type', '<>', Activity::ACTIVITY_TYPE_GOAL)
             ->whereNotIn('id', $activityIds)
             ->delete();
     }
