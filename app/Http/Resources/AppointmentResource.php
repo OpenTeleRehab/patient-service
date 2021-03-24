@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 class AppointmentResource extends JsonResource
 {
@@ -20,7 +21,7 @@ class AppointmentResource extends JsonResource
             'patient_id' => $this->patient_id,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'created_at' => $this->created_at,
+            'created_at' => Carbon::parse($this->created_at)->toDateTimeString(),
             'patient' => $this->patient,
         ];
     }

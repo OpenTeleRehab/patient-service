@@ -27,17 +27,6 @@ class Appointment extends Model
     ];
 
     /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'created_at' => 'datetime',
-    ];
-
-    /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function patient()
