@@ -38,6 +38,7 @@
 
 	<rule ref="PSR2">
 		<exclude name="Squiz.Commenting.DocCommentAlignment.SpaceAfterStar"/>
+		<exclude name="Squiz.Commenting.InlineComment.DocBlock" />
 	</rule>
 
 	<!-- Don't hide tokenizer exceptions -->
