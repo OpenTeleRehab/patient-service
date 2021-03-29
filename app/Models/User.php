@@ -37,7 +37,8 @@ class User extends Authenticatable
         'term_and_condition_id',
         'chat_user_id',
         'chat_password',
-        'chat_rooms'
+        'chat_rooms',
+        'last_login',
     ];
 
     /**
