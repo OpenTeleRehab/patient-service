@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('register/send-code', [RegistrationController::class, 'sendCode']);
 Route::post('register/verify-code', [RegistrationController::class, 'verifyCode']);
 Route::apiResource('patient', PatientController::class);
+Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
 Route::get('treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities']);
