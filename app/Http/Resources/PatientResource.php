@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,23 +33,29 @@ class PatientResource extends JsonResource
                 ->first();
         }
 
-        return [
+        $responseData = [
             'id' => $this->id,
             'identity' => $this->identity,
-            'first_name' => $this->first_name,
-            'last_name' => $this->last_name,
-            'phone' => $this->phone,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
             'date_of_birth' => $this->date_of_birth,
-            'note' => $this->note,
-            'gender' => $this->gender,
-            'therapist_id' => $this->therapist_id,
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
-            'chat_user_id' => $this->chat_user_id,
-            'chat_rooms' => $this->chat_rooms ?: [],
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
         ];
+        if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
+            $responseData = array_merge($responseData, [
+                'first_name' => $this->first_name,
+                'last_name' => $this->last_name,
+                'phone' => $this->phone,
+                'gender' => $this->gender,
+                'chat_user_id' => $this->chat_user_id,
+                'chat_rooms' => $this->chat_rooms ?: [],
+                'therapist_id' => $this->therapist_id,
+                'note' => $this->note,
+            ]);
+        }
+
+        return $responseData;
     }
 }
