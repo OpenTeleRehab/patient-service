@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends Controller
@@ -109,6 +110,29 @@ class AppointmentController extends Controller
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_update'];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getPatientAppointments(Request $request)
+    {
+        $appointments = Appointment::where('status', '!=', Appointment::STATUS_PENDING)
+            ->where('patient_id', Auth::id())
+            ->where('end_date', '>=', $request->get('now'))
+            ->orderBy('start_date')
+            ->paginate($request->get('page_size'));
+
+        $info = [
+            'current_page' => $appointments->currentPage(),
+            'last_page' => $appointments->lastPage(),
+            'total_count' => $appointments->total(),
+        ];
+
+        $data = AppointmentResource::collection($appointments);
+        return ['success' => true, 'data' => $data, 'info' => $info];
     }
 
     /**
