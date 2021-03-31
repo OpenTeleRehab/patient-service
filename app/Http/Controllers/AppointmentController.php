@@ -6,7 +6,6 @@ use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends Controller
 {
@@ -20,22 +19,19 @@ class AppointmentController extends Controller
         $date = date_create_from_format(config('settings.date_format'), $request->get('date'));
         $now = $request->get('now');
 
-        $calendarData = DB::table('appointments')
-            ->select(DB::raw('ANY_VALUE(DATE(start_date)) AS date'), DB::raw('COUNT(*) AS total'))
-            ->where('therapist_id', $request->get('therapist_id'))
+        $calendarData = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->whereYear('start_date', $date->format('Y'))
             ->whereMonth('start_date', $date->format('m'))
-            ->groupBy(DB::raw('DATE(start_date)'))
             ->get();
 
         $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('therapist_id', $request->get('therapist_id'));
 
-        if ($request->get('selected_date')) {
-            $selectedDate = date_create_from_format(config('settings.date_format'), $request->get('selected_date'));
-            $appointments->whereYear('start_date', $date->format('Y'))
-                ->whereMonth('start_date', $date->format('m'))
-                ->whereDay('start_date', $selectedDate->format('d'));
+        if ($request->get('selected_from_date')) {
+            $selectedFromDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_from_date'));
+            $selectedToDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_to_date'));
+            $appointments->where('start_date', '>=', $selectedFromDate)
+                ->where('start_date', '<=', $selectedToDate);
         } else {
             $appointments->where('end_date', '>', $now);
         }
@@ -67,8 +63,8 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
-        $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
-        $endDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+        $startDate = date_create_from_format('Y-m-d H:i:s', $request->get('from'));
+        $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('to'));
 
         // Check if overlap with any appointment.
         $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
@@ -95,8 +91,8 @@ class AppointmentController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
-        $startDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('from'));
-        $endDate = date_create_from_format('d/m/Y g:i A', $request->get('date') . ' ' . $request->get('to'));
+        $startDate = date_create_from_format('Y-m-d H:i:s', $request->get('from'));
+        $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('to'));
 
         // Check if overlap with any appointment.
         $overlap = $this->validateOverlap($startDate, $endDate, $appointment->therapist_id, $appointment->patient_id, $appointment->id);
@@ -107,6 +103,7 @@ class AppointmentController extends Controller
         $appointment->update([
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'status' => Appointment::STATUS_APPROVED,
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_update'];
