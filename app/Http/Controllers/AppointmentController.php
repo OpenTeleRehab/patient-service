@@ -171,4 +171,34 @@ class AppointmentController extends Controller
 
         return $overlap->count();
     }
+
+    /**
+     * @param Request $request
+     * @param \App\Models\Appointment $appointment
+     * @return array
+     */
+    public function updateStatus(Request $request, Appointment $appointment)
+    {
+        $appointment->update([
+            'status' => $request->get('status')
+        ]);
+
+        return ['success' => true, 'message' => 'success_message.appointment_update'];
+    }
+
+    /**
+     * @param \App\Models\Appointment $appointment
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function destroy(Appointment $appointment)
+    {
+        if ($appointment->status === Appointment::STATUS_REQUEST_CANCELLATION) {
+            $appointment->delete();
+            return ['success' => true, 'message' => 'success_message.appointment_delete'];
+        }
+
+        return ['success' => false, 'message' => 'error_message.appointment_delete'];
+    }
 }

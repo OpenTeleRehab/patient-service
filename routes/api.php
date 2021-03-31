@@ -41,3 +41,4 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
 Route::apiResource('appointment', AppointmentController::class);
+Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);
