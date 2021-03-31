@@ -196,4 +196,16 @@ class PatientController extends Controller
             'chat_password' => hash('sha256', $password)
         ];
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function getByTherapistIds(Request $request)
+    {
+        $therapistIds = $request->get('therapist_ids', []);
+        $patients = User::whereIn('therapist_id', $therapistIds)->get();
+        return PatientResource::collection($patients);
+    }
 }

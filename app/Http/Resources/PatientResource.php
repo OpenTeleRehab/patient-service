@@ -20,6 +20,11 @@ class PatientResource extends JsonResource
             ->orderBy('start_date')
             ->first();
 
+        $ongoingTreatmentPlan = $this->treatmentPlans()
+            ->where('start_date', '<=', Carbon::now())
+            ->where('end_date', '>=', Carbon::now())
+            ->get();
+
         // Get last treatment if there is no upcoming
         if (!$upcomingTreatmentPlan) {
             $upcomingTreatmentPlan = $this->treatmentPlans()
@@ -43,6 +48,7 @@ class PatientResource extends JsonResource
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
             'chat_user_id' => $this->chat_user_id,
             'chat_rooms' => $this->chat_rooms ?: [],
+            'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
         ];
     }
 }
