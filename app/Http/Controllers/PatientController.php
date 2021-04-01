@@ -25,16 +25,23 @@ class PatientController extends Controller
             $users = User::where('id', $data['id'])->get();
         } else {
             $query = User::query();
+
             if (isset($data['therapist_id'])) {
                 $query = User::where('therapist_id', $data['therapist_id']);
             }
 
             if (isset($data['search_value'])) {
-                $query->where(function ($query) use ($data) {
-                    $query->where('identity', 'like', '%' . $data['search_value'] . '%')
-                        ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
-                        ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
-                });
+                if ($request->get('type') === User::ADMIN_GROUP_GLOBAL_ADMIN) {
+                    $query->where(function ($query) use ($data) {
+                        $query->where('identity', 'like', '%' . $data['search_value'] . '%');
+                    });
+                } else {
+                    $query->where(function ($query) use ($data) {
+                        $query->where('identity', 'like', '%' . $data['search_value'] . '%')
+                            ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
+                            ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
+                    });
+                }
             }
 
             if (isset($data['filters'])) {
@@ -48,11 +55,19 @@ class PatientController extends Controller
                             $endDate = date_create_from_format('d/m/Y', $dates[1]);
                             $query->where('date_of_birth', '>=', date_format($startDate, config('settings.defaultTimestampFormat')))
                                 ->where('date_of_birth', '<=', date_format($endDate, config('settings.defaultTimestampFormat')));
+                        } elseif (($filterObj->columnName === 'region' || $filterObj->columnName === 'clinic') && $filterObj->value !== '') {
+                            $query->where('clinic_id', $filterObj->value);
+                        } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
+                            $query->where('country_id', $filterObj->value);
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                         }
                     }
                 });
+            }
+
+            if (isset($data['order_by'])) {
+                $query->orderBy($data['order_by']);
             }
 
             $users = $query->paginate($data['page_size']);
