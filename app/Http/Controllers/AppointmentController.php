@@ -180,7 +180,14 @@ class AppointmentController extends Controller
             'status' => $request->get('status')
         ]);
 
-        return ['success' => true, 'message' => 'success_message.appointment_update'];
+        $message = 'success_message.appointment_update';
+
+        // Check if deleting a cancellation request.
+        if ($request->get('status') === Appointment::STATUS_APPROVED) {
+            $message = 'success_message.appointment_cancellation_request_delete';
+        }
+
+        return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
     }
 
     /**
