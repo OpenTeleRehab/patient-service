@@ -205,4 +205,21 @@ class AppointmentController extends Controller
 
         return ['success' => false, 'message' => 'error_message.appointment_delete'];
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function requestAppointment(Request $request)
+    {
+        Appointment::updateOrCreate(
+            [
+                'patient_id' => Auth::id(),
+                'therapist_id' => $request->get('therapist_id'),
+                'status' => Appointment::STATUS_PENDING,
+            ],
+        );
+        return ['success' => true];
+    }
 }
