@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\TreatmentPlanExport;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Http;
+use Mpdf\Mpdf;
 
 class TreatmentPlanController extends Controller
 {
@@ -525,5 +527,27 @@ class TreatmentPlanController extends Controller
                 ];
             }
         }
+    }
+
+    /**
+     * @param \App\Models\TreatmentPlan $treatmentPlan
+     *
+     * @return string
+     * @throws \Mpdf\MpdfException
+     */
+    public function export(TreatmentPlan $treatmentPlan)
+    {
+        $activities = $this->getActivities(new Request(['id' => $treatmentPlan->id]));
+        if (!$activities || !$activities['success']) {
+            return '';
+        }
+        $treatmentPlanActivities = $activities['data'];
+
+        $mpdf = new Mpdf(['orientation' => 'L']);
+        $mpdf->setHeader('{PAGENO}');
+        $mpdf->useSubstitutions = true;
+        $mpdf->use_kwt = true;
+        $mpdf->WriteHTML((new TreatmentPlanExport($treatmentPlanActivities))->view());
+        return $mpdf->Output();
     }
 }
