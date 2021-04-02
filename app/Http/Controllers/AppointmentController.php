@@ -198,12 +198,13 @@ class AppointmentController extends Controller
      */
     public function destroy(Appointment $appointment)
     {
-        if ($appointment->status === Appointment::STATUS_REQUEST_CANCELLATION) {
-            $appointment->delete();
+        $appointment->delete();
+
+        if ($appointment->status === Appointment::STATUS_PENDING) {
+            return ['success' => true, 'message' => 'success_message.appointment_request_delete'];
+        } else {
             return ['success' => true, 'message' => 'success_message.appointment_delete'];
         }
-
-        return ['success' => false, 'message' => 'error_message.appointment_delete'];
     }
 
     /**
