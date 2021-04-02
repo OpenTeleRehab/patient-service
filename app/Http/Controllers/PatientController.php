@@ -223,4 +223,16 @@ class PatientController extends Controller
         $patients = User::whereIn('therapist_id', $therapistIds)->get();
         return PatientResource::collection($patients);
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getByTherapistId(Request $request)
+    {
+        $therapistId = $request->get('therapist_id');
+        $patients = User::where('therapist_id', $therapistId)->get();
+        return ['success' => true, 'data' => PatientResource::collection($patients)];
+    }
 }
