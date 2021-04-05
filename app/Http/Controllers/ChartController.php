@@ -35,6 +35,17 @@ class ChartController extends Controller
             ->groupBy('country_id')
             ->get();
 
+
+        $treatmentsByGender = DB::table('treatment_plans')
+            ->select(DB::raw('
+                country_id,
+                SUM(CASE WHEN gender = "male" THEN 1 ELSE 0 END) AS male,
+                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female
+            '))
+            ->leftJoin('users', 'treatment_plans.patient_id', 'users.id')
+            ->groupBy('country_id')
+            ->get();
+
         $patientsByAgeGapGroupedByCountryColumns = '';
         $onGoingTreatmentsByAgeGapGroupedByCountryColumns = '';
 
@@ -42,24 +53,24 @@ class ChartController extends Controller
             if ($i === self::MIN_AGE) {
                 $patientsByAgeGapGroupedByCountryColumns .= '
                     SUM(CASE WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
-                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
+                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByCountryColumns .= '
                     SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
-                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
+                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
             } elseif ($i < self::MAX_AGE) {
                 $patientsByAgeGapGroupedByCountryColumns .= '
                     SUM(CASE WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
-                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
+                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByCountryColumns .= '
                     SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
-                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
+                    ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
             } else {
                 $patientsByAgeGapGroupedByCountryColumns .= '
@@ -86,11 +97,20 @@ class ChartController extends Controller
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->get();
 
+        $treatmentsByAgeGapGroupedByCountry = DB::table('treatment_plans')
+            ->select(DB::raw('
+                country_id, ' . $patientsByAgeGapGroupedByCountryColumns))
+            ->groupBy('country_id')
+            ->join('users', 'treatment_plans.patient_id', 'users.id')
+            ->get();
+
         return [
             'patientsByGenderGroupedByCountry' => $patientsByGenderGroupedByCountry,
             'onGoingTreatmentsByGenderGroupedByCountry' => $onGoingTreatmentsByGenderGroupedByCountry,
+            'treatmentsByGender' => $treatmentsByGender,
             'patientsByAgeGapGroupedByCountry' => $patientsByAgeGapGroupedByCountry,
             'onGoingTreatmentsByAgeGapGroupedByCountry' => $onGoingTreatmentsByAgeGapGroupedByCountry,
+            'treatmentsByAgeGapGroupedByCountry' => $treatmentsByAgeGapGroupedByCountry,
         ];
     }
 
@@ -139,7 +159,7 @@ class ChartController extends Controller
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
-            } else if ($i < self::MAX_AGE) {
+            } elseif ($i < self::MAX_AGE) {
                 $patientsByAgeGapGroupedByClinicColumns .= '
                     SUM(CASE WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
