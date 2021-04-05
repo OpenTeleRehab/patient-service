@@ -30,6 +30,7 @@ Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
 Route::get('treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities']);
 Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataForGlobalAdmin']);
 Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
+Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
 
 Route::group(['middleware' => 'auth:api'], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -180,6 +182,31 @@ class ChartController extends Controller
             'onGoingTreatmentsByGenderGroupedByClinic' => $onGoingTreatmentsByGenderGroupedByClinic,
             'patientsByAgeGapGroupedByClinic' => $patientsByAgeGapGroupedByClinic,
             'onGoingTreatmentsByAgeGapGroupedByClinic' => $onGoingTreatmentsByAgeGapGroupedByClinic
+        ];
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getDataForClinicAdmin(Request $request)
+    {
+        $clinicId = $request->get('clinic_id');
+        $patientTotal = User::where('clinic_id', $clinicId)->count();
+
+        $onGoingTreatmentsByClinic = DB::table('users')
+            ->select(DB::raw('
+                COUNT(*) AS total
+            '))
+            ->whereDate('start_date', '<=', Carbon::now())
+            ->whereDate('end_date', '>=', Carbon::now())
+            ->groupBy('clinic_id')
+            ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
+            ->where('clinic_id', $clinicId)
+            ->count();
+        return [
+          'patientTotal' => $patientTotal,
+          'onGoingTreatments' => $onGoingTreatmentsByClinic
         ];
     }
 }
