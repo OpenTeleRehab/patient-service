@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\TreatmentPlan;
+use App\Helpers\TranslationHelper;
 use Illuminate\Contracts\View\View;
 
 class TreatmentPlanExport
@@ -30,6 +30,7 @@ class TreatmentPlanExport
     {
         return view('exports.treatment_plan', [
             'treatmentPlan' => $this->treatmentPlan,
+            'translations' => TranslationHelper::getTranslations(),
         ]);
     }
 }

@@ -30,7 +30,7 @@
 @endphp
 
 @for($w = 0; $w < $treatmentPlan['total_of_weeks']; $w++)
-    <h3>Week {{ $w + 1 }} </h3>
+    <h3>{{ $translations['common.week'] ?? 'Week' }} {{ $w + 1 }} </h3>
     <table>
         <thead>
         <tr>
@@ -40,7 +40,7 @@
                     $date->modify('+' . ($w * 7  + $d) .'day');
                 @endphp
                 <th>
-                    Day {{ $d + 1 }}<small>({{ $date->format(config('settings.date_format')) }})</small>
+                    {{ $translations['common.day'] ?? 'Day' }} {{ $d + 1 }}<small>({{ $date->format(config('settings.date_format')) }})</small>
                 </th>
             @endfor
         </tr>
@@ -78,20 +78,20 @@
 
                             <h4>{{ $activity['title'] }}</h4>
                             @if($activity['sets'] > 0)
-                                <span>{{ $activity['sets'] }} sets - {{ $activity['reps'] }} reps</span>
+                                <span>{{ str_replace(['${sets}', '${reps}'], [$activity['sets'], $activity['reps']], $translations['activity.number_of_sets_and_reps'] ?? '') }}</span>
                             @endif
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                             <img width="190" src="http://localhost/images/material.png">
                             <h4>{{ $activity['title'] }}</h4>
-{{--                            <span>{{ $activity['file']['fileGroupType'] }}</span>--}}
+                            <span>{{ $translations[$activity['file']['fileGroupType']] ?? '' }}</span>
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
                             <img width="190" src="http://localhost/images/questionnaire.png">
                             <h4>{{ $activity['title'] }}</h4>
-                            <b>{{ count($activity['questions'])  }}</b> questions
+                            <b>{{ count($activity['questions'])  }}</b> {{ $translations['activity.questions'] ?? 'questions' }}
                         @endif
                     </td>
                 @endfor
