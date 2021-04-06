@@ -22,8 +22,8 @@ class PatientResource extends JsonResource
             ->first();
 
         $ongoingTreatmentPlan = $this->treatmentPlans()
-            ->where('start_date', '<=', Carbon::now())
-            ->where('end_date', '>=', Carbon::now())
+            ->whereDate('start_date', '<=', Carbon::now())
+            ->whereDate('end_date', '>=', Carbon::now())
             ->get();
 
         // Get last treatment if there is no upcoming
