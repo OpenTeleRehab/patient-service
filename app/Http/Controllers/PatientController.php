@@ -30,6 +30,10 @@ class PatientController extends Controller
                 $query = User::where('therapist_id', $data['therapist_id']);
             }
 
+            if (isset($data['enabled'])) {
+                $query = User::where('enabled', $data['enabled']);
+            }
+
             if (isset($data['search_value'])) {
                 if ($request->get('type') === User::ADMIN_GROUP_GLOBAL_ADMIN) {
                     $query->where(function ($query) use ($data) {
