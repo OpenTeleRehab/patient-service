@@ -546,7 +546,6 @@ class TreatmentPlanController extends Controller
         $mpdf = new Mpdf(['orientation' => 'L']);
         $mpdf->setHeader('{PAGENO}');
         $mpdf->useSubstitutions = true;
-        $mpdf->use_kwt = true;
         $mpdf->WriteHTML((new TreatmentPlanExport($treatmentPlanActivities))->view());
         return $mpdf->Output();
     }
