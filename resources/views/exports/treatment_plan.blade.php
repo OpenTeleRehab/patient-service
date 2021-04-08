@@ -104,6 +104,12 @@
                             <h4>{{ $activity['title'] }}</h4>
                             <b>{{ count($activity['questions'])  }}</b> {{ $translations['activity.questions'] ?? 'questions' }}
                         @endif
+
+                        @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_GOAL)
+                            <img width="190" src="http://localhost/images/satisfaction.png">
+                            <h4>{{ $activity['title'] }}</h4>
+                            <span>{{ $translations['activity.goal.' . $activity['frequency']] ?? '' }}</span>
+                        @endif
                     </td>
                 @endfor
             </tr>
@@ -192,6 +198,10 @@
                                     @endif
                                 </div>
                         @endforeach
+                    @endif
+
+                    @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_GOAL)
+                        <div>{{ $translations['activity.goal.' . $activity['frequency']] ?? '' }}</div>
                     @endif
                 </div>
             @endforeach

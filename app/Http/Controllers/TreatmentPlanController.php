@@ -302,16 +302,16 @@ class TreatmentPlanController extends Controller
     {
         $result = [];
         $treatmentPlan = null;
-        if ($request->has('today')) {
-            $date = date_create_from_format(config('settings.date_format'), $request->get('today'))->format(config('settings.defaultTimestampFormat'));
+        if ($request->has('id')) {
+            $treatmentPlan = TreatmentPlan::where('id', $request->get('id'))->firstOrFail();
+        } else {
+            // Get on-going treatment plan.
             $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
-                ->where('start_date', '<=', $date)
-                ->where('end_date', '>=', $date)
+                ->whereDate('start_date', '<=', Carbon::now())
+                ->whereDate('end_date', '>=', Carbon::now())
                 ->firstOrFail();
             $dailyGoals = $treatmentPlan->goals->where('frequency', 'daily')->all();
             $weeklyGoals = $treatmentPlan->goals->where('frequency', 'weekly')->all();
-        } else {
-            $treatmentPlan = TreatmentPlan::where('id', $request->get('id'))->firstOrFail();
         }
         $activities = $treatmentPlan->activities->sortBy(function ($activity) {
             return [$activity->week, $activity->day];
@@ -530,14 +530,12 @@ class TreatmentPlanController extends Controller
     }
 
     /**
-     * @param \App\Models\TreatmentPlan $treatmentPlan
-     *
      * @return string
      * @throws \Mpdf\MpdfException
      */
-    public function export(TreatmentPlan $treatmentPlan)
+    public function export()
     {
-        $activities = $this->getActivities(new Request(['id' => $treatmentPlan->id]));
+        $activities = $this->getActivities(new Request());
         if (!$activities || !$activities['success']) {
             return '';
         }
