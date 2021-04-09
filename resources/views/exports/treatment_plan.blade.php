@@ -167,8 +167,8 @@
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                         @if($activity['file'] && $activity['file']['fileGroupType'] == 'common.type.image')
                             <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $activity['file']['id'] }}">
-                        @else
-                            <span>{{ $translations[$activity['file']['fileGroupType']] ?? '' }}</span>
+                        @elseif($activity['file'])
+                            <span>{{ $translations['activity.file_attachment'] ?? 'File attachment' }}: <i>{{ $activity['title'] }}_{{ $activity['file']['fileName'] }}</i></span>
                         @endif
                     @endif
 
