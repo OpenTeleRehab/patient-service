@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Mpdf\Mpdf;
 
@@ -96,6 +97,7 @@ class TreatmentPlanController extends Controller
         $name = $request->get('name');
         $description = $request->get('description');
         $patientId = $request->get('patient_id');
+        $therapistId = $request->get('therapist_id');
 
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
@@ -109,6 +111,12 @@ class TreatmentPlanController extends Controller
 
         if (count($overlapRecords)) {
             return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient_overlap_schedule'];
+        }
+
+        // Check if ongoing treatment over the limit.
+        $overLimit = $this->validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId);
+        if (!empty($overLimit)) {
+            return $overLimit;
         }
 
         $treatmentPlan = TreatmentPlan::create([
@@ -140,6 +148,7 @@ class TreatmentPlanController extends Controller
     {
         $patientId = $request->get('patient_id');
         $description = $request->get('description');
+        $therapistId = $request->get('therapist_id');
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
 
@@ -153,6 +162,12 @@ class TreatmentPlanController extends Controller
 
         if (count($overlapRecords)) {
             return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient_overlap_schedule'];
+        }
+
+        // Check if ongoing treatment over the limit.
+        $overLimit = $this->validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentPlan->id);
+        if (!empty($overLimit)) {
+            return $overLimit;
         }
 
         $treatmentPlan->update([
@@ -546,5 +561,46 @@ class TreatmentPlanController extends Controller
         $mpdf->useSubstitutions = true;
         $mpdf->WriteHTML((new TreatmentPlanExport($treatmentPlanActivities))->view());
         return $mpdf->Output();
+    }
+
+    /**
+     * @param string $startDate
+     * @param string $endDate
+     * @param integer $therapistId
+     * @param integer|null $treatmentId
+     *
+     * @return array
+     */
+    private function validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentId = null)
+    {
+        $ongoingTreatmentLimit = Http::get(env('ADMIN_SERVICE_URL') . '/api/setting/library-limit', [
+            'type' => TreatmentPlan::NUMBER_OF_ONGOING_TREATMENT_LIMIT,
+        ]);
+        $therapistOngoingTreatment = DB::table('treatment_plans')
+            ->join('users', 'treatment_plans.patient_id', 'users.id')
+            ->where('therapist_id', $therapistId)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereDate('start_date', '<=', $startDate)
+                        ->whereDate('end_date', '>=', $startDate);
+                })->orWhere(function ($query) use ($startDate, $endDate) {
+                    $query->whereDate('start_date', '>=', $startDate)
+                        ->whereDate('end_date', '<=', $endDate);
+                })->orWhere(function ($query) use ($startDate, $endDate) {
+                    $query->whereDate('start_date', '<=', $endDate)
+                        ->whereDate('end_date', '>=', $endDate);
+                });
+            });
+
+        if ($treatmentId) {
+            $therapistOngoingTreatment->where('treatment_plans.id', '!=', $treatmentId);
+        }
+
+        if ($therapistOngoingTreatment->count() >= (int)$ongoingTreatmentLimit->body()) {
+            return ['success' => false, 'message' => 'error_message.ongoing_treatment_create.full_limit', 'limit' => (int)$ongoingTreatmentLimit->body()];
+        } else {
+            return [];
+        }
+
     }
 }
