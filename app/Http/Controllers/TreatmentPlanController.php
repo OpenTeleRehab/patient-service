@@ -580,16 +580,8 @@ class TreatmentPlanController extends Controller
             ->join('users', 'treatment_plans.patient_id', 'users.id')
             ->where('therapist_id', $therapistId)
             ->where(function ($query) use ($startDate, $endDate) {
-                $query->where(function ($query) use ($startDate, $endDate) {
-                    $query->whereDate('start_date', '<=', $startDate)
-                        ->whereDate('end_date', '>=', $startDate);
-                })->orWhere(function ($query) use ($startDate, $endDate) {
-                    $query->whereDate('start_date', '>=', $startDate)
-                        ->whereDate('end_date', '<=', $endDate);
-                })->orWhere(function ($query) use ($startDate, $endDate) {
-                    $query->whereDate('start_date', '<=', $endDate)
-                        ->whereDate('end_date', '>=', $endDate);
-                });
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate]);
             });
 
         if ($treatmentId) {
