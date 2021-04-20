@@ -24,6 +24,7 @@ Route::post('register/verify-code', [RegistrationController::class, 'verifyCode'
 Route::apiResource('patient', PatientController::class);
 Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds']);
 Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId']);
+Route::post('patient/activateDeactivateAccount/{user}', [PatientController::class, 'activateDeactivateAccount']);
 Route::get('patient/list/by-clinic-id', [PatientController::class, 'getByClinicId']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
