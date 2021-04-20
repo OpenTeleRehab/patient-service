@@ -239,4 +239,16 @@ class PatientController extends Controller
         $patients = User::where('therapist_id', $therapistId)->get();
         return ['success' => true, 'data' => PatientResource::collection($patients)];
     }
+
+    /**
+     * @param Request $request
+     * @param \App\Models\User $user
+     * @return array
+     */
+    public function activateDeactivateAccount(Request $request, User $user)
+    {
+        $enabled = $request->boolean('enabled');
+        $user->update(['enabled' => $enabled]);
+        return ['success' => true, 'message' => 'success_message.activate_deactivate_account', 'enabled' => $enabled];
+    }
 }
