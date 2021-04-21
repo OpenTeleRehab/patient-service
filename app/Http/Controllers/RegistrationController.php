@@ -18,7 +18,14 @@ class RegistrationController extends Controller
     {
         $to = $request->get('to');
         $hash = $request->get('hash');
-        $patientCount = User::where('phone', $to)->count();
+        $patientCount = User::where('phone', $to)
+            // Only first time inactive and active can do register.
+            ->where(function ($query) {
+                $query->where(function ($query) {
+                    $query->where('enabled', false)
+                        ->where('password', null);
+                })->orWhere('enabled', true);
+            })->count();
 
         if ($patientCount === 0) {
             return ['success' => false, 'message' => 'error.no_patient_found'];
