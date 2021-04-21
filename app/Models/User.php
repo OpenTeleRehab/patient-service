@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Helpers\RocketChatHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,8 @@ class User extends Authenticatable
     const ADMIN_GROUP_GLOBAL_ADMIN = 'global_admin';
     const ADMIN_GROUP_COUNTRY_ADMIN = 'country_admin';
     const ADMIN_GROUP_CLINIC_ADMIN = 'clinic_admin';
+
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -86,14 +89,11 @@ class User extends Authenticatable
                     'active' => boolval($user->enabled),
                     'name' => $user->last_name . ' ' . $user->first_name
                 ]);
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-        });
 
-        self::deleted(function ($user) {
-            try {
-                RocketChatHelper::updateUser($user->chat_user_id, ['active' => false]);
+                if ($user->deleted) {
+                    // Remove rocket chat user.
+                    RocketChatHelper::deleteUser($user->chat_user_id);
+                }
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }

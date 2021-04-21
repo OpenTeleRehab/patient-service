@@ -70,8 +70,9 @@ class PatientController extends Controller
                 });
             }
 
+            // For global admin.
             if (isset($data['order_by'])) {
-                $query->orderBy($data['order_by']);
+                $query->withTrashed()->orderBy($data['order_by']);
             }
 
             $users = $query->paginate($data['page_size']);
@@ -190,9 +191,8 @@ class PatientController extends Controller
     /**
      * @param string $username
      * @param string $name
-     *
      * @return array
-     * @throws \Illuminate\Http\Client\RequestException
+     * @throws \Exception
      */
     private function createChatUser($username, $name)
     {
@@ -250,5 +250,23 @@ class PatientController extends Controller
         $enabled = $request->boolean('enabled');
         $user->update(['enabled' => $enabled]);
         return ['success' => true, 'message' => 'success_message.activate_deactivate_account', 'enabled' => $enabled];
+    }
+
+    /**
+     * @param Request $request
+     * @param \App\Models\User $user
+     * @return array
+     */
+    public function deleteAccount(Request $request, User $user)
+    {
+        $user->update([
+            'first_name' => '',
+            'last_name' => '',
+            'phone' => '',
+        ]);
+
+        $user->delete();
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
 }
