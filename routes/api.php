@@ -47,6 +47,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('appointment/get-patient-appointments', [AppointmentController::class, 'getPatientAppointments']);
     Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment']);
     Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'export']);
+    Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
+    Route::get('patient/profile/export', [PatientController::class, 'export']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);

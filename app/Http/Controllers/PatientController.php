@@ -7,7 +7,9 @@ use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Mpdf\Mpdf;
 
 class PatientController extends Controller
 {
@@ -253,20 +255,57 @@ class PatientController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param \Illuminate\Http\Request $request
      * @param \App\Models\User $user
+     *
      * @return array
+     * @throws \Exception
      */
     public function deleteAccount(Request $request, User $user)
+    {
+        $this->obfuscatedUserData($user);
+        $user->delete();
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function delete()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $this->obfuscatedUserData($user);
+        $user->delete();
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
+     * @param \App\Models\User $user
+     *
+     * @return void
+     */
+    private function obfuscatedUserData(User $user)
     {
         $user->update([
             'first_name' => '',
             'last_name' => '',
             'phone' => '',
         ]);
+    }
 
-        $user->delete();
-
-        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    /**
+     * @return string
+     * @throws \Mpdf\MpdfException
+     */
+    public function export()
+    {
+        // TODO: Create a zipped file that contain all related patient's profile.
+        $mpdf = new Mpdf();
+        $mpdf->WriteHTML('Dummy user profile');
+        return $mpdf->Output();
     }
 }
