@@ -21,7 +21,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 country_id,
                 SUM(CASE WHEN gender = "male" THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female
+                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))->groupBy('country_id')
             ->get();
 
@@ -29,7 +30,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 country_id,
                 SUM(CASE WHEN gender = "male" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female
+                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS other
             '))
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->groupBy('country_id')
@@ -40,7 +42,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 country_id,
                 SUM(CASE WHEN gender = "male" THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female
+                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))
             ->leftJoin('users', 'treatment_plans.patient_id', 'users.id')
             ->groupBy('country_id')
@@ -127,7 +130,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 clinic_id,
                 SUM(CASE WHEN gender = "male" THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female
+                SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))
             ->where('country_id', $country_id)
             ->groupBy('clinic_id')
@@ -137,7 +141,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 clinic_id,
                 SUM(CASE WHEN gender = "male" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female
+                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS other
             '))
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->where('country_id', $country_id)
