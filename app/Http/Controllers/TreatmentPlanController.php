@@ -593,6 +593,5 @@ class TreatmentPlanController extends Controller
         } else {
             return [];
         }
-
     }
 }
