@@ -34,7 +34,7 @@ Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataF
 Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
 Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
 
-Route::group(['middleware' => 'auth:api'], function () {
+Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);
     Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
