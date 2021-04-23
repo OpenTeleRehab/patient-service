@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PatientProfileExport;
+use App\Exports\TreatmentPlanExport;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
+use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\PatientResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 
 class PatientController extends Controller
 {
@@ -298,14 +302,35 @@ class PatientController extends Controller
     }
 
     /**
-     * @return string
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      * @throws \Mpdf\MpdfException
      */
-    public function export()
+    public function export(Request $request)
     {
-        // TODO: Create a zipped file that contain all related patient's profile.
-        $mpdf = new Mpdf();
-        $mpdf->WriteHTML('Dummy user profile');
-        return $mpdf->Output();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $zip = new \ZipArchive();
+        $fileName = storage_path('app/' . $user->id . '_patient_data.zip');
+
+        if ($zip->open($fileName, \ZipArchive::CREATE) === TRUE) {
+            $patientProfileExport = new PatientProfileExport($user);
+            $zip->addFromString('profile.pdf', $patientProfileExport->Output('profile.pdf', Destination::STRING_RETURN));
+
+            foreach ($user->treatmentPlans()->get() as $treatmentPlan) {
+                $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
+                $zip->addFromString(
+                    $treatmentPlan->name . '.pdf',
+                    $treatmentPlanExport->Output('profile.pdf', Destination::STRING_RETURN)
+                );
+            }
+
+            $zip->close();
+        }
+
+        // TODO: export patient chat/video call history include all attachments.
+        return response()->download($fileName, $user->last_name . $user->first_name . '.zip')->deleteFileAfterSend();
     }
 }

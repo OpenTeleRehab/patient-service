@@ -3,24 +3,34 @@
 namespace App\Exports;
 
 use App\Helpers\TranslationHelper;
+use App\Helpers\TreatmentActivityHelper;
+use App\Models\TreatmentPlan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
+use Mpdf\Mpdf;
 
 class TreatmentPlanExport
 {
     /**
-     * @var array
+     * @var \App\Models\TreatmentPlan
      */
     private $treatmentPlan;
 
     /**
+     * @var \Illuminate\Http\Request
+     */
+    private $request;
+
+    /**
      * TreatmentPlanExport constructor.
      *
-     * @param array $treatmentPlan
-     *
+     * @param \App\Models\TreatmentPlan $treatmentPlan
+     * @param \Illuminate\Http\Request $request
      */
-    public function __construct($treatmentPlan)
+    public function __construct(TreatmentPlan $treatmentPlan, Request $request)
     {
         $this->treatmentPlan = $treatmentPlan;
+        $this->request = $request;
     }
 
     /**
@@ -30,7 +40,24 @@ class TreatmentPlanExport
     {
         return view('exports.treatment_plan', [
             'treatmentPlan' => $this->treatmentPlan,
+            'activities' => TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true),
             'translations' => TranslationHelper::getTranslations(),
         ]);
+    }
+
+    /**
+     * @param string $name
+     * @param string $dest
+     *
+     * @return string
+     * @throws \Mpdf\MpdfException
+     */
+    public function outPut($name = '', $dest = '')
+    {
+        $mpdf = new Mpdf(['orientation' => 'L']);
+        $mpdf->setHeader('{PAGENO}');
+        $mpdf->useSubstitutions = true;
+        $mpdf->WriteHTML($this->view());
+        return $mpdf->Output($name, $dest);
     }
 }

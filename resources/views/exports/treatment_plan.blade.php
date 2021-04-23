@@ -29,14 +29,14 @@
 
 <img width="190" src="http://localhost/images/logo-horizontal.svg">
 
-<h1>{{ $treatmentPlan['name'] }}</h1>
-<pre>{!! $treatmentPlan['description'] !!}</pre>
+<h1>{{ $treatmentPlan->name }}</h1>
+<pre>{!! $treatmentPlan->description !!}</pre>
 
 @php
-    $startDate = date_create_from_format('d/m/Y', $treatmentPlan['start_date']);
+    $startDate = $treatmentPlan->start_date;
 @endphp
 
-@for($w = 0; $w < $treatmentPlan['total_of_weeks']; $w++)
+@for($w = 0; $w < $treatmentPlan->total_of_weeks; $w++)
     {{--  Add new page for each week --}}
     @if($w > 0)
         <pagebreak>
@@ -61,7 +61,7 @@
         @php
             $dayActivities = [];
             for ($d = 0; $d < 7; $d++) {
-                $dayActivities[$d] = array_values(array_filter($treatmentPlan['activities'], function ($a) use ($w, $d) {
+                $dayActivities[$d] = array_values(array_filter($activities, function ($a) use ($w, $d) {
                     return $a['week'] === $w + 1 && $a['day'] === $d + 1;
                 }));
             }
@@ -119,7 +119,7 @@
 @endfor
 
 
-@for($w = 0; $w < $treatmentPlan['total_of_weeks']; $w++)
+@for($w = 0; $w < $treatmentPlan->total_of_weeks; $w++)
     {{--  Add new page for each week --}}
     <pagebreak>
     <h3>{{ $translations['common.week'] ?? 'Week' }} {{ $w + 1 }} </h3>
@@ -129,7 +129,7 @@
             $date = clone $startDate;
             $date->modify('+' . ($w * 7  + $d) .'day');
 
-            $dayActivities = array_filter($treatmentPlan['activities'], function ($a) use ($w, $d) {
+            $dayActivities = array_filter($activities, function ($a) use ($w, $d) {
                 return $a['week'] === $w + 1 && $a['day'] === $d + 1;
             });
         @endphp
