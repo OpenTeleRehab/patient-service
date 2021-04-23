@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\TreatmentPlanExport;
+use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
@@ -315,123 +316,21 @@ class TreatmentPlanController extends Controller
      */
     public function getActivities(Request $request)
     {
-        $result = [];
-        $treatmentPlan = null;
         if ($request->has('id')) {
+            $includedGoals = false;
             $treatmentPlan = TreatmentPlan::where('id', $request->get('id'))->firstOrFail();
         } else {
+            $includedGoals = true;
             // Get on-going treatment plan.
             $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
                 ->whereDate('start_date', '<=', Carbon::now())
                 ->whereDate('end_date', '>=', Carbon::now())
                 ->firstOrFail();
-            $dailyGoals = $treatmentPlan->goals->where('frequency', 'daily')->all();
-            $weeklyGoals = $treatmentPlan->goals->where('frequency', 'weekly')->all();
-        }
-        $activities = $treatmentPlan->activities->sortBy(function ($activity) {
-            return [$activity->week, $activity->day];
-        });
-
-        $previousActivity = $activities ? $activities->first() : null;
-        foreach ($activities as $key => $activity) {
-            $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
-                ->modify('+' . ($activity->day - 1) . ' day')
-                ->format(config('settings.defaultTimestampFormat'));
-            $activityObj = [];
-            $response = null;
-
-            if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
-                    'exercise_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
-            } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
-                    'material_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
-            } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
-                    'questionnaire_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
-            } else {
-                $goal = Goal::find($activity->activity_id);
-                if ($goal) {
-                    $activityObj = [
-                        'id' => $activity->id,
-                        'title' => $goal->title,
-                        'frequency' => $goal->frequency,
-                    ];
-                }
-            }
-
-            if (!empty($response) && $response->successful()) {
-                if ($response->json()['data']) {
-                    $activityObj = $response->json()['data'][0];
-                    $activityObj['id'] = $activity->id;
-                } else {
-                    continue;
-                }
-            }
-
-            $result[] = array_merge([
-                'date' => $date,
-                'activity_id' => $activity->activity_id,
-                'completed' => $activity->completed,
-                'pain_level' => $activity->pain_level,
-                'completed_sets' => $activity->sets,
-                'completed_reps' => $activity->reps,
-                'satisfaction' => $activity->satisfaction,
-                'type' => $activity->type,
-                'submitted_date' => $activity->submitted_date,
-                'answers' => QuestionnaireAnswerResource::collection($activity->answers),
-                'week' => $activity->week,
-                'day' => $activity->day,
-            ], $activityObj);
-
-            // Add daily goals.
-            if (!empty($dailyGoals)) {
-                if ($previousActivity->day !== $activity->day || $previousActivity->week !== $activity->week) {
-                    $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
-                        ->modify('+' . ($previousActivity->day - 1) . ' day')
-                        ->format(config('settings.defaultTimestampFormat'));
-                    $this->addGoals($dailyGoals, $activities, $previousActivity, $previousDate, 'daily', $result);
-                }
-
-                if ($key === array_key_last($activities->toArray())) {
-                    $previousDate = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
-                        ->modify('+' . ($activity->day - 1) . ' day')
-                        ->format(config('settings.defaultTimestampFormat'));
-                    $this->addGoals($dailyGoals, $activities, $activity, $previousDate, 'daily', $result);
-                }
-            }
-
-            // Add weekly goals.
-            if (!empty($weeklyGoals)) {
-                if ($previousActivity->week !== $activity->week) {
-                    $previousDate = $treatmentPlan->start_date->modify('+' . ($previousActivity->week - 1) . ' week')
-                        ->modify('+' . ($previousActivity->day - 1) . ' day')
-                        ->format(config('settings.defaultTimestampFormat'));
-                    $this->addGoals($weeklyGoals, $activities, $previousActivity, $previousDate, 'weekly', $result);
-                }
-
-                if ($key === array_key_last($activities->toArray())) {
-                    $previousDate = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
-                        ->modify('+' . ($activity->day - 1) . ' day')
-                        ->format(config('settings.defaultTimestampFormat'));
-                    $this->addGoals($weeklyGoals, $activities, $activity, $previousDate, 'weekly', $result);
-                }
-            }
-            $previousActivity = clone $activity;
         }
 
         $data = array_merge($treatmentPlan->toArray(), [
             'goals' => GoalResource::collection($treatmentPlan->goals),
-            'activities' => $result
+            'activities' => TreatmentActivityHelper::getActivities($treatmentPlan, $request, $includedGoals),
         ]);
 
         return ['success' => true, 'data' => $data];
@@ -511,56 +410,20 @@ class TreatmentPlanController extends Controller
     }
 
     /**
-     * @param array $goals
-     * @param array $activities
-     * @param array $previousActivity
-     * @param Date $previousDate
-     * @param string  $frequency
-     * @param array $result
+     * @param \Illuminate\Http\Request $request
      *
-     * @return void
-     */
-    private function addGoals($goals, $activities, $previousActivity, $previousDate, $frequency, &$result)
-    {
-        foreach ($goals as $goal) {
-            $completed = $activities->where('type', Activity::ACTIVITY_TYPE_GOAL)
-                ->where('activity_id', $goal->id)
-                ->where('week', $previousActivity->week)
-                ->where('day', $previousActivity->day)
-                ->count();
-            if (!$completed) {
-                $result[] = [
-                    'date' => $previousDate,
-                    'activity_id' => $goal->id,
-                    'title' => $goal->title,
-                    'completed' => false,
-                    'type' => Activity::ACTIVITY_TYPE_GOAL,
-                    'frequency' => $frequency,
-                    'week' => $previousActivity->week,
-                    'day' => $previousActivity->day,
-                    'treatment_plan_id' => $previousActivity->treatment_plan_id,
-                ];
-            }
-        }
-    }
-
-    /**
      * @return string
      * @throws \Mpdf\MpdfException
      */
-    public function export()
+    public function exportOnGoing(Request $request)
     {
-        $activities = $this->getActivities(new Request());
-        if (!$activities || !$activities['success']) {
-            return '';
-        }
-        $treatmentPlanActivities = $activities['data'];
+        $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
+            ->whereDate('start_date', '<=', Carbon::now())
+            ->whereDate('end_date', '>=', Carbon::now())
+            ->firstOrFail();
 
-        $mpdf = new Mpdf(['orientation' => 'L']);
-        $mpdf->setHeader('{PAGENO}');
-        $mpdf->useSubstitutions = true;
-        $mpdf->WriteHTML((new TreatmentPlanExport($treatmentPlanActivities))->view());
-        return $mpdf->Output();
+        $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
+        return $treatmentPlanExport->outPut();
     }
 
     /**

@@ -46,7 +46,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal']);
     Route::get('appointment/get-patient-appointments', [AppointmentController::class, 'getPatientAppointments']);
     Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment']);
-    Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'export']);
+    Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'exportOnGoing']);
     Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
 });
