@@ -337,6 +337,8 @@ class TreatmentPlanController extends Controller
     }
 
     /**
+     * @deprecated It is wrong with goal activity count, use getActivities() instead of, then count in FE
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
