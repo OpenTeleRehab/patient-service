@@ -46,6 +46,7 @@ class User extends Authenticatable
         'chat_password',
         'chat_rooms',
         'last_login',
+        'secondary_therapists',
     ];
 
     /**
@@ -65,6 +66,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'chat_rooms' => 'array',
+        'secondary_therapists' => 'array',
     ];
 
     /**

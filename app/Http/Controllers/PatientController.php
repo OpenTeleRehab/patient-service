@@ -33,6 +33,7 @@ class PatientController extends Controller
 
             if (isset($data['therapist_id'])) {
                 $query = User::where('therapist_id', $data['therapist_id']);
+                $query = $query->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
             }
 
             if (isset($data['enabled'])) {
@@ -119,7 +120,8 @@ class PatientController extends Controller
             'gender' => $data['gender'],
             'clinic_id' => $data['clinic_id'],
             'date_of_birth' => $dateOfBirth,
-            'note' => $data['note']
+            'note' => $data['note'],
+            'secondary_therapists' => isset($data['secondary_therapists']) ? $data['secondary_therapists'] : []
         ]);
 
         // Create unique identity.
@@ -183,6 +185,10 @@ class PatientController extends Controller
 
             if (isset($data['language_id'])) {
                 $dataUpdate['language_id'] = $data['language_id'];
+            }
+
+            if (isset($data['secondary_therapists'])) {
+                $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
             }
 
             $user->update($dataUpdate);
