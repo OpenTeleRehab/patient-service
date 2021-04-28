@@ -89,11 +89,14 @@ class User extends Authenticatable
                     'active' => boolval($user->enabled),
                     'name' => $user->last_name . ' ' . $user->first_name
                 ]);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
 
-                if ($user->deleted) {
-                    // Remove rocket chat user.
-                    RocketChatHelper::deleteUser($user->chat_user_id);
-                }
+        self::deleting(function ($user) {
+            try {
+                RocketChatHelper::deleteUser($user->chat_user_id);
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
