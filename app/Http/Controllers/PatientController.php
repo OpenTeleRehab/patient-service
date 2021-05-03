@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ChatExport;
 use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
-use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\PatientResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
 class PatientController extends Controller
@@ -325,6 +324,21 @@ class PatientController extends Controller
                     $treatmentPlan->name . '.pdf',
                     $treatmentPlanExport->Output('profile.pdf', Destination::STRING_RETURN)
                 );
+            }
+
+            foreach ($user->chat_rooms as $room_id) {
+                $messages = RocketChatHelper::getMessages($user, $room_id);
+
+                foreach ($messages as $message) {
+                    if (isset($message['file'])) {
+                        $download_file = file_get_contents(env('ROCKET_CHAT_URL') . '/file-upload/' . $message['file']['_id'] . '/' . $message['file']['_id'] . '?rc_uid=' . env('ROCKET_CHAT_ADMIN_USER_ID') . '&rc_token=' . env('ROCKET_CHAT_ADMIN_AUTH_TOKEN'));
+                        $zip->addFromString($message['file']['name'], $download_file);
+                    }
+                }
+
+                $chatExport = new ChatExport($messages);
+                $file = 'chat-' . $room_id . '.pdf';
+                $zip->addFromString($file, $chatExport->Output($file, Destination::STRING_RETURN));
             }
 
             $zip->close();

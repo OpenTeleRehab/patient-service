@@ -10,6 +10,7 @@ define('ROCKET_CHAT_CREATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.cr
 define('ROCKET_CHAT_UPDATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.update');
 define('ROCKET_CHAT_DELETE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.delete');
 define('ROCKET_CHAT_CREATE_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.create');
+define('ROCKET_CHAT_MESSAGES_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.messages');
 
 class RocketChatHelper
 {
@@ -158,6 +159,35 @@ class RocketChatHelper
         if ($response->successful()) {
             $result = $response->json();
             return $result['success'] ? $result['room']['rid'] : null;
+        }
+
+        $response->throw();
+    }
+
+    /**
+     * @param \App\Models\User $user
+     * @param string $chat_room
+     *
+     * @return mixed
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function getMessages($user, $chat_room)
+    {
+        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $authToken = $userAuth['authToken'];
+        $userId = $userAuth['userId'];
+
+        $response = Http::withHeaders([
+            'X-Auth-Token' => $authToken,
+            'X-User-Id' => $userId
+        ])->asJson()->get(ROCKET_CHAT_MESSAGES_URL, ['roomId' => $chat_room]);
+
+        // Always logout to clear local login token on completion.
+        self::logout($userId, $authToken);
+
+        if ($response->successful()) {
+            $result = $response->json();
+            return $result['messages'];
         }
 
         $response->throw();
