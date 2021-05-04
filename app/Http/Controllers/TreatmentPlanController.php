@@ -128,6 +128,7 @@ class TreatmentPlanController extends Controller
             'end_date' => $endDate,
             'status' => TreatmentPlan::STATUS_PLANNED,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
+            'created_by' => $therapistId
         ]);
 
         if (!$treatmentPlan) {
