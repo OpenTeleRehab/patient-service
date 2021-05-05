@@ -37,16 +37,16 @@
     <tbody>
         @foreach ($messages as $message)
             <tr>
-                <th align="left">{{ $message['u']['name'] }}</th>
+                <th align="left">{{ strpos($message['u']['username'], 'P') !== false ? $patient['name'] : $therapist['name'] }}</th>
                 <td align="left">
                     @switch($message)
-                        @case($message['msg'] === \App\Models\Message::JITSI_CALL_ENDED)
-                            {{ $translations['video_call_ended'] ?? 'Video Call Ended' }}
+                        @case($message['msg'] === \App\Models\Message::JITSI_CALL_AUDIO_ENDED || $message['msg'] === \App\Models\Message::JITSI_CALL_VIDEO_ENDED)
+                            {{ $translations[$message['msg']] ?? $message['msg'] }}
                             {{ \App\Models\Message::getCallDuration($message['ts'], $message['editedAt']) }}
                             @break
 
-                        @case($message['msg'] === \App\Models\Message::JITSI_CALL_MISSED)
-                            {{ $translations['video_call_missed'] ?? 'Missed Video Call' }}
+                        @case($message['msg'] === \App\Models\Message::JITSI_CALL_AUDIO_MISSED || $message['msg'] === \App\Models\Message::JITSI_CALL_VIDEO_MISSED)
+                            {{ $translations[$message['msg']] ?? $message['msg'] }}
                             @break
 
                         @case($message['msg'] === \App\Models\Message::JITSI_CALL_ACCEPTED)

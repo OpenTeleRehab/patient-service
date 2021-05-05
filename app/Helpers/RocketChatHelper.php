@@ -10,7 +10,9 @@ define('ROCKET_CHAT_CREATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.cr
 define('ROCKET_CHAT_UPDATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.update');
 define('ROCKET_CHAT_DELETE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.delete');
 define('ROCKET_CHAT_CREATE_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.create');
-define('ROCKET_CHAT_MESSAGES_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.messages');
+define('ROCKET_CHAT_GET_MESSAGES_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.messages');
+define('ROCKET_CHAT_GET_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/rooms.info');
+define('ROCKET_CHAT_GET_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.info');
 
 class RocketChatHelper
 {
@@ -180,7 +182,7 @@ class RocketChatHelper
         $response = Http::withHeaders([
             'X-Auth-Token' => $authToken,
             'X-User-Id' => $userId
-        ])->asJson()->get(ROCKET_CHAT_MESSAGES_URL, ['roomId' => $chat_room]);
+        ])->asJson()->get(ROCKET_CHAT_GET_MESSAGES_URL, ['roomId' => $chat_room]);
 
         // Always logout to clear local login token on completion.
         self::logout($userId, $authToken);
@@ -188,6 +190,60 @@ class RocketChatHelper
         if ($response->successful()) {
             $result = $response->json();
             return $result['messages'];
+        }
+
+        $response->throw();
+    }
+
+    /**
+     * @param \App\Models\User $user
+     * @param string $room_id
+     *
+     * @return mixed
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function getRoom($user, $room_id)
+    {
+        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $authToken = $userAuth['authToken'];
+        $userId = $userAuth['userId'];
+
+        $response = Http::withHeaders([
+            'X-Auth-Token' => $authToken,
+            'X-User-Id' => $userId,
+        ])->asJson()->get(ROCKET_CHAT_GET_ROOM_URL, ['roomId' => $room_id]);
+
+        // Always logout to clear local login token on completion.
+        self::logout($userId, $authToken);
+
+        if ($response->successful()) {
+            $usernames = $response->json()['room']['usernames'];
+
+            return [
+                'patient_username' => strpos($usernames[0], 'P') !== false ? $usernames[0] : $usernames[1],
+                'therapist_username' => strpos($usernames[0], 'T') !== false ? $usernames[0] : $usernames[1]
+            ];
+        }
+
+        $response->throw();
+    }
+
+    /**
+     * @param string $username
+     *
+     * @return mixed
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function getUser($username)
+    {
+        $response = Http::withHeaders([
+            'X-Auth-Token' => getenv('ROCKET_CHAT_ADMIN_AUTH_TOKEN'),
+            'X-User-Id' => getenv('ROCKET_CHAT_ADMIN_USER_ID'),
+        ])->asJson()->get(ROCKET_CHAT_GET_USER_URL, ['username' => $username]);
+
+        if ($response->successful()) {
+            $result = $response->json();
+            return $result['user'];
         }
 
         $response->throw();
