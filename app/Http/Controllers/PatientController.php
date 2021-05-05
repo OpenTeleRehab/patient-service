@@ -335,6 +335,9 @@ class PatientController extends Controller
 
             foreach ($user->chat_rooms as $room_id) {
                 $messages = RocketChatHelper::getMessages($user, $room_id);
+                $room_usernames = RocketChatHelper::getRoom($user, $room_id);
+                $patient = RocketChatHelper::getUser($room_usernames['patient_username']);
+                $therapist = RocketChatHelper::getUser($room_usernames['therapist_username']);
 
                 foreach ($messages as $message) {
                     if (isset($message['file'])) {
@@ -343,8 +346,8 @@ class PatientController extends Controller
                     }
                 }
 
-                $chatExport = new ChatExport($messages);
-                $file = 'chat-' . $room_id . '.pdf';
+                $chatExport = new ChatExport($messages, $patient, $therapist);
+                $file = 'chat-' . strtolower(str_replace(' ', '-', $therapist['name'])) . '.pdf';
                 $zip->addFromString($file, $chatExport->Output($file, Destination::STRING_RETURN));
             }
 

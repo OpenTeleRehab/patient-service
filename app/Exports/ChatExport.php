@@ -14,13 +14,28 @@ class ChatExport
     private $messages;
 
     /**
+     * @var array $patient
+     */
+    private $patient;
+
+    /**
+     * @var array $therapist
+     */
+    private $therapist;
+
+    /**
      * ProfileExport constructor.
      *
      * @param array $messages
+     * @param array $patient
+     * @param array $therapist
+     *
      */
-    public function __construct($messages)
+    public function __construct($messages, $patient, $therapist)
     {
         $this->messages = $messages;
+        $this->patient = $patient;
+        $this->therapist = $therapist;
     }
 
     /**
@@ -30,6 +45,8 @@ class ChatExport
     {
         return view('exports.chat', [
             'messages' => $this->messages,
+            'patient' => $this->patient,
+            'therapist' => $this->therapist,
             'translations' => TranslationHelper::getTranslations(),
         ]);
     }
