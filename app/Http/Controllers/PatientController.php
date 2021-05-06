@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Mpdf\Output\Destination;
 
 class PatientController extends Controller
@@ -125,6 +126,12 @@ class PatientController extends Controller
             'secondary_therapists' => isset($data['secondary_therapists']) ? $data['secondary_therapists'] : []
         ]);
 
+        Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
+            'therapist_ids' => isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [],
+            'patient_first_name' => $user->first_name,
+            'patient_last_name' => $user->last_name,
+        ]);
+
         // Create unique identity.
         $clinicIdentity = $data['clinic_identity'];
         $identity = 'P' . $clinicIdentity .
@@ -163,6 +170,7 @@ class PatientController extends Controller
         try {
             $user = User::findOrFail($id);
             $data = $request->all();
+            $newSecondaryTherapistIds = [];
             $dataUpdate = [
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -190,9 +198,23 @@ class PatientController extends Controller
 
             if (isset($data['secondary_therapists'])) {
                 $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
+
+                if ($user->secondary_therapists) {
+                    $newSecondaryTherapistIds = array_values(array_diff($data['secondary_therapists'], $user->secondary_therapists));
+                } else {
+                    $newSecondaryTherapistIds = $data['secondary_therapists'];
+                }
             }
 
             $user->update($dataUpdate);
+
+            if ($newSecondaryTherapistIds) {
+                Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
+                    'therapist_ids' => $newSecondaryTherapistIds,
+                    'patient_first_name' => $user->first_name,
+                    'patient_last_name' => $user->last_name,
+                ]);
+            }
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
