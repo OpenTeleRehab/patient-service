@@ -156,7 +156,6 @@ class PatientController extends Controller
                     $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
                     TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
                     array_push($chatRoomIds, $chatRoomId);
-
                 }
             }
         }
@@ -240,7 +239,6 @@ class PatientController extends Controller
                             $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
                             TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
                             $chatRoomIds = array_merge($user->chat_rooms, [$chatRoomId]);
-
                         }
                     }
                 }
@@ -418,17 +416,15 @@ class PatientController extends Controller
             $zip->close();
         }
 
-        // TODO: export patient chat/video call history include all attachments.
         return response()->download($fileName, $user->last_name . $user->first_name . '.zip')->deleteFileAfterSend();
     }
-
-
 
     /**
      * @param Request $request
      * @return array
      */
-    public function deleteChatRoomById(Request $request) {
+    public function deleteChatRoomById(Request $request)
+    {
         $chatRoomId = $request->get('chat_room_id');
         $patientId = $request->get('patient_id');
 

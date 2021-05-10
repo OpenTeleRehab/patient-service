@@ -9,6 +9,7 @@ class TherapistServiceHelper
     /**
      * @param string $accessToken
      * @param string $chatRoomId
+     * @param string $therapisId
      *
      * @return void
      */
@@ -17,7 +18,8 @@ class TherapistServiceHelper
         Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken
         ])->asJson()->put(
-            env('THERAPIST_SERVICE_URL') . '/api/user/add-new-chatroom', [
+            env('THERAPIST_SERVICE_URL') . '/api/user/add-new-chatroom',
+            [
                 'chat_room_id' => $chatRoomId,
                 'therapist_id' => $therapisId
             ]
