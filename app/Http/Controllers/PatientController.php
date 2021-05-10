@@ -351,8 +351,8 @@ class PatientController extends Controller
             foreach ($user->treatmentPlans()->get() as $treatmentPlan) {
                 $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
                 $zip->addFromString(
-                    $treatmentPlan->name . '.pdf',
-                    $treatmentPlanExport->Output('profile.pdf', Destination::STRING_RETURN)
+                    $treatmentPlan->name . '_' . $treatmentPlan->start_date->format('Y-m-d') . '.pdf',
+                    $treatmentPlanExport->Output('treatment_plan.pdf', Destination::STRING_RETURN)
                 );
             }
 
