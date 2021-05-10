@@ -339,6 +339,7 @@ class PatientController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        $timezone = $request->get('timezone');
 
         $zip = new \ZipArchive();
         $fileName = storage_path('app/' . $user->id . '_patient_data.zip');
@@ -368,7 +369,7 @@ class PatientController extends Controller
                     }
                 }
 
-                $chatExport = new ChatExport($messages, $patient, $therapist);
+                $chatExport = new ChatExport($messages, $patient, $therapist, $timezone);
                 $file = 'chat-' . strtolower(str_replace(' ', '-', $therapist['name'])) . '.pdf';
                 $zip->addFromString($file, $chatExport->Output($file, Destination::STRING_RETURN));
             }

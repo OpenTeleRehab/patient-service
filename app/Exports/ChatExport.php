@@ -24,18 +24,25 @@ class ChatExport
     private $therapist;
 
     /**
+     * @var string $timezone
+     */
+    private $timezone;
+
+    /**
      * ProfileExport constructor.
      *
      * @param array $messages
      * @param array $patient
      * @param array $therapist
+     * @param string $timezone
      *
      */
-    public function __construct($messages, $patient, $therapist)
+    public function __construct($messages, $patient, $therapist, $timezone)
     {
         $this->messages = $messages;
         $this->patient = $patient;
         $this->therapist = $therapist;
+        $this->timezone = $timezone;
     }
 
     /**
@@ -47,6 +54,7 @@ class ChatExport
             'messages' => $this->messages,
             'patient' => $this->patient,
             'therapist' => $this->therapist,
+            'timezone' => $this->timezone,
             'translations' => TranslationHelper::getTranslations(),
         ]);
     }

@@ -61,7 +61,7 @@
                             {{ $message['msg'] }}
                     @endswitch
                 </td>
-                <td align="left">{{ $message['ts'] ? \Carbon\Carbon::parse($message['ts'])->format(config('settings.datetime_format')) : '' }}</td>
+                <td align="left">{{ $message['_updatedAt'] ? Carbon\Carbon::parse($message['_updatedAt'])->timezone($timezone)->format(config('settings.datetime_format')) : '' }}</td>
             </tr>
         @endforeach
     </tbody>
