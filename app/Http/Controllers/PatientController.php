@@ -101,11 +101,14 @@ class PatientController extends Controller
     {
         DB::beginTransaction();
         $data = $request->all();
+
         $dateOfBirth = null;
         if ($data['date_of_birth']) {
             $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
             $dateOfBirth = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
         }
+
+        $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
 
         $phoneExist = User::where('phone', $data['phone'])->first();
         if ($phoneExist) {
@@ -123,7 +126,7 @@ class PatientController extends Controller
             'clinic_id' => $data['clinic_id'],
             'date_of_birth' => $dateOfBirth,
             'note' => $data['note'],
-            'secondary_therapists' => isset($data['secondary_therapists']) ? $data['secondary_therapists'] : []
+            'secondary_therapists' => $secondaryTherapists
         ]);
 
         Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
@@ -140,13 +143,32 @@ class PatientController extends Controller
         // Create chat user.
         $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
 
+        $chatRoomIds = [];
+        if (!empty($secondaryTherapists)) {
+            $response = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/by-ids', [
+                'ids' => \GuzzleHttp\json_encode($secondaryTherapists)
+            ]);
+
+            if (!empty($response) && $response->successful()) {
+                $therapists = $response->json()['data'];
+                foreach ($therapists as $therapist) {
+                    $therapistIdentity = $therapist['identity'];
+                    $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
+                    TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
+                    array_push($chatRoomIds, $chatRoomId);
+
+                }
+            }
+        }
+
         // Create chat room.
         $therapistIdentity = $data['therapist_identity'];
         $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
-        TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId);
+        TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $data['therapist_id']);
 
         $updateData['identity'] = $identity;
-        $updateData['chat_rooms'] = [$chatRoomId];
+        $updateData['chat_rooms'] = array_merge($chatRoomIds, [$chatRoomId]);
+
         $user->fill($updateData);
         $user->save();
 
@@ -196,6 +218,7 @@ class PatientController extends Controller
                 $dataUpdate['language_id'] = $data['language_id'];
             }
 
+            $chatRoomIds = $user->chat_rooms;
             if (isset($data['secondary_therapists'])) {
                 $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
 
@@ -204,8 +227,26 @@ class PatientController extends Controller
                 } else {
                     $newSecondaryTherapistIds = $data['secondary_therapists'];
                 }
+
+                if (!empty($newSecondaryTherapistIds)) {
+                    $response = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/by-ids', [
+                        'ids' => \GuzzleHttp\json_encode($newSecondaryTherapistIds)
+                    ]);
+
+                    if (!empty($response) && $response->successful()) {
+                        $therapists = $response->json()['data'];
+                        foreach ($therapists as $therapist) {
+                            $therapistIdentity = $therapist['identity'];
+                            $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
+                            TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
+                            $chatRoomIds = array_merge($user->chat_rooms, [$chatRoomId]);
+
+                        }
+                    }
+                }
             }
 
+            $dataUpdate['chat_rooms'] = $chatRoomIds;
             $user->update($dataUpdate);
 
             if ($newSecondaryTherapistIds) {
@@ -379,5 +420,28 @@ class PatientController extends Controller
 
         // TODO: export patient chat/video call history include all attachments.
         return response()->download($fileName, $user->last_name . $user->first_name . '.zip')->deleteFileAfterSend();
+    }
+
+
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function deleteChatRoomById(Request $request) {
+        $chatRoomId = $request->get('chat_room_id');
+        $patientId = $request->get('patient_id');
+
+        $patient = User::where('id', $patientId)->first();
+        $chatRooms = $patient['chat_rooms'];
+        if (($key = array_search($chatRoomId, $chatRooms)) !== false) {
+            unset($chatRooms[$key]);
+        }
+
+        $updateData['chat_rooms'] = $chatRooms;
+        $patient->fill($updateData);
+        $patient->save();
+
+        return ['success' => true, 'message' => 'success_message.deleted_chat_rooms'];
     }
 }

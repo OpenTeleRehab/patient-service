@@ -12,13 +12,15 @@ class TherapistServiceHelper
      *
      * @return void
      */
-    public static function AddNewChatRoom($accessToken, $chatRoomId)
+    public static function AddNewChatRoom($accessToken, $chatRoomId, $therapisId)
     {
         Http::withHeaders([
             'Authorization' => 'Bearer ' . $accessToken
         ])->asJson()->put(
-            env('THERAPIST_SERVICE_URL') . '/api/user/add-new-chatroom',
-            ['chat_room_id' => $chatRoomId]
+            env('THERAPIST_SERVICE_URL') . '/api/user/add-new-chatroom', [
+                'chat_room_id' => $chatRoomId,
+                'therapist_id' => $therapisId
+            ]
         );
     }
 }
