@@ -175,28 +175,31 @@
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
                         <p>{{ $activity['description'] }}</p>
                         @foreach($activity['questions'] as $question)
-                                <div class="mb-1">
-                                    <h5>{{ $translations['activity.question'] ?? 'Question' }} {{ $loop->iteration }}</h5>
-                                    @if($question['file'])
-                                        <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $question['file']['id'] }}">
-                                    @endif
-                                    <p>{{ $question['title'] }}</p>
+                            @php
+                                $questionAnswer = current(array_filter($activity['answers']->resolve(), function($a) use ($question) { return $a['question_id'] === $question['id']; }));
+                            @endphp
+                            <div class="mb-1">
+                                <h5>{{ $translations['activity.question'] ?? 'Question' }} {{ $loop->iteration }}</h5>
+                                @if($question['file'])
+                                    <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $question['file']['id'] }}">
+                                @endif
+                                <p>{{ $question['title'] }}</p>
 
-                                    @if($question['type'] === 'open-text' || $question['type'] === 'open-number')
-                                        <input size="500">
-                                    @elseif($question['answers'])
-                                        @foreach($question['answers'] as $answers)
-                                            <div class="indent">
-                                                @if($question['type'] === 'checkbox')
-                                                    <input type="checkbox">
-                                                @else
-                                                    <input type="radio">
-                                                @endif
-                                                <label>{{ $answers['description'] }}</label>
-                                            </div>
-                                        @endforeach
-                                    @endif
-                                </div>
+                                @if($question['type'] === 'open-text' || $question['type'] === 'open-number')
+                                    <input size="500" value="{{ $questionAnswer ? $questionAnswer['answer'] : '' }}">
+                                @elseif($question['answers'])
+                                    @foreach($question['answers'] as $answer)
+                                        <div class="indent">
+                                            @if($question['type'] === 'checkbox')
+                                                <input type="checkbox" {{ $questionAnswer && in_array($answer['id'], $questionAnswer['answer']) ? 'checked=checked' : '' }}>
+                                            @else
+                                                <input type="radio" {{ $questionAnswer && $questionAnswer['answer'] === $answer['id'] ? 'checked=checked' : '' }}>
+                                            @endif
+                                            <label>{{ $answer['description'] }}</label>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
                         @endforeach
                     @endif
 
