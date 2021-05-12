@@ -31,6 +31,7 @@ class Activity extends Model
         'type',
         'submitted_date',
         'satisfaction',
+        'created_by',
     ];
 
     /**

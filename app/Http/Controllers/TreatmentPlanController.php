@@ -136,7 +136,7 @@ class TreatmentPlanController extends Controller
         }
 
         $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
-        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
+        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
         return ['success' => true, 'message' => 'success_message.treatment_plan_assign_to_patient', 'data' => $treatmentPlan];
     }
 
@@ -180,7 +180,7 @@ class TreatmentPlanController extends Controller
             'total_of_weeks' => $request->get('total_of_weeks', 1),
         ]);
 
-        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []));
+        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
         $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
     }
@@ -220,22 +220,34 @@ class TreatmentPlanController extends Controller
      *
      * @return void
      */
-    private function updateOrCreateActivities(int $treatmentPlanId, array $activities = [])
+    private function updateOrCreateActivities(int $treatmentPlanId, array $activities = [], $createdBy)
     {
         $activityIds = [];
         foreach ($activities as $activity) {
-            $exercises = $activity['exercises'];
-            $materials = $activity['materials'];
-            $questionnaires = $activity['questionnaires'];
+            $exercises = isset($activity['exercises']) ? $activity['exercises'] : [];
+            $materials = isset($activity['materials']) ? $activity['materials'] : [];
+            $questionnaires = isset($activity['questionnaires']) ? $activity['questionnaires'] : [];
+
             if (count($exercises) > 0) {
                 foreach ($exercises as $exercise) {
-                    $activityObj = Activity::firstOrCreate(
+                    $existedExercise = Activity::where('activity_id', $exercise)
+                        ->where('type', Activity::ACTIVITY_TYPE_EXERCISE)
+                        ->where('treatment_plan_id', $treatmentPlanId)
+                        ->where('day', $activity['day'])
+                        ->where('week', $activity['week'])
+                        ->first();
+
+                    $activityObj = Activity::updateOrCreate(
+                        [
+                            'id' => isset($existedExercise) ? $existedExercise['id'] : null,
+                        ],
                         [
                             'treatment_plan_id' => $treatmentPlanId,
                             'week' => $activity['week'],
                             'day' => $activity['day'],
                             'activity_id' => $exercise,
                             'type' => Activity::ACTIVITY_TYPE_EXERCISE,
+                            'created_by' => isset($existedExercise) ? $existedExercise['created_by'] : $createdBy,
                         ],
                     );
                     $activityIds[] = $activityObj->id;
@@ -248,15 +260,27 @@ class TreatmentPlanController extends Controller
 
             if (count($materials) > 0) {
                 foreach ($materials as $material) {
-                    $activityObj = Activity::firstOrCreate(
+                    $existedMaterial = Activity::where('activity_id', $material)
+                        ->where('type', Activity::ACTIVITY_TYPE_MATERIAL)
+                        ->where('treatment_plan_id', $treatmentPlanId)
+                        ->where('day', $activity['day'])
+                        ->where('week', $activity['week'])
+                        ->first();
+
+                    $activityObj = Activity::updateOrCreate(
+                        [
+                            'id' => isset($existedMaterial) ? $existedMaterial['id'] : null,
+                        ],
                         [
                             'treatment_plan_id' => $treatmentPlanId,
                             'week' => $activity['week'],
                             'day' => $activity['day'],
                             'activity_id' => $material,
                             'type' => Activity::ACTIVITY_TYPE_MATERIAL,
+                            'created_by' => isset($existedMaterial) ? $existedMaterial['created_by'] : $createdBy,
                         ],
                     );
+
                     $activityIds[] = $activityObj->id;
                 }
                 // TODO: move to Queued Event Listeners.
@@ -267,13 +291,24 @@ class TreatmentPlanController extends Controller
 
             if (count($questionnaires) > 0) {
                 foreach ($questionnaires as $questionnaire) {
+                    $existedQuestionnaire = Activity::where('activity_id', $questionnaire)
+                        ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+                        ->where('treatment_plan_id', $treatmentPlanId)
+                        ->where('day', $activity['day'])
+                        ->where('week', $activity['week'])
+                        ->first();
+
                     $activityObj = Activity::firstOrCreate(
+                        [
+                            'id' => isset($existedQuestionnaire) ? $existedQuestionnaire['id'] : null,
+                        ],
                         [
                             'treatment_plan_id' => $treatmentPlanId,
                             'week' => $activity['week'],
                             'day' => $activity['day'],
                             'activity_id' => $questionnaire,
                             'type' => Activity::ACTIVITY_TYPE_QUESTIONNAIRE,
+                            'created_by' => isset($existedMaterial) ? $existedMaterial['created_by'] : $createdBy,
                         ],
                     );
                     $activityIds[] = $activityObj->id;
