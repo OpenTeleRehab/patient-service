@@ -400,7 +400,7 @@ class TreatmentPlanController extends Controller
      */
     public function completeGoal(Request $request)
     {
-        Activity::create([
+        Activity::firstOrCreate([
             'satisfaction' => $request->get('satisfaction'),
             'week' => $request->get('week'),
             'day' => $request->get('day'),
