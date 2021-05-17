@@ -400,15 +400,18 @@ class TreatmentPlanController extends Controller
      */
     public function completeGoal(Request $request)
     {
-        Activity::firstOrCreate([
-            'satisfaction' => $request->get('satisfaction'),
-            'week' => $request->get('week'),
-            'day' => $request->get('day'),
-            'type' => Activity::ACTIVITY_TYPE_GOAL,
-            'completed' => true,
-            'activity_id' => $request->get('goal_id'),
-            'treatment_plan_id' => $request->get('treatment_plan_id'),
-        ]);
+        $goals = json_decode($request[0], true);
+        foreach($goals as $goal){
+            Activity::firstOrCreate([
+                'satisfaction' => $goal['satisfaction'],
+                'week' => $goal['week'],
+                'day' => $goal['day'],
+                'type' => Activity::ACTIVITY_TYPE_GOAL,
+                'completed' => true,
+                'activity_id' => $goal['goal_id'],
+                'treatment_plan_id' => $goal['treatment_plan_id'],
+            ]);
+        }
         return ['success' => true];
     }
 
