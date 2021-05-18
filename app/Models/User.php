@@ -47,6 +47,7 @@ class User extends Authenticatable
         'chat_rooms',
         'last_login',
         'secondary_therapists',
+        'created_by',
     ];
 
     /**

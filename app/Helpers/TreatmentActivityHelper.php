@@ -74,6 +74,7 @@ class TreatmentActivityHelper
 
             $result[] = array_merge([
                 'date' => $date,
+                'created_by' => $activity->created_by,
                 'activity_id' => $activity->activity_id,
                 'completed' => $activity->completed,
                 'pain_level' => $activity->pain_level,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
@@ -34,6 +35,7 @@ Route::get('treatment-plan/get-treatment-plan-detail', [TreatmentPlanController:
 Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataForGlobalAdmin']);
 Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
 Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
+Route::get('activities/list/by-ids', [ActivityController::class, 'getByIds']);
 
 Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);

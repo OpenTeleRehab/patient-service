@@ -17,6 +17,8 @@ class TreatmentPlanResource extends JsonResource
     {
         $activities = Activity::select('week', 'day')
             ->selectRaw('ANY_VALUE(activities.id) AS id')
+            ->selectRaw('ANY_VALUE(activities.type) AS type')
+            ->selectRaw('ANY_VALUE(activities.created_by) AS created_by')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = "exercise" THEN activity_id END) AS exercises')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = "material" THEN activity_id END) AS materials')
             ->selectRaw('GROUP_CONCAT(CASE WHEN type = "questionnaire" THEN activity_id END) AS questionnaires')
@@ -37,7 +39,7 @@ class TreatmentPlanResource extends JsonResource
             'goals' => GoalResource::collection($this->goals),
             'activities' => ActivityResource::collection($activities),
             'total_of_weeks' => $this->total_of_weeks,
-            'created_by' => $this->created_by
+            'created_by' => $this->created_by,
         ];
     }
 }
