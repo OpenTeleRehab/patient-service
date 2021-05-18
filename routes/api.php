@@ -42,10 +42,10 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
-    Route::post('treatment-plan/complete_activity/{activity}', [TreatmentPlanController::class, 'completeActivity']);
+    Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity']);
     Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
-    Route::post('treatment-plan/complete_questionnaire/{activity}', [TreatmentPlanController::class, 'completeQuestionnaire']);
+    Route::post('treatment-plan/complete_questionnaire', [TreatmentPlanController::class, 'completeQuestionnaire']);
     Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal']);
     Route::get('appointment/get-patient-appointments', [AppointmentController::class, 'getPatientAppointments']);
     Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment']);

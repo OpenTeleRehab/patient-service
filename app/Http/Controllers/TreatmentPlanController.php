@@ -333,14 +333,17 @@ class TreatmentPlanController extends Controller
      *
      * @return bool[]
      */
-    public function completeActivity(Request $request, Activity $activity)
+    public function completeActivity(Request $request)
     {
-        $activity->update([
-            'completed' => true,
-            'pain_level' => $request->get('pain_level'),
-            'sets' => $request->get('sets'),
-            'reps' => $request->get('reps'),
-        ]);
+        $activities = json_decode($request[0], true);
+        foreach ($activities as $activity){
+            Activity::where('id', $activity['id'])->update([
+                'completed' => true,
+                'pain_level' => $activity['pain_level'] ?? null,
+                'sets' => $activity['sets'] ?? null,
+                'reps' => $activity['reps'] ?? null,
+            ]);
+        }
 
         return ['success' => true];
     }
@@ -410,21 +413,23 @@ class TreatmentPlanController extends Controller
      *
      * @return bool[]
      */
-    public function completeQuestionnaire(Request $request, Activity $activity)
+    public function completeQuestionnaire(Request $request)
     {
-        foreach ($request->get('answers', []) as $key => $answer) {
-            QuestionnaireAnswer::create([
-                'activity_id' => $activity->id,
-                'question_id' => $key,
-                'answer' => serialize($answer),
+        $questionnaireAnswers = json_decode($request[0], true);
+        foreach ($questionnaireAnswers as $questionnaireAnswer) {
+            foreach ($questionnaireAnswer['answers'] as $key => $answer) {
+                QuestionnaireAnswer::create([
+                    'activity_id' => $questionnaireAnswer['id'],
+                    'question_id' => $key,
+                    'answer' => serialize($answer),
+                ]);
+            }
+
+            Activity::where('id',$questionnaireAnswer['id'])->update([
+                'completed' => true,
+                'submitted_date' => now(),
             ]);
         }
-
-        $activity->update([
-            'completed' => true,
-            'submitted_date' => now(),
-        ]);
-
         return ['success' => true];
     }
 
