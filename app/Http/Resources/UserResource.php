@@ -31,7 +31,8 @@ class UserResource extends JsonResource
             'term_and_condition_id' => $this->term_and_condition_id,
             'chat_user_id' => $this->chat_user_id,
             'chat_password' => $this->chat_password,
-            'chat_rooms' => $this->chat_rooms
+            'chat_rooms' => $this->chat_rooms,
+            'secondary_therapists' => $this->secondary_therapists
         ];
     }
 }
