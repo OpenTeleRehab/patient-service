@@ -48,6 +48,7 @@ class User extends Authenticatable
         'last_login',
         'secondary_therapists',
         'created_by',
+        'dial_code',
     ];
 
     /**

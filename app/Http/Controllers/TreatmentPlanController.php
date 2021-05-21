@@ -217,10 +217,11 @@ class TreatmentPlanController extends Controller
     /**
      * @param int $treatmentPlanId
      * @param array $activities
+     * @param int $createdBy
      *
      * @return void
      */
-    private function updateOrCreateActivities(int $treatmentPlanId, array $activities = [], $createdBy)
+    private function updateOrCreateActivities(int $treatmentPlanId, array $activities, $createdBy)
     {
         $activityIds = [];
         foreach ($activities as $activity) {
@@ -329,14 +330,13 @@ class TreatmentPlanController extends Controller
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param \App\Models\Activity $activity
      *
      * @return bool[]
      */
     public function completeActivity(Request $request)
     {
         $activities = json_decode($request[0], true);
-        foreach ($activities as $activity){
+        foreach ($activities as $activity) {
             Activity::where('id', $activity['id'])->update([
                 'completed' => true,
                 'pain_level' => $activity['pain_level'] ?? null,
@@ -409,7 +409,6 @@ class TreatmentPlanController extends Controller
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param \App\Models\Activity $activity
      *
      * @return bool[]
      */
@@ -441,7 +440,7 @@ class TreatmentPlanController extends Controller
     public function completeGoal(Request $request)
     {
         $goals = json_decode($request[0], true);
-        foreach($goals as $goal){
+        foreach ($goals as $goal) {
             Activity::firstOrCreate([
                 'satisfaction' => $goal['satisfaction'],
                 'week' => $goal['week'],

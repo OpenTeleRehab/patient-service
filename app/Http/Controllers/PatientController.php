@@ -119,6 +119,7 @@ class PatientController extends Controller
         $user = User::create([
             'therapist_id' => $data['therapist_id'],
             'phone' => $data['phone'],
+            'dial_code' => $data['dial_code'],
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'country_id' => $data['country_id'],
@@ -196,6 +197,7 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
+                'dial_code' => $data['dial_code'],
             ];
 
             if (isset($data['phone'])) {
