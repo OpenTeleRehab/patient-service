@@ -63,9 +63,17 @@ class ActivityController extends Controller
                 $newActivityIds = $activityIds;
             }
 
-            $response = $this->getActivitiesFromAdminService($type, $newActivityIds, $request);
-            if (!empty($response) && $response->successful() && $response->json()['data']) {
-                $newActivityObj = $response->json()['data'][0];
+            $newActivityObj = [];
+            foreach ($newActivityIds as $id) {
+                $response = $this->getActivitiesFromAdminService($type, $id, $request);
+                if (!empty($response) && $response->successful()) {
+                    if ($response->json()['data']) {
+                        $newActivityObj = $response->json()['data'][0];
+                    } else {
+                        continue;
+                    }
+                }
+
                 array_push($result, $newActivityObj);
             }
         }
