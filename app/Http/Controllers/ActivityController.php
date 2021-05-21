@@ -74,12 +74,12 @@ class ActivityController extends Controller
     }
 
     /**
-     * @param $type
-     * @param $activityIds
-     * @param $request
+     * @param string $type
+     * @param integer $activityIds
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Client\Response
      */
-    private function getActivitiesFromAdminService($type, $activityIds, $request)
+    private function getActivitiesFromAdminService($type, $activityIds, Request $request)
     {
         $response = null;
         if ($type === Activity::ACTIVITY_TYPE_EXERCISE) {

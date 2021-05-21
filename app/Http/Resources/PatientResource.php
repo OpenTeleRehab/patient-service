@@ -48,6 +48,7 @@ class PatientResource extends JsonResource
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
                 'phone' => $this->phone,
+                'dial_code' => $this->dial_code,
                 'gender' => $this->gender,
                 'chat_user_id' => $this->chat_user_id,
                 'chat_rooms' => $this->chat_rooms ?: [],
