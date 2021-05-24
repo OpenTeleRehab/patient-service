@@ -197,8 +197,11 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
-                'dial_code' => $data['dial_code'],
             ];
+
+            if (isset($data['dial_code'])) {
+                $dataUpdate['dial_code'] = $data['dial_code'];
+            }
 
             if (isset($data['phone'])) {
                 $dataUpdate['phone'] = $data['phone'];
