@@ -55,5 +55,6 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
+Route::get('treatment-plan/export/{treatmentPlan}', [TreatmentPlanController::class, 'export']);
 Route::apiResource('appointment', AppointmentController::class);
 Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);

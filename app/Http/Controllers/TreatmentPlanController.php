@@ -472,6 +472,19 @@ class TreatmentPlanController extends Controller
     }
 
     /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\TreatmentPlan $treatmentPlan
+     *
+     * @return string
+     * @throws \Mpdf\MpdfException
+     */
+    public function export(Request $request, TreatmentPlan $treatmentPlan)
+    {
+        $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
+        return $treatmentPlanExport->outPut();
+    }
+
+    /**
      * @param string $startDate
      * @param string $endDate
      * @param integer $therapistId
