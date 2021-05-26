@@ -225,6 +225,7 @@ class TreatmentPlanController extends Controller
     {
         $activityIds = [];
         foreach ($activities as $activity) {
+            $customExercises = isset($activity['customExercises']) ? $activity['customExercises'] : [];
             $exercises = isset($activity['exercises']) ? $activity['exercises'] : [];
             $materials = isset($activity['materials']) ? $activity['materials'] : [];
             $questionnaires = isset($activity['questionnaires']) ? $activity['questionnaires'] : [];
@@ -238,18 +239,28 @@ class TreatmentPlanController extends Controller
                         ->where('week', $activity['week'])
                         ->first();
 
+                    $updateFields = [
+                        'treatment_plan_id' => $treatmentPlanId,
+                        'week' => $activity['week'],
+                        'day' => $activity['day'],
+                        'activity_id' => $exercise,
+                        'type' => Activity::ACTIVITY_TYPE_EXERCISE,
+                        'created_by' => isset($existedExercise) ? $existedExercise['created_by'] : $createdBy,
+                    ];
+
+                    $customExercise = current(array_filter($customExercises, function ($c) use ($exercise) {
+                        return $c['id'] === $exercise;
+                    }));
+
+                    if ($customExercise) {
+                        $updateFields['sets'] = $customExercise['sets'];
+                        $updateFields['reps'] = $customExercise['reps'];
+                        $updateFields['additional_information'] = $customExercise['additional_information'];
+                    }
+
                     $activityObj = Activity::updateOrCreate(
-                        [
-                            'id' => isset($existedExercise) ? $existedExercise['id'] : null,
-                        ],
-                        [
-                            'treatment_plan_id' => $treatmentPlanId,
-                            'week' => $activity['week'],
-                            'day' => $activity['day'],
-                            'activity_id' => $exercise,
-                            'type' => Activity::ACTIVITY_TYPE_EXERCISE,
-                            'created_by' => isset($existedExercise) ? $existedExercise['created_by'] : $createdBy,
-                        ],
+                        ['id' => isset($existedExercise) ? $existedExercise['id'] : null],
+                        $updateFields,
                     );
                     $activityIds[] = $activityObj->id;
                 }
@@ -340,8 +351,8 @@ class TreatmentPlanController extends Controller
             Activity::where('id', $activity['id'])->update([
                 'completed' => true,
                 'pain_level' => $activity['pain_level'] ?? null,
-                'sets' => $activity['sets'] ?? null,
-                'reps' => $activity['reps'] ?? null,
+                'completed_sets' => $activity['sets'] ?? null,
+                'completed_reps' => $activity['reps'] ?? null,
             ]);
         }
 

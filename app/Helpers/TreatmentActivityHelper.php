@@ -67,6 +67,14 @@ class TreatmentActivityHelper
                 if ($response->json()['data']) {
                     $activityObj = $response->json()['data'][0];
                     $activityObj['id'] = $activity->id;
+
+                    // Custom Sets/Reps in Treatment.
+                    if ($activity->sets >= 0) {
+                        $activityObj['sets'] = $activity->sets;
+                    }
+                    if ($activity->reps >= 0) {
+                        $activityObj['reps'] = $activity->reps;
+                    }
                 } else {
                     continue;
                 }
@@ -78,14 +86,15 @@ class TreatmentActivityHelper
                 'activity_id' => $activity->activity_id,
                 'completed' => $activity->completed,
                 'pain_level' => $activity->pain_level,
-                'completed_sets' => $activity->sets,
-                'completed_reps' => $activity->reps,
+                'completed_sets' => $activity->completed_sets,
+                'completed_reps' => $activity->completed_reps,
                 'satisfaction' => $activity->satisfaction,
                 'type' => $activity->type,
                 'submitted_date' => $activity->submitted_date,
                 'answers' => QuestionnaireAnswerResource::collection($activity->answers),
                 'week' => $activity->week,
                 'day' => $activity->day,
+                'additional_information' => $activity->additional_information,
             ], $activityObj);
 
             if ($includedGoals) {

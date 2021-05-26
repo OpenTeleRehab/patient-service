@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ActivityObjResource;
 use App\Models\Activity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -12,7 +11,7 @@ class ActivityController extends Controller
     /**
      * @param \Illuminate\Http\Request $request
      *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return array
      */
     public function getByIds(Request $request)
     {
@@ -30,7 +29,7 @@ class ActivityController extends Controller
 
         $activitiesObjIds = [];
         $result = [];
-        foreach ($activities as $key => $activity) {
+        foreach ($activities as $activity) {
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
                 $type = Activity::ACTIVITY_TYPE_EXERCISE;
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
@@ -44,13 +43,22 @@ class ActivityController extends Controller
                 if ($response->json()['data']) {
                     $activityObj = $response->json()['data'][0];
                     $activityObj['id'] = $activity->activity_id;
+
+                    // Custom Sets/Reps in Treatment.
+                    if ($activity->sets >= 0) {
+                        $activityObj['sets'] = $activity->sets;
+                    }
+                    if ($activity->reps >= 0) {
+                        $activityObj['reps'] = $activity->reps;
+                    }
                 } else {
                     continue;
                 }
             }
 
             $result[] = array_merge([
-                'created_by' => $activity->created_by
+                'created_by' => $activity->created_by,
+                'additional_information' => $activity->additional_information,
             ], $activityObj);
 
             array_push($activitiesObjIds, $activity->activity_id);
@@ -89,7 +97,6 @@ class ActivityController extends Controller
      */
     private function getActivitiesFromAdminService($type, $activityIds, Request $request)
     {
-        $response = null;
         if ($type === Activity::ACTIVITY_TYPE_EXERCISE) {
             $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
                 'exercise_ids' => [$activityIds],

@@ -32,6 +32,9 @@ class Activity extends Model
         'submitted_date',
         'satisfaction',
         'created_by',
+        'completed_sets',
+        'completed_reps',
+        'additional_information'
     ];
 
     /**
