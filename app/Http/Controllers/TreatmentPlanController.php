@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
-use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
 use App\Models\Goal;
@@ -14,10 +13,8 @@ use App\Models\TreatmentPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Mpdf\Mpdf;
 
 class TreatmentPlanController extends Controller
 {
@@ -255,7 +252,7 @@ class TreatmentPlanController extends Controller
                     if ($customExercise) {
                         $updateFields['sets'] = $customExercise['sets'];
                         $updateFields['reps'] = $customExercise['reps'];
-                        $updateFields['additional_information'] = $customExercise['additional_information'];
+                        $updateFields['additional_information'] = $customExercise['additional_information'] ?? null;
                     }
 
                     $activityObj = Activity::updateOrCreate(

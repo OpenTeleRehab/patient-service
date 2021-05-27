@@ -69,10 +69,10 @@ class TreatmentActivityHelper
                     $activityObj['id'] = $activity->id;
 
                     // Custom Sets/Reps in Treatment.
-                    if ($activity->sets >= 0) {
+                    if ($activity->sets !== null) {
                         $activityObj['sets'] = $activity->sets;
                     }
-                    if ($activity->reps >= 0) {
+                    if ($activity->reps !== null) {
                         $activityObj['reps'] = $activity->reps;
                     }
                 } else {
