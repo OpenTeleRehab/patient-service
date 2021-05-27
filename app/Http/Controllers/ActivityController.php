@@ -45,10 +45,10 @@ class ActivityController extends Controller
                     $activityObj['id'] = $activity->activity_id;
 
                     // Custom Sets/Reps in Treatment.
-                    if ($activity->sets >= 0) {
+                    if ($activity->sets !== null) {
                         $activityObj['sets'] = $activity->sets;
                     }
-                    if ($activity->reps >= 0) {
+                    if ($activity->reps !== null) {
                         $activityObj['reps'] = $activity->reps;
                     }
                 } else {
