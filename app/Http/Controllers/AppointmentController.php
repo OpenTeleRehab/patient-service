@@ -78,6 +78,7 @@ class AppointmentController extends Controller
             'status' => Appointment::STATUS_APPROVED,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'note' => $request->get('note'),
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_add'];
@@ -104,6 +105,7 @@ class AppointmentController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             'status' => Appointment::STATUS_APPROVED,
+            'note' => $request->get('note'),
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_update'];

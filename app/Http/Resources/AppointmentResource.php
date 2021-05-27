@@ -24,6 +24,7 @@ class AppointmentResource extends JsonResource
             'created_at' => Carbon::parse($this->created_at)->toDateTimeString(),
             'patient' => $this->patient,
             'status' => $this->status,
+            'note' => $this->note,
         ];
     }
 }
