@@ -62,11 +62,8 @@ class PatientController extends Controller
                     foreach ($filters as $filter) {
                         $filterObj = json_decode($filter);
                         if ($filterObj->columnName === 'date_of_birth') {
-                            $dates = explode(' - ', $filterObj->value);
-                            $startDate = date_create_from_format('d/m/Y', $dates[0]);
-                            $endDate = date_create_from_format('d/m/Y', $dates[1]);
-                            $query->where('date_of_birth', '>=', date_format($startDate, config('settings.defaultTimestampFormat')))
-                                ->where('date_of_birth', '<=', date_format($endDate, config('settings.defaultTimestampFormat')));
+                            $dateOfBirth = date_create_from_format('d/m/Y', $filterObj->value);
+                            $query->where('date_of_birth', date_format($dateOfBirth, config('settings.defaultTimestampFormat')));
                         } elseif (($filterObj->columnName === 'region' || $filterObj->columnName === 'clinic') && $filterObj->value !== '') {
                             $query->where('clinic_id', $filterObj->value);
                         } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
