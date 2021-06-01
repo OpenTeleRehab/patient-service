@@ -42,6 +42,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
+    Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy']);
     Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity']);
     Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);

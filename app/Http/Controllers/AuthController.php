@@ -22,13 +22,14 @@ class AuthController extends Controller
             ->where('otp_code', $request->otp_code)
             ->firstOrFail();
 
-        // Accept terms of services.
-        $data = ['term_and_condition_id' => $request->get('term_and_condition_id')];
+        // Accept terms of services and privacy policy.
+        $data = ['term_and_condition_id' => $request->get('term_and_condition_id'), 'privacy_and_policy_id' => $request->get('privacy_and_policy_id')];
 
         // Update user language.
         if ($request->has('language')) {
             $data['language_id'] = $request->get('language');
         }
+
         $user->update($data);
 
         return $this->savePinCode($user, $request->pin);
@@ -140,6 +141,21 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->update([
             'term_and_condition_id' => $request->get('term_and_condition_id'),
+        ]);
+
+        return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function acceptPrivacyPolicy(Request $request)
+    {
+        $user = Auth::user();
+        $user->update([
+            'privacy_and_policy_id' => $request->get('privacy_and_policy_id'),
         ]);
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];

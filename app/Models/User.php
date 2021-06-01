@@ -49,6 +49,7 @@ class User extends Authenticatable
         'secondary_therapists',
         'created_by',
         'dial_code',
+        'privacy_and_policy_id',
     ];
 
     /**
