@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
@@ -36,22 +37,9 @@ class AppointmentController extends Controller
             $appointments->where('end_date', '>', $now);
         }
 
-        $requests = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('status', Appointment::STATUS_PENDING)
-            ->orderBy('created_at')
-            ->get();
-
-        $cancelRequests = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('status', Appointment::STATUS_REQUEST_CANCELLATION)
-            ->where('end_date', '>', $now)
-            ->orderBy('start_date')
-            ->get();
-
         $data = [
             'calendarData' => $calendarData,
             'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
-            'requests' => AppointmentResource::collection($requests),
-            'cancelRequests' => AppointmentResource::collection($cancelRequests),
         ];
         return ['success' => true, 'data' => $data];
     }
@@ -75,7 +63,8 @@ class AppointmentController extends Controller
         Appointment::create([
             'therapist_id' => $request->get('therapist_id'),
             'patient_id' => $request->get('patient_id'),
-            'status' => Appointment::STATUS_APPROVED,
+            'therapist_status' => Appointment::STATUS_ACCEPTED,
+            'patient_status' => Appointment::STATUS_INVITED,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'note' => $request->get('note'),
@@ -104,7 +93,7 @@ class AppointmentController extends Controller
         $appointment->update([
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'status' => Appointment::STATUS_APPROVED,
+            // 'status' => Appointment::STATUS_APPROVED,
             'note' => $request->get('note'),
         ]);
 
@@ -118,8 +107,7 @@ class AppointmentController extends Controller
      */
     public function getPatientAppointments(Request $request)
     {
-        $appointments = Appointment::where('status', '!=', Appointment::STATUS_PENDING)
-            ->where('patient_id', Auth::id())
+        $appointments = Appointment::where('patient_id', Auth::id())
             ->where('end_date', '>=', $request->get('now'))
             ->orderBy('start_date')
             ->paginate($request->get('page_size'));
@@ -183,12 +171,6 @@ class AppointmentController extends Controller
         ]);
 
         $message = 'success_message.appointment_update';
-
-        // Check if deleting a cancellation request.
-        if ($request->get('status') === Appointment::STATUS_APPROVED) {
-            $message = 'success_message.appointment_cancellation_request_delete';
-        }
-
         return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
     }
 
@@ -202,11 +184,7 @@ class AppointmentController extends Controller
     {
         $appointment->delete();
 
-        if ($appointment->status === Appointment::STATUS_PENDING) {
-            return ['success' => true, 'message' => 'success_message.appointment_request_delete'];
-        } else {
-            return ['success' => true, 'message' => 'success_message.appointment_delete'];
-        }
+        return ['success' => true, 'message' => 'success_message.appointment_delete'];
     }
 
     /**
@@ -220,9 +198,28 @@ class AppointmentController extends Controller
             [
                 'patient_id' => Auth::id(),
                 'therapist_id' => $request->get('therapist_id'),
-                'status' => Appointment::STATUS_PENDING,
+                'patient_status' => Appointment::STATUS_ACCEPTED,
+                'therapist_status' => Appointment::STATUS_INVITED,
+                'start_date' => $request->get('start_date'),
+                'end_date' => $request->get('end_date'),
+                'created_by_therapist' => false,
             ],
         );
         return ['success' => true];
+    }
+
+    /**
+     * @param Request $request
+     * @param \App\Models\Appointment $appointment
+     * @return array
+     */
+    public function updatePatientStatus(Request $request, Appointment $appointment)
+    {
+        $appointment->update([
+            'patient_status' => $request->get('status')
+        ]);
+
+        $message = 'success_message.appointment_update';
+        return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
     }
 }
