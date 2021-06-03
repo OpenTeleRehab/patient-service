@@ -9,6 +9,7 @@ class SMSHelper
 {
     /**
      * @param string $to
+     * @param string $channel
      * @param string $hash
      * @param string $locale
      *
@@ -16,22 +17,21 @@ class SMSHelper
      * @throws \Twilio\Exceptions\ConfigurationException
      * @throws \Twilio\Exceptions\TwilioException
      */
-    public static function sendCode($to, $hash, $locale = 'en')
+    public static function sendCode($to, $channel, $hash, $locale = 'en')
     {
         // Keep sending SMS for some excluded numbers.
         if (str_contains(env('SMS_VERIFY_EXCLUDE_NUMBERS', ''), $to)) {
             return;
         }
 
-        $to = '+' . $to;
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         $options = ['locale' => $locale];
-        if ($hash) {
+        if ($channel === 'sms' && $hash) {
             $options['appHash'] = $hash;
         }
         $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verifications
-            ->create($to, 'sms', $options);
+            ->create($to, $channel, $options);
     }
 
     /**
@@ -49,7 +49,6 @@ class SMSHelper
             return true;
         }
 
-        $to = '+' . $to;
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         return $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verificationChecks
