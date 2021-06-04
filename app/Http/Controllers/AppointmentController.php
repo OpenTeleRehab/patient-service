@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
@@ -90,12 +89,17 @@ class AppointmentController extends Controller
             return ['success' => false, 'message' => 'error_message.appointment_overlap'];
         }
 
-        $appointment->update([
+        $updateFile = [
             'start_date' => $startDate,
             'end_date' => $endDate,
-            // 'status' => Appointment::STATUS_APPROVED,
             'note' => $request->get('note'),
-        ]);
+        ];
+
+        // Update patient status if appointment data changed.
+        if ($startDate != $appointment->start_date || $endDate != $appointment->end_date) {
+            $updateFile['patient_status'] = Appointment::STATUS_INVITED;
+        }
+        $appointment->update($updateFile);
 
         return ['success' => true, 'message' => 'success_message.appointment_update'];
     }
@@ -167,7 +171,7 @@ class AppointmentController extends Controller
     public function updateStatus(Request $request, Appointment $appointment)
     {
         $appointment->update([
-            'status' => $request->get('status')
+            'therapist_status' => $request->get('status')
         ]);
 
         $message = 'success_message.appointment_update';
