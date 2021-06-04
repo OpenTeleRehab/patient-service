@@ -12,6 +12,10 @@ class Appointment extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_REQUEST_CANCELLATION = 'request_cancellation';
 
+    const STATUS_INVITED = 'invited';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_REJECTED = 'rejected';
+
     use HasFactory;
 
     /**
@@ -22,10 +26,22 @@ class Appointment extends Model
     protected $fillable = [
         'therapist_id',
         'patient_id',
-        'status',
+        'therapist_status',
+        'patient_status',
         'start_date',
         'end_date',
         'note',
+        'created_by_therapist',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     * This format will be used when the model is serialized to an array or JSON
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_by_therapist' => 'boolean',
     ];
 
     /**
