@@ -38,6 +38,7 @@ class TreatmentPlan extends Model
         'start_date' => 'datetime:d/m/Y',
         'end_date' => 'datetime:d/m/Y',
     ];
+
     /**
      * Bootstrap the model and its traits.
      *

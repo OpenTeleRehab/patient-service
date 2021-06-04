@@ -8,10 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REQUEST_CANCELLATION = 'request_cancellation';
-
     const STATUS_INVITED = 'invited';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_REJECTED = 'rejected';
@@ -41,6 +37,8 @@ class Appointment extends Model
      * @var array
      */
     protected $casts = [
+        'start_date' => 'datetime:d/m/Y',
+        'end_date' => 'datetime:d/m/Y',
         'created_by_therapist' => 'boolean',
     ];
 
