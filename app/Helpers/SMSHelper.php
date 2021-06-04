@@ -9,19 +9,27 @@ class SMSHelper
 {
     /**
      * @param string $to
-     * @param string $channel
      * @param string $hash
+     * @param string $email
      * @param string $locale
      *
      * @return void
      * @throws \Twilio\Exceptions\ConfigurationException
      * @throws \Twilio\Exceptions\TwilioException
      */
-    public static function sendCode($to, $channel, $hash, $locale = 'en')
+    public static function sendCode($to, $hash, $email, $locale = 'en')
     {
         // Keep sending SMS for some excluded numbers.
         if (str_contains(env('SMS_VERIFY_EXCLUDE_NUMBERS', ''), $to)) {
             return;
+        }
+
+        if ($email) {
+            $to = $email;
+            $channel = 'email';
+        } else {
+            $to = "+$to";
+            $channel = 'sms';
         }
 
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
@@ -37,16 +45,23 @@ class SMSHelper
     /**
      * @param string $to
      * @param string $code
+     * @param string $email
      *
      * @return bool
      * @throws \Twilio\Exceptions\ConfigurationException
      * @throws \Twilio\Exceptions\TwilioException
      */
-    public static function verifyCode($to, $code)
+    public static function verifyCode($to, $code, $email)
     {
         // Make it as valid verification if it is excluded number.
         if (str_contains(env('SMS_VERIFY_EXCLUDE_NUMBERS', ''), $to)) {
             return true;
+        }
+
+        if ($email) {
+            $to = $email;
+        } else {
+            $to = "+$to";
         }
 
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));

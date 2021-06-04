@@ -32,14 +32,7 @@ class RegistrationController extends Controller
         }
 
         try {
-            if ($request->get('email')) {
-                $to = $request->get('email');
-                $channel = 'email';
-            } else {
-                $to = "+$to";
-                $channel = 'sms';
-            }
-            SMSHelper::sendCode($to, $channel, $hash);
+            SMSHelper::sendCode($to, $hash, $request->get('email'));
             return ['success' => true, 'message' => 'success.code_sent'];
         } catch (\Exception $e) {
             Log::error('error.sms_gateway.send', [$e->getMessage()]);
@@ -55,13 +48,9 @@ class RegistrationController extends Controller
     public function verifyCode(Request $request)
     {
         try {
-            if ($request->get('email')) {
-                $to = $request->get('email');
-            } else {
-                $to = '+' . $request->get('to');
-            }
+            $to = $request->get('to');
             $code = $request->get('code');
-            $isVerified = SMSHelper::verifyCode($to, $code);
+            $isVerified = SMSHelper::verifyCode($to, $code, $request->get('email'));
             if ($isVerified) {
                 User::where('phone', $to)->update(['otp_code' => $code, 'enabled' => true]);
                 return ['success' => true, 'message' => 'success.code_verified'];
