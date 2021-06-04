@@ -32,7 +32,14 @@ class RegistrationController extends Controller
         }
 
         try {
-            SMSHelper::sendCode($to, $hash);
+            if ($request->get('email')) {
+                $to = $request->get('email');
+                $channel = 'email';
+            } else {
+                $to = "+$to";
+                $channel = 'sms';
+            }
+            SMSHelper::sendCode($to, $channel, $hash);
             return ['success' => true, 'message' => 'success.code_sent'];
         } catch (\Exception $e) {
             Log::error('error.sms_gateway.send', [$e->getMessage()]);
@@ -48,7 +55,11 @@ class RegistrationController extends Controller
     public function verifyCode(Request $request)
     {
         try {
-            $to = $request->get('to');
+            if ($request->get('email')) {
+                $to = $request->get('email');
+            } else {
+                $to = '+' . $request->get('to');
+            }
             $code = $request->get('code');
             $isVerified = SMSHelper::verifyCode($to, $code);
             if ($isVerified) {
