@@ -343,6 +343,24 @@ class PatientController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @return array
+     */
+    public function deleteByClinicId(Request $request)
+    {
+        $clinicId = $request->get('clinic_id');
+        $users = User::where('clinic_id', $clinicId)->get();
+        if (count($users) > 0) {
+            foreach ($users as $user) {
+                $this->obfuscatedUserData($user);
+                $user->delete();
+            }
+        }
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
      * @return array
      * @throws \Exception
      */
