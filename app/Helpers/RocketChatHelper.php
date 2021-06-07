@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 define('ROCKET_CHAT_LOGIN_URL', env('ROCKET_CHAT_URL') . '/api/v1/login');
 define('ROCKET_CHAT_LOGOUT_URL', env('ROCKET_CHAT_URL') . '/api/v1/logout');
@@ -11,6 +12,7 @@ define('ROCKET_CHAT_UPDATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.up
 define('ROCKET_CHAT_DELETE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.delete');
 define('ROCKET_CHAT_CREATE_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.create');
 define('ROCKET_CHAT_GET_MESSAGES_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.messages');
+define('ROCKET_CHAT_GET_COUNTER_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.counters');
 define('ROCKET_CHAT_GET_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/rooms.info');
 define('ROCKET_CHAT_GET_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.info');
 
@@ -193,6 +195,34 @@ class RocketChatHelper
         }
 
         $response->throw();
+    }
+
+    /**
+     * @param string $authToken
+     * @param string $userId
+     * @param string $roomId
+     *
+     * @return mixed
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function getUnreadMessages($authToken, $userId, $roomId)
+    {
+        $unreads = 0;
+        try {
+            $response = Http::withHeaders([
+                'X-Auth-Token' => $authToken,
+                'X-User-Id' => $userId
+            ])->asJson()->get(ROCKET_CHAT_GET_COUNTER_URL, ['roomId' => $roomId]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                return $result['unreads'];
+            }
+        } catch (\Exception $e) {
+            $response->throw();
+        }
+
+        return $unreads;
     }
 
     /**
