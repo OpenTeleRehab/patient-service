@@ -198,7 +198,20 @@ class AppointmentController extends Controller
      */
     public function requestAppointment(Request $request)
     {
+        $startDate = date_create_from_format('Y-m-d H:i:s', $request->get('start_date'));
+        $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('end_date'));
+
+        // Check if overlap with any appointment.
+        $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
+
+        if ($overlap) {
+             return ['success' => false, 'message' => 'error_message.appointment_overlap'];
+        }
+
         Appointment::updateOrCreate(
+            [
+                'id' => $request->get('id'),
+            ],
             [
                 'patient_id' => Auth::id(),
                 'therapist_id' => $request->get('therapist_id'),
@@ -209,6 +222,7 @@ class AppointmentController extends Controller
                 'created_by_therapist' => false,
             ],
         );
+
         return ['success' => true];
     }
 
