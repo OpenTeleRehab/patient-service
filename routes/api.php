@@ -37,6 +37,7 @@ Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataF
 Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
 Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
 Route::get('activities/list/by-ids', [ActivityController::class, 'getByIds']);
+Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease']);
 
 Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);
