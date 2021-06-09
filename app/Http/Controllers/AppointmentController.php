@@ -202,7 +202,12 @@ class AppointmentController extends Controller
         $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('end_date'));
 
         // Check if overlap with any appointment.
-        $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
+        if ($request->get('id') !== null) {
+            $appointment = Appointment::find($request->get('id'));
+            $overlap = $this->validateOverlap($startDate, $endDate, $appointment->therapist_id, $appointment->patient_id, $appointment->id);
+        } else {
+            $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
+        }
 
         if ($overlap) {
              return ['success' => false, 'message' => 'error_message.appointment_overlap'];
