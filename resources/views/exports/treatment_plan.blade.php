@@ -95,7 +95,11 @@
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
-                            <img width="190" src="http://localhost/images/material.png">
+                            @if($activity['file'] && ($activity['file']['hasThumbnail'] || $activity['file']['fileGroupType'] === 'common.type.image'))
+                                <img width="190" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $activity['file']['id'] . '?thumbnail=' . $activity['file']['hasThumbnail']}}">
+                            @else
+                                <img width="190" src="http://localhost/images/material.png">
+                            @endif
                             <h4>{{ $activity['title'] }}</h4>
                             <span>{{ $translations[$activity['file']['fileGroupType']] ?? '' }}</span>
                         @endif
