@@ -7,8 +7,12 @@ use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
+use App\Http\Resources\PatientForTherapistRemoveResource;
 use App\Http\Resources\PatientResource;
+use App\Models\Activity;
+use App\Models\TreatmentPlan;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -316,6 +320,27 @@ class PatientController extends Controller
     }
 
     /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getPatientForTherapistRemove(Request $request)
+    {
+        $therapistId = $request->get('therapist_id');
+        $data = $request->all();
+
+        $query = User::query();
+        if ($therapistId) {
+            $query->where(function ($query) use ($data) {
+                $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
+            });
+        }
+
+        $patients = $query->get();
+        return ['success' => true, 'data' => PatientForTherapistRemoveResource::collection($patients)];
+    }
+
+    /**
      * @param Request $request
      * @param \App\Models\User $user
      * @return array
@@ -358,6 +383,94 @@ class PatientController extends Controller
         }
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function deleteByTherapistId(Request $request)
+    {
+        $therapistId = $request->get('therapist_id');
+        $users = User::where('therapist_id', $therapistId)->get();
+        if (count($users) > 0) {
+            foreach ($users as $user) {
+                $this->obfuscatedUserData($user);
+                $user->delete();
+            }
+        }
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public function transferToTherapist(Request $request, User $user)
+    {
+        $therapistId = $request->get('therapist_id');
+        $therapistIdentity = $request->get('therapist_identity');
+        $oldTherapistChatRooms = $request->get('chat_rooms');
+        $newTherapistChatRooms = $request->get('new_chat_rooms');
+
+        // Remove chat room of previous therapist
+        $chatRooms = array_intersect($oldTherapistChatRooms, $user->chat_rooms);
+        $rooms = $user->chat_rooms;
+        if (($key = array_search(reset($chatRooms), $rooms)) !== false) {
+            unset($rooms[$key]);
+        }
+
+        // Remove secondary therapists if transfered therapist
+        $secondaryTherapists = $user->secondary_therapists;
+        if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
+            unset($secondaryTherapists[$key]);
+        }
+
+        //Update own activities
+        $ongoingTreatmentPlan = $user->treatmentPlans()
+            ->whereDate('start_date', '<=', Carbon::now())
+            ->whereDate('end_date', '>=', Carbon::now())
+            ->get();
+        $plannedTreatmentPlans = $user->treatmentPlans()
+            ->whereDate('end_date', '>', Carbon::now())
+            ->orderBy('start_date')
+            ->get();
+
+        if (count($plannedTreatmentPlans) > 0) {
+            foreach ($plannedTreatmentPlans as $treatmentPlan) {
+                Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+                TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+            }
+        }
+
+        if (count($ongoingTreatmentPlan) > 0) {
+            Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+            TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+        }
+
+        // Check if chat rooms of new therapist exist
+        $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms, $user->chat_rooms);
+        if (!$chatRoomOfNewTherapists) {
+            // Create chat room for new therapist and patient
+            $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
+            TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapistId);
+            $newChatRooms = array_merge($rooms, [$chatRoomId]);
+        } else {
+            $newChatRooms = $rooms;
+        }
+
+        // Update user chatrooms
+        $updateData['chat_rooms'] = $newChatRooms;
+        $updateData['therapist_id'] = $therapistId;
+        $updateData['secondary_therapists'] = $secondaryTherapists;
+
+        $user->update($updateData);
+        $user->save();
+
+        return ['success' => true, 'message' => 'success_message.transfered_account'];
     }
 
     /**
