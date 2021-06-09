@@ -37,8 +37,8 @@ class Appointment extends Model
      * @var array
      */
     protected $casts = [
-        'start_date' => 'datetime:d/m/Y',
-        'end_date' => 'datetime:d/m/Y',
+        'start_date' => 'datetime:Y-m-d H:i:s',
+        'end_date' => 'datetime:Y-m-d H:i:s',
         'created_by_therapist' => 'boolean',
     ];
 
