@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 use App\Helpers\TreatmentActivityHelper;
 use App\Models\TreatmentPlan;
-use App\Helpers\RocketChatHelper;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -111,13 +110,6 @@ class PatientResource extends JsonResource
                     }
                 }
             }
-
-            $unreads = 0;
-            if ($request->get('chat_rooms')) {
-                $rooms = array_intersect($request->get('chat_rooms'), $this->chat_rooms);
-                $unreads = RocketChatHelper::getUnreadMessages($request->get('auth_token'),
-                    $request->get('auth_userId'), reset($rooms));
-            }
         }
 
         $responseData = [
@@ -143,9 +135,8 @@ class PatientResource extends JsonResource
                 'secondary_therapists' => $this->secondary_therapists ? : [],
                 'note' => $this->note,
                 'is_secondary_therapist' => $this->isSecondaryTherapist($this->secondary_therapists, $request),
-                'completed_percent' => $completedPercent,
-                'totalPainThreshold' => $totalPainThreshold,
-                'unreads' => $unreads
+                 'completed_percent' => $completedPercent,
+                 'totalPainThreshold' => $totalPainThreshold,
             ]);
         }
 
