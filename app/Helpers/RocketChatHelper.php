@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -10,6 +11,7 @@ define('ROCKET_CHAT_LOGOUT_URL', env('ROCKET_CHAT_URL') . '/api/v1/logout');
 define('ROCKET_CHAT_CREATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.create');
 define('ROCKET_CHAT_UPDATE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.update');
 define('ROCKET_CHAT_DELETE_USER_URL', env('ROCKET_CHAT_URL') . '/api/v1/users.delete');
+define('ROCKET_CHAT_DELETE_MESSAGE_URL', env('ROCKET_CHAT_URL') . '/api/v1/rooms.cleanHistory');
 define('ROCKET_CHAT_CREATE_ROOM_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.create');
 define('ROCKET_CHAT_GET_MESSAGES_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.messages');
 define('ROCKET_CHAT_GET_COUNTER_URL', env('ROCKET_CHAT_URL') . '/api/v1/im.counters');
@@ -130,6 +132,33 @@ class RocketChatHelper
             'X-2fa-Code' => hash('sha256', getenv('ROCKET_CHAT_ADMIN_PASSWORD')),
             'X-2fa-Method' => 'password'
         ])->asJson()->post(ROCKET_CHAT_DELETE_USER_URL, ['userId' => $userId, 'confirmRelinquish' => true]);
+
+        if ($response->successful()) {
+            $result = $response->json();
+            return $result['success'];
+        }
+
+        $response->throw();
+    }
+
+    /**
+     * @param string $chat_room
+     *
+     * @return mixed
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function deleteMessages($chat_room)
+    {
+        $payload = [
+            'roomId' => $chat_room,
+            'latest' => Carbon::now()->subYears(1),
+            'oldest' => Carbon::now()->subYears(5)
+        ];
+
+        $response = Http::withHeaders([
+            'X-Auth-Token' => getenv('ROCKET_CHAT_ADMIN_AUTH_TOKEN'),
+            'X-User-Id' => getenv('ROCKET_CHAT_ADMIN_USER_ID'),
+        ])->asJson()->post(ROCKET_CHAT_DELETE_MESSAGE_URL, $payload);
 
         if ($response->successful()) {
             $result = $response->json();

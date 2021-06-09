@@ -24,7 +24,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('hi:chat-cleanup')->daily()->runInBackground();
+        $schedule->command('hi:treatment-cleanup')->daily()->runInBackground();
+        $schedule->command('hi:appointment-cleanup')->daily()->runInBackground();
     }
 
     /**

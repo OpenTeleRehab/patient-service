@@ -55,6 +55,15 @@ class TreatmentPlan extends Model
             $builder->orderBy('start_date', 'desc');
             $builder->orderBy('name');
         });
+
+        self::deleting(function ($treatment) {
+            try {
+                Goal::where('treatment_plan_id', $treatment->id)->delete();
+                Activity::where('treatment_plan_id', $treatment->id)->delete();
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
     }
 
     /**
