@@ -227,34 +227,6 @@ class RocketChatHelper
     }
 
     /**
-     * @param string $authToken
-     * @param string $userId
-     * @param string $roomId
-     *
-     * @return mixed
-     * @throws \Illuminate\Http\Client\RequestException
-     */
-    public static function getUnreadMessages($authToken, $userId, $roomId)
-    {
-        $unreads = 0;
-        try {
-            $response = Http::withHeaders([
-                'X-Auth-Token' => $authToken,
-                'X-User-Id' => $userId
-            ])->asJson()->get(ROCKET_CHAT_GET_COUNTER_URL, ['roomId' => $roomId]);
-
-            if ($response->successful()) {
-                $result = $response->json();
-                return $result['unreads'];
-            }
-        } catch (\Exception $e) {
-            $response->throw();
-        }
-
-        return $unreads;
-    }
-
-    /**
      * @param \App\Models\User $user
      * @param string $room_id
      *
