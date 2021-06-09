@@ -30,6 +30,7 @@
 <img width="190" src="http://localhost/images/logo-horizontal.svg">
 
 <h1>{{ $treatmentPlan->name }}</h1>
+<h2>{{$diseaseName}}</h2>
 <pre>{!! $treatmentPlan->description !!}</pre>
 
 @php

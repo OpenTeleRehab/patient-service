@@ -7,6 +7,7 @@ use App\Helpers\TreatmentActivityHelper;
 use App\Models\TreatmentPlan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Mpdf\Mpdf;
 
 class TreatmentPlanExport
@@ -38,7 +39,11 @@ class TreatmentPlanExport
      */
     public function view(): View
     {
+        $diseaseName = Http::get(env('ADMIN_SERVICE_URL') . '/api/disease/get-name/by-id', [
+            'disease_id' => $this->treatmentPlan->disease_id,
+        ]);
         return view('exports.treatment_plan', [
+            'diseaseName' => $diseaseName,
             'treatmentPlan' => $this->treatmentPlan,
             'activities' => TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true),
             'translations' => TranslationHelper::getTranslations(),
