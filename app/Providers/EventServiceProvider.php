@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\PodcastCalculatorEvent;
+use App\Listeners\Calculator;
 use App\Listeners\LoginEvent;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         'Illuminate\Auth\Events\Login' => [
             LoginEvent::class,
         ],
+        PodcastCalculatorEvent::class => [
+            Calculator::class
+        ]
     ];
 
     /**
