@@ -25,6 +25,7 @@ Route::post('register/verify-code', [RegistrationController::class, 'verifyCode'
 Route::apiResource('patient', PatientController::class);
 Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds']);
 Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId']);
+Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove']);
 Route::get('patient/unread/{user}', [PatientController::class, 'getUserCounters']);
 Route::post('patient/activateDeactivateAccount/{user}', [PatientController::class, 'activateDeactivateAccount']);
 Route::post('patient/deleteAccount/{user}', [PatientController::class, 'deleteAccount']);
@@ -37,6 +38,7 @@ Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataF
 Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
 Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
 Route::get('activities/list/by-ids', [ActivityController::class, 'getByIds']);
+Route::post('activities/delete/by-ids', [ActivityController::class, 'deleteByIds']);
 Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease']);
 
 Route::group(['middleware' => ['auth:api', 'user']], function () {
@@ -63,4 +65,6 @@ Route::get('treatment-plan/export/{treatmentPlan}', [TreatmentPlanController::cl
 Route::apiResource('appointment', AppointmentController::class);
 Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);
 Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
+Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
+Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
 

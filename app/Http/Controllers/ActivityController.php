@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\TreatmentPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -87,6 +88,21 @@ class ActivityController extends Controller
         }
 
         return ['success' => true, 'data' => $result];
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public static function deleteByIds(Request $request)
+    {
+        $activitiesIds = $request->get('activity_ids', []);
+        Log::debug($activitiesIds);
+
+        $type = $request->get('type');
+        Activity::where('type', $type)->whereIn('activity_id', $activitiesIds)->delete();
+
+        return ['success' => true, 'message' => 'message.activity_delete'];
     }
 
     /**
