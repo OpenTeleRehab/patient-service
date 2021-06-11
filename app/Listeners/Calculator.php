@@ -35,9 +35,7 @@ class Calculator
         ]);
 
         $activity = Activity::find($event->activity['id']);
-
         $ongoingTreatmentPlan = TreatmentPlan::find($activity->treatment_plan_id);
-
         $dateDiff = intval(date_diff(date_create($ongoingTreatmentPlan->start_date), date_create(Carbon::now()->format('Y-m-d')), true)->format('%d'));
         $totalPainThreshold = 0;
         $totalCompleted = 0;
@@ -58,9 +56,7 @@ class Calculator
                 $week = $activity->week;
                 $totalDay += 1;
             }
-
             $totalCompleted += $activity->completed ? 1 : 0;
-
             if ($totalDay >= 3) {
                 exit();
             }
@@ -78,16 +74,14 @@ class Calculator
             ->get();
 
         foreach ($exerciseActivities as $exerciseActivity) {
-            if ($activity->day !== $day && $activity->week !== $week) {
-                $day = $activity->day;
-                $week = $activity->week;
+            if ($exerciseActivity->day !== $day && $exerciseActivity->week !== $week) {
+                $day = $exerciseActivity->day;
+                $week = $exerciseActivity->week;
                 $totalDay += 1;
             }
-
-            if ($activity->pain_level > (int)$painThresholdLimit->body()) {
+            if ($exerciseActivity->pain_level > (int)$painThresholdLimit->body()) {
                 $totalPainThreshold += 1;
             }
-
             if ($totalDay >= 3) {
                 exit();
             }
