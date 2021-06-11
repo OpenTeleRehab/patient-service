@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PodcastCalculatorEvent;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
@@ -355,6 +356,8 @@ class TreatmentPlanController extends Controller
                 'completed_sets' => $activity['sets'] ?? null,
                 'completed_reps' => $activity['reps'] ?? null,
             ]);
+            // Calculate completed percent and total pain threshold
+            event(new PodcastCalculatorEvent($activity));
         }
 
         return ['success' => true];

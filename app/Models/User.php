@@ -50,6 +50,8 @@ class User extends Authenticatable
         'created_by',
         'dial_code',
         'privacy_and_policy_id',
+        'completed_percent',
+        'total_pain_threshold',
     ];
 
     /**
