@@ -106,7 +106,8 @@ class TreatmentPlanController extends Controller
         $overlapRecords = TreatmentPlan::where('patient_id', $patientId)
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere('end_date', '>' , $startDate);
             })->get();
 
         if (count($overlapRecords)) {
@@ -517,7 +518,8 @@ class TreatmentPlanController extends Controller
             ->where('therapist_id', $therapistId)
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere('end_date', '>', $startDate);
             });
 
         if ($treatmentId) {
