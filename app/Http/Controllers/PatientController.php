@@ -43,7 +43,7 @@ class PatientController extends Controller
             }
 
             if (isset($data['enabled'])) {
-                $query = User::where('enabled', $data['enabled']);
+                $query->where('enabled', boolval($data['enabled']));
             }
 
             if (isset($data['search_value'])) {
