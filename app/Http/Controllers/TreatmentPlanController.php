@@ -215,6 +215,11 @@ class TreatmentPlanController extends Controller
         Goal::where('treatment_plan_id', $treatmentPlanId)
             ->whereNotIn('id', $goalIds)
             ->delete();
+
+        Activity::where('treatment_plan_id', $treatmentPlanId)
+            ->where('type', Activity::ACTIVITY_TYPE_GOAL)
+            ->whereNotIn('id', $goalIds)
+            ->delete();
     }
 
     /**
