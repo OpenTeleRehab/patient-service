@@ -515,12 +515,11 @@ class TreatmentPlanController extends Controller
      */
     private function validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentId = null)
     {
-        $ongoingTreatmentLimit = Http::get(env('ADMIN_SERVICE_URL') . '/api/setting/library-limit', [
-            'type' => TreatmentPlan::NUMBER_OF_ONGOING_TREATMENT_LIMIT,
+        $ongoingTreatmentLimit = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/get-patient-limit', [
+            'therapist_id' => $therapistId,
         ]);
         $therapistOngoingTreatment = DB::table('treatment_plans')
-            ->join('users', 'treatment_plans.patient_id', 'users.id')
-            ->where('therapist_id', $therapistId)
+            ->where('created_by', $therapistId)
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
                     ->orWhereBetween('end_date', [$startDate, $endDate])
