@@ -10,7 +10,6 @@ class TreatmentPlan extends Model
     const STATUS_PLANNED = 'planned';
     const STATUS_ON_GOING = 'on_going';
     const STATUS_FINISHED = 'finished';
-    const NUMBER_OF_ONGOING_TREATMENT_LIMIT = 'number_of_ongoing_treatment_per_therapist';
     const PAIN_THRESHOLD_LIMIT = 'pain_threshold_limit';
 
     /**
