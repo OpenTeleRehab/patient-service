@@ -68,3 +68,4 @@ Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClin
 Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
 Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
 
+Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
