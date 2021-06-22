@@ -112,6 +112,7 @@ class PatientController extends Controller
         $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
 
         $phoneExist = User::where('phone', $data['phone'])->first();
+
         if ($phoneExist) {
             // Todo: message will be replaced.
             return abort(409, 'error_message.phone_exists');
@@ -581,5 +582,16 @@ class PatientController extends Controller
         $patient->save();
 
         return ['success' => true, 'message' => 'success_message.deleted_chat_rooms'];
+    }
+
+    /**
+     * @param Request $request
+     * @return int
+     */
+    public function getPatientByPhone(Request $request) {
+        $phone = $request->get('phone');
+        $patient = User::where('phone', $phone)->count();
+
+        return $patient ? $patient : 0;
     }
 }
