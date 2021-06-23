@@ -111,9 +111,15 @@ class PatientController extends Controller
 
         $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
 
-        $phoneExist = User::where('phone', $data['phone'])->first();
+        $phoneExist = Http::get(env('THERAPIST_SERVICE_URL') . '/api/patient/by-phone-number', [
+            'phone' => $data['phone']
+        ]);
 
-        if ($phoneExist) {
+        if (!empty($phoneExist) && $phoneExist->successful()) {
+            $patientData = $phoneExist->json()['data'];
+        }
+
+        if ($patientData > 0) {
             // Todo: message will be replaced.
             return abort(409, 'error_message.phone_exists');
         }
