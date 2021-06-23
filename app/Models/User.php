@@ -120,4 +120,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(TreatmentPlan::class, 'patient_id', 'id');
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id', 'id');
+    }
 }

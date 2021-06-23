@@ -56,8 +56,14 @@ class PatientController extends Controller
                     $query->where(function ($query) use ($data) {
                         $query->where('identity', 'like', '%' . $data['search_value'] . '%')
                             ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
-                            ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
-                    });
+                            ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%')
+                            ->orWhereHas('appointments', function($query) use ($data) {
+                                $query->where('start_date', '>', Carbon::now())
+                                    ->limit(1);
+                            })->whereHas('appointments', function(Builder $query) use ($data) {
+                                $query->whereDate('start_date', 'like', '%' . $data['search_value'] . '%');
+                            });
+                        });
                 }
             }
 
@@ -113,6 +119,14 @@ class PatientController extends Controller
                                     $query->where('secondary_therapists',  'like', '%[]%');
                                 });
                             }
+                        } elseif ($filterObj->columnName === 'next_appointment' && $filterObj->value !== '') {
+                            $nexAppointment = date_create_from_format('d/m/Y', $filterObj->value);
+                            $query->whereHas('appointments', function(Builder $query) use ($filterObj) {
+                                $query->where('start_date', '>', Carbon::now())
+                                    ->limit(1);
+                            })->whereHas('appointments', function(Builder $query) use ($nexAppointment) {
+                                $query->whereDate('start_date', '=', date_format($nexAppointment, config('settings.defaultTimestampFormat')));
+                            });
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                         }
