@@ -13,6 +13,7 @@ use App\Models\Activity;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,8 @@ class PatientController extends Controller
 
             if (isset($data['filters'])) {
                 $filters = $request->get('filters');
-                $query->where(function ($query) use ($filters) {
+                $therapist_id = $data['therapist_id'] ?? '';
+                $query->where(function ($query) use ($filters, $therapist_id) {
                     foreach ($filters as $filter) {
                         $filterObj = json_decode($filter);
                         if ($filterObj->columnName === 'date_of_birth') {
@@ -72,6 +74,45 @@ class PatientController extends Controller
                             $query->where('clinic_id', $filterObj->value);
                         } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
                             $query->where('country_id', $filterObj->value);
+                        } elseif ($filterObj->columnName === 'treatment_status') {
+                            if ($filterObj->value == User::FINISHED_TREATMENT_PLAN) {
+                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('end_date', '<', Carbon::now());
+                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('end_date', '>', Carbon::now());
+                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('start_date', '<=', Carbon::now())
+                                        ->whereDate('end_date', '>=', Carbon::now());
+                                });
+                            } elseif ($filterObj->value == User::PLANNED_TREATMENT_PLAN) {
+                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('end_date', '>', Carbon::now());
+                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('start_date', '<=', Carbon::now())
+                                        ->whereDate('end_date', '>=', Carbon::now());
+                                });
+                            } else {
+                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                    $query->whereDate('start_date', '<=', Carbon::now())
+                                        ->whereDate('end_date', '>=', Carbon::now());
+                                });
+                            }
+                        } else if ($filterObj->columnName === 'age') {
+                            $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) = ? OR TIMESTAMPDIFF(MONTH, date_of_birth, NOW()) = ?  OR TIMESTAMPDIFF(DAY, date_of_birth, NOW()) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
+                        } else if ($filterObj->columnName === 'ongoing_treatment_plan') {
+                            $query->whereHas('treatmentPlans', function(Builder $query) use ($filterObj) {
+                                $query->where('name', 'like', '%' .  $filterObj->value . '%');
+                            });
+                        } else if ($filterObj->columnName === 'secondary_therapist') {
+                            if ($filterObj->value == User::SECONDARY_TERAPIST){
+                                $query->where(function ($query) use ($therapist_id) {
+                                    $query->whereJsonContains('secondary_therapists', intval($therapist_id));
+                                });
+                            } else {
+                                $query->where(function ($query) use ($therapist_id) {
+                                    $query->where('secondary_therapists',  'like', '%[]%');
+                                });
+                            }
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                         }
