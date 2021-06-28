@@ -651,7 +651,15 @@ class PatientController extends Controller
      */
     public function getPatientByPhone(Request $request) {
         $phone = $request->get('phone');
-        $patient = User::where('phone', $phone)->count();
+        $patientId = $request->get('patientId');
+        if ($patientId) {
+            $patient = User::where('phone', $phone)->whereNotIn('id', [$patientId])
+                ->count();
+        } else {
+            $patient = User::where('phone', $phone)
+                ->count();
+        }
+
 
         return $patient ? $patient : 0;
     }
