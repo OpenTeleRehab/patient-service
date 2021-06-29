@@ -262,13 +262,15 @@ class PatientController extends Controller
                 'gender' => $data['gender'],
             ];
 
-            $phoneExist = User::where('phone', $data['phone'])
-                ->whereNotIn('id', [$id])
-                ->first();
+            if (isset($data['phone'])) {
+                $phoneExist = User::where('phone', $data['phone'])
+                    ->whereNotIn('id', [$id])
+                    ->first();
 
-            if ($phoneExist) {
-                // Todo: message will be replaced.
-                return abort(409, 'error_message.phone_exists');
+                if ($phoneExist) {
+                    // Todo: message will be replaced.
+                    return abort(409, 'error_message.phone_exists');
+                }
             }
 
             if (isset($data['dial_code'])) {
