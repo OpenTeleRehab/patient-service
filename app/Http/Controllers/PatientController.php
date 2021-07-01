@@ -104,7 +104,7 @@ class PatientController extends Controller
                                 });
                             }
                         } else if ($filterObj->columnName === 'age') {
-                            $query->whereRaw('YEAR(NOW()) - YEAR(date_of_birth) = ? OR TIMESTAMPDIFF(MONTH, date_of_birth, NOW()) = ?  OR TIMESTAMPDIFF(DAY, date_of_birth, NOW()) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
+                            $query->whereRaw('YEAR(NOW()) - YEAR(date_of_birth) = ? OR ABS(MONTH(date_of_birth) - MONTH(NOW())) = ?  OR ABS(DAY(date_of_birth) - DAY(NOW())) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
                         } else if ($filterObj->columnName === 'ongoing_treatment_plan') {
                             $query->whereHas('treatmentPlans', function(Builder $query) use ($filterObj) {
                                 $query->where('name', 'like', '%' .  $filterObj->value . '%');
