@@ -49,15 +49,15 @@ class TreatmentPlanController extends Controller
                     foreach ($filters as $filter) {
                         $filterObj = json_decode($filter);
                         if ($filterObj->columnName === 'treatment_status') {
-                            $status = trim($filterObj->value);
+                            $status = $filterObj->value;
                             switch ($status) {
-                                case TreatmentPlan::STATUS_PLANNED:
+                                case TreatmentPlan::FILTER_STATUS_PLANNED:
                                     $query->whereDate('start_date', '>', Carbon::now());
                                     break;
-                                case TreatmentPlan::STATUS_FINISHED:
+                                case TreatmentPlan::FILTER_STATUS_FINISHED:
                                     $query->where('end_date', '<', Carbon::now());
                                     break;
-                                case TreatmentPlan::STATUS_ON_GOING:
+                                case TreatmentPlan::FILTER_STATUS_ON_GOING:
                                     $query->where('start_date', '<=', Carbon::now());
                                     $query->where('end_date', '>=', Carbon::now());
                             }
@@ -67,8 +67,8 @@ class TreatmentPlanController extends Controller
                             $endDate = date_create_from_format('d/m/Y', $dates[1]);
                             $startDate->format('Y-m-d');
                             $endDate->format('Y-m-d');
-                            $query->where($filterObj->columnName, '>=', $startDate)
-                                ->where($filterObj->columnName, '<=', $endDate);
+                            $query->whereDate($filterObj->columnName, '>=', $startDate)
+                                ->whereDate($filterObj->columnName, '<=', $endDate);
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                         }
