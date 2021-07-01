@@ -62,8 +62,10 @@ class PatientController extends Controller
                                     ->limit(1);
                             })->whereHas('appointments', function(Builder $query) use ($data) {
                                 $query->whereDate('start_date', 'like', '%' . $data['search_value'] . '%');
+                            })->orWhereHas('treatmentPlans', function(Builder $query) use ($data) {
+                                $query->where('name', 'like', '%' . $data['search_value'] . '%');
                             });
-                        });
+                    });
                 }
             }
 

@@ -55,11 +55,11 @@ class TreatmentPlanController extends Controller
                                     $query->whereDate('start_date', '>', Carbon::now());
                                     break;
                                 case TreatmentPlan::FILTER_STATUS_FINISHED:
-                                    $query->where('end_date', '<', Carbon::now());
+                                    $query->whereDate('end_date', '<', Carbon::now());
                                     break;
                                 case TreatmentPlan::FILTER_STATUS_ON_GOING:
-                                    $query->where('start_date', '<=', Carbon::now());
-                                    $query->where('end_date', '>=', Carbon::now());
+                                    $query->whereDate('start_date', '<=', Carbon::now());
+                                    $query->whereDate('end_date', '>=', Carbon::now());
                             }
                         } elseif ($filterObj->columnName === 'start_date' || $filterObj->columnName === 'end_date') {
                             $dates = explode(' - ', $filterObj->value);
