@@ -385,14 +385,16 @@ class TreatmentPlanController extends Controller
             $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
                 ->whereDate('start_date', '<=', Carbon::now())
                 ->whereDate('end_date', '>=', Carbon::now())
-                ->firstOrFail();
+                ->first();
         }
 
-        $data = array_merge($treatmentPlan->toArray(), [
-            'goals' => GoalResource::collection($treatmentPlan->goals),
-            'activities' => TreatmentActivityHelper::getActivities($treatmentPlan, $request, $includedGoals),
-        ]);
-
+        $data = [];
+        if ($treatmentPlan) {
+            $data = array_merge($treatmentPlan->toArray(), [
+                'goals' => GoalResource::collection($treatmentPlan->goals),
+                'activities' => TreatmentActivityHelper::getActivities($treatmentPlan, $request, $includedGoals),
+            ]);
+        }
         return ['success' => true, 'data' => $data];
     }
 
