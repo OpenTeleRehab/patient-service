@@ -23,17 +23,21 @@ class ChartController extends Controller
                 SUM(CASE WHEN gender = "male" THEN 1 ELSE 0 END) AS male,
                 SUM(CASE WHEN gender = "female" THEN 1 ELSE 0 END) AS female,
                 SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
-            '))->groupBy('country_id')
+            '))
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)->groupBy('country_id')
             ->get();
 
         $onGoingTreatmentsByGenderGroupedByCountry = DB::table('users')
             ->select(DB::raw('
                 country_id,
-                SUM(CASE WHEN gender = "male" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female,
-                SUM(CASE WHEN gender = "other" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS other
+                SUM(CASE WHEN gender = "male" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS male,
+                SUM(CASE WHEN gender = "female" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS other
             '))
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('country_id')
             ->get();
 
@@ -46,6 +50,8 @@ class ChartController extends Controller
                 SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))
             ->leftJoin('users', 'treatment_plans.patient_id', 'users.id')
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('country_id')
             ->get();
 
@@ -60,7 +66,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByCountryColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
@@ -71,7 +77,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByCountryColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
@@ -81,7 +87,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `>=' . $i . '`';
 
                 $onGoingTreatmentsByAgeGapGroupedByCountryColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' THEN 1 ELSE 0 END) AS `>=' . $i . '`';
             }
@@ -90,12 +96,16 @@ class ChartController extends Controller
         $patientsByAgeGapGroupedByCountry = DB::table('users')
             ->select(DB::raw('
                 country_id, ' . $patientsByAgeGapGroupedByCountryColumns))
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('country_id')
             ->get();
 
         $onGoingTreatmentsByAgeGapGroupedByCountry = DB::table('users')
             ->select(DB::raw('
                 country_id, ' . $onGoingTreatmentsByAgeGapGroupedByCountryColumns))
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('country_id')
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->get();
@@ -103,6 +113,8 @@ class ChartController extends Controller
         $treatmentsByAgeGapGroupedByCountry = DB::table('treatment_plans')
             ->select(DB::raw('
                 country_id, ' . $patientsByAgeGapGroupedByCountryColumns))
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('country_id')
             ->join('users', 'treatment_plans.patient_id', 'users.id')
             ->get();
@@ -134,18 +146,22 @@ class ChartController extends Controller
                 SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))
             ->where('country_id', $country_id)
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('clinic_id')
             ->get();
 
         $onGoingTreatmentsByGenderGroupedByClinic = DB::table('users')
             ->select(DB::raw('
                 clinic_id,
-                SUM(CASE WHEN gender = "male" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS male,
-                SUM(CASE WHEN gender = "female" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS female,
-                SUM(CASE WHEN gender = "other" AND start_date <= NOW() AND end_date >= NOW() THEN 1 ELSE 0 END) AS other
+                SUM(CASE WHEN gender = "male" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS male,
+                SUM(CASE WHEN gender = "female" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS female,
+                SUM(CASE WHEN gender = "other" AND start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END) AS other
             '))
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->where('country_id', $country_id)
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('clinic_id')
             ->get();
 
@@ -160,7 +176,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByClinicColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `< ' . ($i + self::AGE_GAP) . '`,';
@@ -171,7 +187,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
 
                 $onGoingTreatmentsByAgeGapGroupedByClinicColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ' . ($i + 10) .
                     ' THEN 1 ELSE 0 END) AS `' . $i . ' - ' . ($i + self::AGE_GAP) . '`,';
@@ -181,7 +197,7 @@ class ChartController extends Controller
                     ' THEN 1 ELSE 0 END) AS `>=' . $i . '`';
 
                 $onGoingTreatmentsByAgeGapGroupedByClinicColumns .= '
-                    SUM(CASE WHEN start_date <= NOW() AND end_date >= NOW()
+                    SUM(CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE()
                     AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ' . $i .
                     ' THEN 1 ELSE 0 END) AS `>=' . $i . '`';
             }
@@ -191,6 +207,8 @@ class ChartController extends Controller
             ->select(DB::raw('
                 clinic_id, ' . $patientsByAgeGapGroupedByClinicColumns))
             ->where('country_id', $country_id)
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('clinic_id')
             ->get();
 
@@ -200,6 +218,8 @@ class ChartController extends Controller
             ->groupBy('clinic_id')
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->where('country_id', $country_id)
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->get();
 
         return [
@@ -217,7 +237,10 @@ class ChartController extends Controller
     public function getDataForClinicAdmin(Request $request)
     {
         $clinicId = $request->get('clinic_id');
-        $patientTotal = User::where('clinic_id', $clinicId)->count();
+        $patientTotal = User::where('clinic_id', $clinicId)
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
+            ->count();
 
         $onGoingTreatmentsByClinic = DB::table('users')
             ->select(DB::raw('
@@ -225,6 +248,8 @@ class ChartController extends Controller
             '))
             ->whereDate('start_date', '<=', Carbon::now())
             ->whereDate('end_date', '>=', Carbon::now())
+            ->where('users.enabled', '=', 1)
+            ->where('deleted_at', '=', null)
             ->groupBy('clinic_id')
             ->join('treatment_plans', 'users.id', 'treatment_plans.patient_id')
             ->where('clinic_id', $clinicId)

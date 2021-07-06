@@ -389,8 +389,12 @@ class PatientController extends Controller
      */
     public function getByTherapistId(Request $request)
     {
-        $therapistId = $request->get('therapist_id');
-        $patients = User::where('therapist_id', $therapistId)->get();
+        $data = $request->all();
+        $query = User::where('therapist_id', $data['therapist_id']);
+        if (isset($data['enabled'])) {
+            $query->where('enabled', $data['enabled']);
+        }
+        $patients = $query->get();
         return ['success' => true, 'data' => PatientResource::collection($patients)];
     }
 
