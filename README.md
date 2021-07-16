@@ -22,3 +22,7 @@ This repository is where Telerehabilitation App implemented in Laravel and using
 * Configuration with IDE
 
   > [https://eslint.org/docs/user-guide/integrations](https://eslint.org/docs/user-guide/integrations)
+
+# API Documents
+* Please visit [L5-Swagger](https://github.com/DarkaOnLine/L5-Swagger) more detail.
+* Browse [http://localhost:8083/api/documentation](http://localhost:8084/api/documentation)

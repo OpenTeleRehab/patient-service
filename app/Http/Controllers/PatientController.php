@@ -23,6 +23,43 @@ use Mpdf\Output\Destination;
 class PatientController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/patient",
+     *     tags={"Patient"},
+     *     summary="Patient list",
+     *     operationId="patientList",
+     *     @OA\Parameter(
+     *         name="therapist_id",
+     *         in="query",
+     *         description="Therapist id",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="page_size",
+     *         in="query",
+     *         description="Limit",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -151,6 +188,144 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/patient",
+     *     tags={"Patient"},
+     *     summary="Create patient",
+     *     operationId="createPatient",
+     *     @OA\Parameter(
+     *         name="therapist_id",
+     *         in="query",
+     *         description="Therapist id",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="therapist_identity",
+     *         in="query",
+     *         description="Therapist identity",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="phone",
+     *         in="query",
+     *         description="Phone",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="dial_code",
+     *         in="query",
+     *         description="Dial code",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="first_name",
+     *         in="query",
+     *         description="First name",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="last_name",
+     *         in="query",
+     *         description="Last name",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="gender",
+     *         in="query",
+     *         description="Gender",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="Country id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="clinic_id",
+     *         in="query",
+     *         description="Clinic id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="clinic_identity",
+     *         in="query",
+     *         description="Clinic identity",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_of_birth",
+     *         in="query",
+     *         description="Date of birth",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date(dd/mm/yyyy)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="note",
+     *         in="query",
+     *         description="Note",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="secondary_therapist[]",
+     *         in="query",
+     *         description="Secondary therapist ids",
+     *         required=false,
+     *         @OA\Schema(
+     *              type="array",
+     *              @OA\Items( type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param Request $request
      * @return array|void
      * @throws \Exception
@@ -159,7 +334,6 @@ class PatientController extends Controller
     {
         DB::beginTransaction();
         $data = $request->all();
-
         $dateOfBirth = null;
         if ($data['date_of_birth']) {
             $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
@@ -247,6 +421,108 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/patient/{id}",
+     *     tags={"Patient"},
+     *     summary="Update patient",
+     *     operationId="updatePatient",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Id",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="phone",
+     *         in="query",
+     *         description="Phone",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="dial_code",
+     *         in="query",
+     *         description="Dial code",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="first_name",
+     *         in="query",
+     *         description="First name",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="last_name",
+     *         in="query",
+     *         description="Last name",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="gender",
+     *         in="query",
+     *         description="Gender",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_of_birth",
+     *         in="query",
+     *         description="Date of birth",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date(dd/mm/yyyy)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="note",
+     *         in="query",
+     *         description="Note",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="secondary_therapist[]",
+     *         in="query",
+     *         description="Secondary therapist ids",
+     *         required=false,
+     *         @OA\Schema(
+     *              type="array",
+     *              @OA\Items( type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      * @param int $id
      *
@@ -371,6 +647,35 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/patient/list/by-therapist-ids",
+     *     tags={"Patient"},
+     *     summary="Patient list by therapist ids",
+     *     operationId="patientListByTherapistIds",
+     *     @OA\Parameter(
+     *         name="therapist_ids[]",
+     *         in="query",
+     *         description="Therapist ids",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="array",
+     *              @OA\Items( type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
@@ -383,6 +688,34 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/patient/list/by-therapist-id",
+     *     tags={"Patient"},
+     *     summary="Patient list by therapist id",
+     *     operationId="patientListByTherapistId",
+     *     @OA\Parameter(
+     *         name="therapist_id",
+     *         in="query",
+     *         description="Therapist id",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -420,6 +753,43 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/patient/activateDeactivateAccount/{user}",
+     *     tags={"Patient"},
+     *     summary="Activate deactivate patient account",
+     *     operationId="patientActivateDeactivateAccount",
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="User id",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="enabled",
+     *         in="query",
+     *         description="Enabled",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="boolean"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param Request $request
      * @param \App\Models\User $user
      * @return array
@@ -432,6 +802,34 @@ class PatientController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/patient/deleteAccount/{user}",
+     *     tags={"Patient"},
+     *     summary="Delete user account",
+     *     operationId="deleteUserAccount",
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="User id",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      * @param \App\Models\User $user
      *

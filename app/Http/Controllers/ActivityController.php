@@ -10,6 +10,72 @@ use Illuminate\Support\Facades\Http;
 class ActivityController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/activities/list/by-ids",
+     *     tags={"Activity"},
+     *     summary="Activities list by ids",
+     *     operationId="activitiesListByIds",
+     *     @OA\Parameter(
+     *         name="activity_ids[]",
+     *         in="query",
+     *         description="Activity ids",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="array",
+     *              @OA\Items( type="integer"),
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="type",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="string",
+     *              enum={"exercise", "material", "questionnaire"}
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="day",
+     *         in="query",
+     *         description="day",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="week",
+     *         in="query",
+     *         description="week",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="treatment_plan_id",
+     *         in="query",
+     *         description="Treatment plan id",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -91,13 +157,51 @@ class ActivityController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/activities/delete/by-ids",
+     *     tags={"Activity"},
+     *     summary="Activities delete by ids",
+     *     operationId="activitiesDeleteByIds",
+     *     @OA\Parameter(
+     *         name="activity_ids[]",
+     *         in="query",
+     *         description="Activity ids",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="array",
+     *              @OA\Items( type="integer"),
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="type",
+     *         required=true,
+     *          @OA\Schema(
+     *              type="string",
+     *              enum={"exercise", "material", "questionnaire"}
+     *          ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param Request $request
      * @return array
      */
     public static function deleteByIds(Request $request)
     {
         $activitiesIds = $request->get('activity_ids', []);
-        Log::debug($activitiesIds);
 
         $type = $request->get('type');
         Activity::where('type', $type)->whereIn('activity_id', $activitiesIds)->delete();

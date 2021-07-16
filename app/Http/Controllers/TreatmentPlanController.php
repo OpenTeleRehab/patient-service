@@ -20,6 +20,34 @@ use Illuminate\Support\Facades\Http;
 class TreatmentPlanController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/treatment-plan",
+     *     tags={"Treatment plan"},
+     *     summary="Treatment plan list",
+     *     operationId="treatmentPlanList",
+     *     @OA\Parameter(
+     *         name="page_size",
+     *         in="query",
+     *         description="Limit",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -370,6 +398,34 @@ class TreatmentPlanController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/treatment-plan/get-treatment-plan-detail",
+     *     tags={"Treatment plan"},
+     *     summary="Get treatment plan detail",
+     *     operationId="getTreatmentPlanDetail",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="query",
+     *         description="Treatment plan id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
