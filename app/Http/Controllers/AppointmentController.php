@@ -10,6 +10,54 @@ use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/appointment",
+     *     tags={"Appointment"},
+     *     summary="Appointment list",
+     *     operationId="appointmentList",
+     *     @OA\Parameter(
+     *         name="date",
+     *         in="query",
+     *         description="Date",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="now",
+     *         in="query",
+     *         description="Now",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="therapist_id",
+     *         in="query",
+     *         description="Therapist id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -44,6 +92,63 @@ class AppointmentController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/appointment",
+     *     tags={"Appointment"},
+     *     summary="Create appointment",
+     *     operationId="createAppointment",
+     *     @OA\Parameter(
+     *         name="from",
+     *         in="query",
+     *         description="From",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date-time(yyyy-mm-dd hh:mm:ss)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="to",
+     *         in="query",
+     *         description="To",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date-time(yyyy-mm-dd hh:mm:ss)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="therapist_id",
+     *         in="query",
+     *         description="Therapist id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="patient_id",
+     *         in="query",
+     *         description="Patient id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
@@ -73,6 +178,54 @@ class AppointmentController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/appointment/{id}",
+     *     tags={"Appointment"},
+     *     summary="Update appointment",
+     *     operationId="updateAppointment",
+     *     @OA\Parameter(
+     *         name="from",
+     *         in="query",
+     *         description="From",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date-time(yyyy-mm-dd hh:mm:ss)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="to",
+     *         in="query",
+     *         description="To",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *             format="date-time(yyyy-mm-dd hh:mm:ss)"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \Illuminate\Http\Request $request
      * @param \App\Models\Appointment $appointment
      *
@@ -179,6 +332,34 @@ class AppointmentController extends Controller
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/appointment/{id}",
+     *     tags={"Appointment"},
+     *     summary="Delete appointment",
+     *     operationId="deleteAppointment",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
      * @param \App\Models\Appointment $appointment
      *
      * @return array
