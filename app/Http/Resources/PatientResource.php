@@ -30,12 +30,9 @@ class PatientResource extends JsonResource
             ->whereDate('end_date', '>=', Carbon::now())
             ->get();
 
-        // Get last treatment if there is no upcoming
-        if (!$upcomingTreatmentPlan) {
-            $upcomingTreatmentPlan = $this->treatmentPlans()
-                ->orderBy('end_date', 'desc')
-                ->first();
-        }
+        $lastTreatmentPlan = $this->treatmentPlans()
+            ->orderBy('end_date', 'desc')
+            ->first();
 
         $responseData = [
             'id' => $this->id,
@@ -46,7 +43,9 @@ class PatientResource extends JsonResource
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
+            'lastTreatmentPlan' => $lastTreatmentPlan
         ];
+
         if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
             $responseData = array_merge($responseData, [
                 'first_name' => $this->first_name,
