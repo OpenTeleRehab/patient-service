@@ -55,6 +55,7 @@ class User extends Authenticatable
         'privacy_and_policy_id',
         'completed_percent',
         'total_pain_threshold',
+        'kid_theme',
     ];
 
     /**
