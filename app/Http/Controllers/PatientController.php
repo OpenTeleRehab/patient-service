@@ -1060,4 +1060,88 @@ class PatientController extends Controller
 
         return $patient ? $patient : 0;
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getPatientAchievements(Request $request) {
+        $achievements = array(
+            [
+                'title' => 'achievement.tasks.bronze.title',
+                'subtitle' => 'achievement.tasks.bronze.subtitle',
+                'icon' => '/images/badges/daily-task-bronze-badge.png',
+                'obtained' => true,
+            ],
+            [
+                'title' => 'achievement.tasks.silver.title',
+                'subtitle' => 'achievement.tasks.silver.subtitle',
+                'icon' => '/images/badges/daily-task-silver-badge.png',
+                'obtained' => true,
+            ],
+            [
+                'title' => 'achievement.tasks.gold.title',
+                'subtitle' => 'achievement.tasks.gold.subtitle',
+                'icon' => '/images/badges/daily-task-gold-badge.png',
+                'obtained' => true,
+            ],
+            [
+                'title' => 'achievement.tasks.diamond.title',
+                'subtitle' => 'achievement.tasks.diamond.subtitle',
+                'icon' => '/images/badges/daily-task-diamond-badge.png',
+                'obtained' => true,
+            ],
+            [
+                'title' => 'achievement.logins.bronze.title',
+                'subtitle' => 'achievement.logins.bronze.subtitle',
+                'icon' => '/images/badges/login-bronze-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.logins.silver.title',
+                'subtitle' => 'achievement.logins.silver.subtitle',
+                'icon' => '/images/badges/login-silver-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.logins.gold.title',
+                'subtitle' => 'achievement.logins.gold.subtitle',
+                'icon' => '/images/badges/login-gold-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.logins.diamond.title',
+                'subtitle' => 'achievement.logins.diamond.subtitle',
+                'icon' => '/images/badges/login-diamond-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.answers.bronze.title',
+                'subtitle' => 'achievement.answers.bronze.subtitle',
+                'icon' => '/images/badges/answer-bronze-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.answers.silver.title',
+                'subtitle' => 'achievement.answers.silver.subtitle',
+                'icon' => '/images/badges/answer-silver-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.answers.gold.title',
+                'subtitle' => 'achievement.answers.gold.subtitle',
+                'icon' => '/images/badges/answer-gold-badge.png',
+                'obtained' => false,
+            ],
+            [
+                'title' => 'achievement.answers.diamond.title',
+                'subtitle' => 'achievement.answers.diamond.subtitle',
+                'icon' => '/images/badges/answer-diamond-badge.png',
+                'obtained' => false,
+            ],
+        );
+
+        return ['success' => true, 'data' => $achievements];
+    }
 }

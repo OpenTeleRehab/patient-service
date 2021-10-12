@@ -59,6 +59,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'exportOnGoing']);
     Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
+    Route::get('patient/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
