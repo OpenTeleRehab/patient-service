@@ -22,6 +22,11 @@ class User extends Authenticatable
     const PLANNED_TREATMENT_PLAN = 2;
     const SECONDARY_TERAPIST = 2;
 
+    const BRONZE_DAILY_LOGINS = 4;
+    const SILVER_DAILY_LOGINS = 8;
+    const GOLD_DAILY_LOGINS = 12;
+    const DIAMOND_DAILY_LOGINS = 16;
+
     use SoftDeletes;
 
     /**
@@ -56,6 +61,9 @@ class User extends Authenticatable
         'completed_percent',
         'total_pain_threshold',
         'kid_theme',
+        'daily_tasks',
+        'daily_logins',
+        'daily_answers'
     ];
 
     /**

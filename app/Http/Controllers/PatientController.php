@@ -1046,7 +1046,8 @@ class PatientController extends Controller
      * @param Request $request
      * @return int
      */
-    public function getPatientByPhone(Request $request) {
+    public function getPatientByPhone(Request $request)
+    {
         $phone = $request->get('phone');
         $patientId = $request->get('patientId');
         if ($patientId) {
@@ -1066,55 +1067,58 @@ class PatientController extends Controller
      *
      * @return array
      */
-    public function getPatientAchievements(Request $request) {
+    public function getPatientAchievements(Request $request)
+    {
+        $user = Auth::user();
+
         $achievements = array(
             [
                 'title' => 'achievement.tasks.bronze.title',
                 'subtitle' => 'achievement.tasks.bronze.subtitle',
                 'icon' => '/images/badges/daily-task-bronze-badge.png',
-                'obtained' => true,
+                'obtained' => false,
             ],
             [
                 'title' => 'achievement.tasks.silver.title',
                 'subtitle' => 'achievement.tasks.silver.subtitle',
                 'icon' => '/images/badges/daily-task-silver-badge.png',
-                'obtained' => true,
+                'obtained' => false,
             ],
             [
                 'title' => 'achievement.tasks.gold.title',
                 'subtitle' => 'achievement.tasks.gold.subtitle',
                 'icon' => '/images/badges/daily-task-gold-badge.png',
-                'obtained' => true,
+                'obtained' => false,
             ],
             [
                 'title' => 'achievement.tasks.diamond.title',
                 'subtitle' => 'achievement.tasks.diamond.subtitle',
                 'icon' => '/images/badges/daily-task-diamond-badge.png',
-                'obtained' => true,
+                'obtained' => false,
             ],
             [
                 'title' => 'achievement.logins.bronze.title',
                 'subtitle' => 'achievement.logins.bronze.subtitle',
                 'icon' => '/images/badges/login-bronze-badge.png',
-                'obtained' => false,
+                'obtained' => $user->daily_logins >= User::BRONZE_DAILY_LOGINS,
             ],
             [
                 'title' => 'achievement.logins.silver.title',
                 'subtitle' => 'achievement.logins.silver.subtitle',
                 'icon' => '/images/badges/login-silver-badge.png',
-                'obtained' => false,
+                'obtained' => $user->daily_logins >= User::SILVER_DAILY_LOGINS,
             ],
             [
                 'title' => 'achievement.logins.gold.title',
                 'subtitle' => 'achievement.logins.gold.subtitle',
                 'icon' => '/images/badges/login-gold-badge.png',
-                'obtained' => false,
+                'obtained' => $user->daily_logins >= User::GOLD_DAILY_LOGINS,
             ],
             [
                 'title' => 'achievement.logins.diamond.title',
                 'subtitle' => 'achievement.logins.diamond.subtitle',
                 'icon' => '/images/badges/login-diamond-badge.png',
-                'obtained' => false,
+                'obtained' => $user->daily_logins >= User::DIAMOND_DAILY_LOGINS,
             ],
             [
                 'title' => 'achievement.answers.bronze.title',
