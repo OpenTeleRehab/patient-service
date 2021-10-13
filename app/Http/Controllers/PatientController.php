@@ -340,21 +340,12 @@ class PatientController extends Controller
             $dateOfBirth = date_format($dateOfBirth, config('settings.defaultTimestampFormat'));
         }
 
-        $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
-
-        $phoneExist = Http::get(env('THERAPIST_SERVICE_URL') . '/api/patient/by-phone-number', [
-            'phone' => $data['phone']
-        ]);
-
-        if (!empty($phoneExist) && $phoneExist->successful()) {
-            $patientData = $phoneExist->json()['data'];
-        }
-
-        if ($patientData > 0) {
-            // Todo: message will be replaced.
+        $countUserByPhone = User::where('phone', $data['phone'])->count();
+        if ($countUserByPhone > 0) {
             return abort(409, 'error_message.phone_exists');
         }
 
+        $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
         $user = User::create([
             'therapist_id' => $data['therapist_id'],
             'phone' => $data['phone'],
@@ -366,11 +357,11 @@ class PatientController extends Controller
             'clinic_id' => $data['clinic_id'],
             'date_of_birth' => $dateOfBirth,
             'note' => $data['note'],
-            'secondary_therapists' => $secondaryTherapists
+            'secondary_therapists' => $secondaryTherapists,
         ]);
 
         Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
-            'therapist_ids' => isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [],
+            'therapist_ids' => $secondaryTherapists,
             'patient_first_name' => $user->first_name,
             'patient_last_name' => $user->last_name,
         ]);
