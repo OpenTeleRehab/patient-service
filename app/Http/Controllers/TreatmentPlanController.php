@@ -389,11 +389,27 @@ class TreatmentPlanController extends Controller
                 'pain_level' => $activity['pain_level'] ?? null,
                 'completed_sets' => $activity['sets'] ?? null,
                 'completed_reps' => $activity['reps'] ?? null,
+                'submitted_date' => now(),
             ]);
             // Calculate completed percent and total pain threshold
             event(new PodcastCalculatorEvent($activity));
         }
 
+        // Update user daily task.
+        $lastSubmittedActivity = Activity::where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->skip(1)->first();
+        $completedDateDiff = now()->diffInDays($lastSubmittedActivity->submitted_date);
+        $user = Auth::user();
+        if ($completedDateDiff === 0 && $user->init_daily_tasks > 0) {
+            $init_daily_tasks = $user->init_daily_tasks;
+        } else if ($completedDateDiff === 1) {
+            $init_daily_tasks = $user->init_daily_tasks + 1;
+        } else {
+            $init_daily_tasks = 1;
+        }
+        $user->update([
+            'init_daily_tasks' => $init_daily_tasks,
+            'daily_tasks' => $init_daily_tasks > $user->daily_tasks ? $init_daily_tasks : $user->daily_tasks,
+        ]);
         return ['success' => true];
     }
 
@@ -508,6 +524,22 @@ class TreatmentPlanController extends Controller
                 'submitted_date' => now(),
             ]);
         }
+
+        // Update user daily answers completed.
+        $user = Auth::user();
+        $lastSubmittedQuestionnaire = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->skip(1)->first();
+        $completedDateDiff = now()->diffInDays($lastSubmittedQuestionnaire->submitted_date);
+        if ($completedDateDiff === 0 && $user->init_daily_answers > 0) {
+            $init_daily_answers = $user->init_daily_answers;
+        } else if ($completedDateDiff === 1) {
+            $init_daily_answers = $user->init_daily_answers + 1;
+        } else {
+            $init_daily_answers = 1;
+        }
+        $user->update([
+            'init_daily_answers' => $init_daily_answers,
+            'daily_answers' => $init_daily_answers > $user->daily_answers ? $init_daily_answers : $user->daily_answers,
+        ]);
         return ['success' => true];
     }
 

@@ -27,6 +27,16 @@ class User extends Authenticatable
     const GOLD_DAILY_LOGINS = 12;
     const DIAMOND_DAILY_LOGINS = 16;
 
+    const BRONZE_DAILY_TASKS = 5;
+    const SILVER_DAILY_TASKS = 15;
+    const GOLD_DAILY_TASKS = 25;
+    const DIAMOND_DAILY_TASKS = 35;
+
+    const BRONZE_DAILY_ANSWERS = 2;
+    const SILVER_DAILY_ANSWERS = 5;
+    const GOLD_DAILY_ANSWERS = 8;
+    const DIAMOND_DAILY_ANSWERS = 11;
+
     use SoftDeletes;
 
     /**
