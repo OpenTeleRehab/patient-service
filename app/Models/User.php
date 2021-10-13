@@ -61,6 +61,9 @@ class User extends Authenticatable
         'completed_percent',
         'total_pain_threshold',
         'kid_theme',
+        'init_daily_tasks',
+        'init_daily_logins',
+        'init_daily_answers',
         'daily_tasks',
         'daily_logins',
         'daily_answers'

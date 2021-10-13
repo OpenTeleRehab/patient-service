@@ -20,9 +20,18 @@ class LoginEvent
     {
         $user = Auth::user();
 
+        if (now()->diffInDays($user->last_login) === 0 && $user->init_daily_logins > 0) {
+            $init_daily_logins = $user->init_daily_logins;
+        } else if (now()->diffInDays($user->last_login) === 1) {
+            $init_daily_logins = $user->init_daily_logins + 1;
+        } else {
+            $init_daily_logins = 1;
+        }
+
         $user->update([
             'last_login' => now(),
-            'daily_logins' => now()->diffInDays($user->last_login) === 1 ? $user->daily_logins + 1 : 1
+            'init_daily_logins' => $init_daily_logins,
+            'daily_logins' => $init_daily_logins > $user->daily_logins ? $init_daily_logins : $user->daily_logins,
         ]);
     }
 }
