@@ -14,6 +14,9 @@ class AddAchievementToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->integer('init_daily_tasks')->default(0);
+            $table->integer('init_daily_logins')->default(0);
+            $table->integer('init_daily_answers')->default(0);
             $table->integer('daily_tasks')->default(0);
             $table->integer('daily_logins')->default(0);
             $table->integer('daily_answers')->default(0);
@@ -28,6 +31,9 @@ class AddAchievementToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('init_daily_tasks');
+            $table->dropColumn('init_daily_logins');
+            $table->dropColumn('init_daily_answers');
             $table->dropColumn('daily_tasks');
             $table->dropColumn('daily_logins');
             $table->dropColumn('daily_answers');
