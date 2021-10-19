@@ -160,4 +160,19 @@ class AuthController extends Controller
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function enableKidTheme(Request $request)
+    {
+        $user = Auth::user();
+        $user->update([
+            'kid_theme' => $request->get('kid_theme'),
+        ]);
+
+        return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
+    }
 }

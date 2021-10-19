@@ -47,6 +47,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
     Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy']);
+    Route::post('auth/enable-kid-theme', [AuthController::class, 'enableKidTheme']);
     Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity']);
     Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
@@ -58,6 +59,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'exportOnGoing']);
     Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
+    Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);

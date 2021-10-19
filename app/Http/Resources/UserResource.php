@@ -35,6 +35,7 @@ class UserResource extends JsonResource
             'chat_rooms' => $this->chat_rooms,
             'secondary_therapists' => $this->secondary_therapists,
             'privacy_and_policy_id' => $this->privacy_and_policy_id,
+            'kid_theme' => $this->kid_theme,
         ];
     }
 }

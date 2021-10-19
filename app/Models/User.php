@@ -22,6 +22,21 @@ class User extends Authenticatable
     const PLANNED_TREATMENT_PLAN = 2;
     const SECONDARY_TERAPIST = 2;
 
+    const BRONZE_DAILY_LOGINS = 4;
+    const SILVER_DAILY_LOGINS = 8;
+    const GOLD_DAILY_LOGINS = 12;
+    const DIAMOND_DAILY_LOGINS = 16;
+
+    const BRONZE_DAILY_TASKS = 5;
+    const SILVER_DAILY_TASKS = 15;
+    const GOLD_DAILY_TASKS = 25;
+    const DIAMOND_DAILY_TASKS = 35;
+
+    const BRONZE_DAILY_ANSWERS = 2;
+    const SILVER_DAILY_ANSWERS = 5;
+    const GOLD_DAILY_ANSWERS = 8;
+    const DIAMOND_DAILY_ANSWERS = 11;
+
     use SoftDeletes;
 
     /**
@@ -55,6 +70,13 @@ class User extends Authenticatable
         'privacy_and_policy_id',
         'completed_percent',
         'total_pain_threshold',
+        'kid_theme',
+        'init_daily_tasks',
+        'init_daily_logins',
+        'init_daily_answers',
+        'daily_tasks',
+        'daily_logins',
+        'daily_answers'
     ];
 
     /**
