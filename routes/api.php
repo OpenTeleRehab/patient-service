@@ -60,6 +60,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
     Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
+    Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, 'getBadgeIcon']);
 });
 
 Route::apiResource('treatment-plan', TreatmentPlanController::class);
