@@ -1182,4 +1182,30 @@ class PatientController extends Controller
     {
         return response()->file(public_path('badges/' . $filename));
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Support\Collection
+     */
+    public function getPatientsForGlobalData (Request $request) {
+        $yesterday = Carbon::yesterday();
+        if ($request->has('all')) {
+            $users = User::withTrashed()->get();
+        } else {
+            $users = User::withTrashed()
+                ->whereDate('updated_at', '>=', $yesterday->startOfDay())
+                ->whereDate('updated_at', '<=', $yesterday->endOfDay())
+                ->get();
+        }
+
+        return $users;
+    }
+
+    /**
+     * @param integer $id
+     * @return User
+     */
+    public function getById($id) {
+        return json_encode(User::find(intval($id)));
+    }
 }

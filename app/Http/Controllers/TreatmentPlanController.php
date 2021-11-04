@@ -640,4 +640,21 @@ class TreatmentPlanController extends Controller
 
         return $treatmentPlans > 0 ? true : false;
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTreatmentPlanForGlobalData (Request $request) {
+        $yesterday = Carbon::yesterday();
+        if ($request->has('all')) {
+            $treatmentPlans = TreatmentPlan::all();
+        } else {
+            $treatmentPlans = TreatmentPlan::whereDate('updated_at', '>=', $yesterday->startOfDay())
+                ->whereDate('updated_at', '<=', $yesterday->endOfDay())
+                ->get();
+        }
+
+        return $treatmentPlans;
+    }
 }
