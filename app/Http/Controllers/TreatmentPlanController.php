@@ -391,17 +391,18 @@ class TreatmentPlanController extends Controller
                 'completed_reps' => $activity['reps'] ?? null,
                 'submitted_date' => now(),
             ]);
-            // Calculate completed percent and total pain threshold
+
+            // Calculate completed percent and total pain threshold.
             event(new PodcastCalculatorEvent($activity));
         }
 
         // Update user daily task.
-        $lastSubmittedActivity = Activity::where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->skip(1)->first();
-        $completedDateDiff = now()->diffInDays($lastSubmittedActivity->submitted_date);
+        $lastSubmittedActivity = Activity::where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->first();
+        $completedDateDiff = now()->diffInDays($lastSubmittedActivity->submitted_date->format('Y-m-d'));
         $user = Auth::user();
         if ($completedDateDiff === 0 && $user->init_daily_tasks > 0) {
             $init_daily_tasks = $user->init_daily_tasks;
-        } else if ($completedDateDiff === 1) {
+        } elseif ($completedDateDiff === 1) {
             $init_daily_tasks = $user->init_daily_tasks + 1;
         } else {
             $init_daily_tasks = 1;
@@ -527,11 +528,11 @@ class TreatmentPlanController extends Controller
 
         // Update user daily answers completed.
         $user = Auth::user();
-        $lastSubmittedQuestionnaire = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->skip(1)->first();
-        $completedDateDiff = now()->diffInDays($lastSubmittedQuestionnaire->submitted_date);
+        $lastSubmittedQuestionnaire = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->first();
+        $completedDateDiff = now()->diffInDays($lastSubmittedQuestionnaire->submitted_date->format('Y-m-d'));
         if ($completedDateDiff === 0 && $user->init_daily_answers > 0) {
             $init_daily_answers = $user->init_daily_answers;
-        } else if ($completedDateDiff === 1) {
+        } elseif ($completedDateDiff === 1) {
             $init_daily_answers = $user->init_daily_answers + 1;
         } else {
             $init_daily_answers = 1;
@@ -541,6 +542,7 @@ class TreatmentPlanController extends Controller
             'daily_answers' => $init_daily_answers > $user->daily_answers ? $init_daily_answers : $user->daily_answers,
         ]);
         return ['success' => true];
+
     }
 
     /**
