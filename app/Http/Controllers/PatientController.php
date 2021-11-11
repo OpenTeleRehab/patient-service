@@ -1173,6 +1173,11 @@ class PatientController extends Controller
         return ['success' => true, 'data' => $achievements];
     }
 
+    /**
+     * @param string $filename
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function getBadgeIcon($filename)
     {
         return response()->file(public_path('badges/' . $filename));
