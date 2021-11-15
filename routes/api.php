@@ -31,6 +31,8 @@ Route::post('patient/activateDeactivateAccount/{user}', [PatientController::clas
 Route::post('patient/deleteAccount/{user}', [PatientController::class, 'deleteAccount']);
 Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById']);
 Route::get('patient/list/by-clinic-id', [PatientController::class, 'getByClinicId']);
+Route::get('patient/list/global', [PatientController::class, 'getPatientsForGlobalData']);
+Route::get('patient/id/{id}', [PatientController::class, 'getById']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
 Route::get('treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities']);
@@ -40,6 +42,7 @@ Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataF
 Route::get('activities/list/by-ids', [ActivityController::class, 'getByIds']);
 Route::post('activities/delete/by-ids', [ActivityController::class, 'deleteByIds']);
 Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease']);
+Route::get('treatment-plan/list/global', [TreatmentPlanController::class, 'getTreatmentPlanForGlobalData']);
 
 Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);

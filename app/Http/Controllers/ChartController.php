@@ -44,7 +44,8 @@ class ChartController extends Controller
                 SUM(CASE WHEN gender = "other" THEN 1 ELSE 0 END) AS other
             '))
             ->where('users.enabled', '=', 1)
-            ->where('deleted_at', '=', null)->groupBy('country_id')
+            ->where('deleted_at', '=', null)
+            ->groupBy('country_id')
             ->get();
 
         $onGoingTreatmentsByGenderGroupedByCountry = DB::table('users')
@@ -131,7 +132,7 @@ class ChartController extends Controller
 
         $treatmentsByAgeGapGroupedByCountry = DB::table('treatment_plans')
             ->select(DB::raw('
-                country_id, ' . $patientsByAgeGapGroupedByCountryColumns))
+               country_id, ' . $patientsByAgeGapGroupedByCountryColumns))
             ->where('users.enabled', '=', 1)
             ->where('deleted_at', '=', null)
             ->groupBy('country_id')
