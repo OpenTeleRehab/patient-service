@@ -1077,7 +1077,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.tasks.bronze.subtitle',
                 'icon' => '/achievement/get-badge-icon/daily-task-bronze-badge.png',
                 'obtained' => $user->daily_tasks >= User::BRONZE_DAILY_TASKS,
-                'max_streak_number' => User::DIAMOND_DAILY_TASKS,
+                'max_streak_number' => User::BRONZE_DAILY_TASKS,
                 'init_streak_number' => $user->init_daily_tasks,
             ],
             [
@@ -1085,7 +1085,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.tasks.silver.subtitle',
                 'icon' => '/achievement/get-badge-icon/daily-task-silver-badge.png',
                 'obtained' => $user->daily_tasks >= User::SILVER_DAILY_TASKS,
-                'max_streak_number' => User::DIAMOND_DAILY_TASKS,
+                'max_streak_number' => User::SILVER_DAILY_TASKS,
                 'init_streak_number' => $user->init_daily_tasks,
             ],
             [
@@ -1093,7 +1093,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.tasks.gold.subtitle',
                 'icon' => '/achievement/get-badge-icon/daily-task-gold-badge.png',
                 'obtained' => $user->daily_tasks >= User::GOLD_DAILY_TASKS,
-                'max_streak_number' => User::DIAMOND_DAILY_TASKS,
+                'max_streak_number' => User::GOLD_DAILY_TASKS,
                 'init_streak_number' => $user->init_daily_tasks,
             ],
             [
@@ -1109,7 +1109,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.logins.bronze.subtitle',
                 'icon' => '/achievement/get-badge-icon/login-bronze-badge.png',
                 'obtained' => $user->daily_logins >= User::BRONZE_DAILY_LOGINS,
-                'max_streak_number' => User::DIAMOND_DAILY_LOGINS,
+                'max_streak_number' => User::BRONZE_DAILY_LOGINS,
                 'init_streak_number' => $user->init_daily_logins,
             ],
             [
@@ -1117,7 +1117,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.logins.silver.subtitle',
                 'icon' => '/achievement/get-badge-icon/login-silver-badge.png',
                 'obtained' => $user->daily_logins >= User::SILVER_DAILY_LOGINS,
-                'max_streak_number' => User::DIAMOND_DAILY_LOGINS,
+                'max_streak_number' => User::SILVER_DAILY_LOGINS,
                 'init_streak_number' => $user->init_daily_logins,
             ],
             [
@@ -1125,7 +1125,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.logins.gold.subtitle',
                 'icon' => '/achievement/get-badge-icon/login-gold-badge.png',
                 'obtained' => $user->daily_logins >= User::GOLD_DAILY_LOGINS,
-                'max_streak_number' => User::DIAMOND_DAILY_LOGINS,
+                'max_streak_number' => User::GOLD_DAILY_LOGINS,
                 'init_streak_number' => $user->init_daily_logins,
             ],
             [
@@ -1141,7 +1141,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.answers.bronze.subtitle',
                 'icon' => '/achievement/get-badge-icon/answer-bronze-badge.png',
                 'obtained' => $user->daily_answers >= User::BRONZE_DAILY_ANSWERS,
-                'max_streak_number' => User::DIAMOND_DAILY_ANSWERS,
+                'max_streak_number' => User::BRONZE_DAILY_ANSWERS,
                 'init_streak_number' => $user->init_daily_answers,
             ],
             [
@@ -1149,7 +1149,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.answers.silver.subtitle',
                 'icon' => '/achievement/get-badge-icon/answer-silver-badge.png',
                 'obtained' => $user->daily_answers >= User::SILVER_DAILY_ANSWERS,
-                'max_streak_number' => User::DIAMOND_DAILY_ANSWERS,
+                'max_streak_number' => User::SILVER_DAILY_ANSWERS,
                 'init_streak_number' => $user->init_daily_answers,
             ],
             [
@@ -1157,7 +1157,7 @@ class PatientController extends Controller
                 'subtitle' => 'achievement.answers.gold.subtitle',
                 'icon' => '/achievement/get-badge-icon/answer-gold-badge.png',
                 'obtained' => $user->daily_answers >= User::GOLD_DAILY_ANSWERS,
-                'max_streak_number' => User::DIAMOND_DAILY_ANSWERS,
+                'max_streak_number' => User::GOLD_DAILY_ANSWERS,
                 'init_streak_number' => $user->init_daily_answers,
             ],
             [
