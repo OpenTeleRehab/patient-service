@@ -39,22 +39,28 @@ class LoginEvent
             $init_daily_logins = $user->init_daily_logins + 1;
         }
 
-        $lastTaskSubmitted = $lastTreatmentPlan->activities::where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+        $lastTaskSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
+            ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->where('completed', 1)
             ->orderBy('submitted_date', 'DESC')
             ->first();
-        $hasUncompletedTask = $this->hasUncompletedTask($user, $lastTaskSubmitted->submitted_date);
-        if (!empty($lastTaskSubmitted) && now()->diffInDays($lastTaskSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedTask) {
-            $init_daily_tasks = 0;
+        if ($lastTaskSubmitted) {
+            $hasUncompletedTask = $this->hasUncompletedTask($user, $lastTaskSubmitted->submitted_date);
+            if (!empty($lastTaskSubmitted) && now()->diffInDays($lastTaskSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedTask) {
+                $init_daily_tasks = 0;
+            }
         }
 
-        $lastAnswerSubmitted = $lastTreatmentPlan->activities::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+        $lastAnswerSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
+            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->where('completed', 1)
             ->orderBy('submitted_date', 'DESC')
             ->first();
-        $hasUncompletedAnswer = $this->hasUncompletedTask($user, $lastAnswerSubmitted->submitted_date);
-        if (!empty($lastAnswerSubmitted) && now()->diffInDays($lastAnswerSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
-            $init_daily_answers = 0;
+        if ($lastAnswerSubmitted) {
+            $hasUncompletedAnswer = $this->hasUncompletedTask($user, $lastAnswerSubmitted->submitted_date);
+            if (!empty($lastAnswerSubmitted) && now()->diffInDays($lastAnswerSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
+                $init_daily_answers = 0;
+            }
         }
 
         $user->update([
@@ -76,26 +82,28 @@ class LoginEvent
         $ongoingTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $now)
             ->whereDate('end_date', '>=', $now)
-            ->get();
+            ->first();
         $hasUncompletedTask = false;
-        $uncompletedTasks = $ongoingTreatmentPlan->activities->where('completed', 0)->get();
-        foreach ($uncompletedTasks as $activity) {
-            $numberDay = $activity->day + (($activity->week - 1) * 7);
-            $numberDay -= 1;
-            $taskDate = Carbon::parse($ongoingTreatmentPlan->start_date)->addDays($numberDay);
-            if (!is_null($lastDay)) {
-                $lastDay = Carbon::parse($lastDay);
-                if ($taskDate < $now && $taskDate > $lastDay) {
-                    $hasUncompletedTask = true;
-                    break;
+        if ($ongoingTreatmentPlan) {
+            $uncompletedTasks = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)->where('completed', 0)->get();
+            foreach ($uncompletedTasks as $activity) {
+                $numberDay = $activity->day + (($activity->week - 1) * 7);
+                $numberDay -= 1;
+                $taskDate = Carbon::parse($ongoingTreatmentPlan->start_date)->addDays($numberDay);
+                if (!is_null($lastDay)) {
+                    $lastDay = Carbon::parse($lastDay);
+                    if ($taskDate < $now && $taskDate > $lastDay) {
+                        $hasUncompletedTask = true;
+                        break;
+                    }
+                } else {
+                    if ($taskDate->startOfDay() == $now->startOfDay()) {
+                        $hasUncompletedTask = true;
+                        break;
+                    }
                 }
-            } else {
-                if ($taskDate == $now) {
-                    $hasUncompletedTask = true;
-                    break;
-                }
-            }
 
+            }
         }
         return $hasUncompletedTask;
     }
