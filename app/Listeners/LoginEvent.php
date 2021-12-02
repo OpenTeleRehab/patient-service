@@ -35,7 +35,7 @@ class LoginEvent
         $hasUncompletedTaskLastLogin = $this->hasUncompletedTask($user, $user->last_login);
         if ($hasUncompletedTaskLastLogin) {
             $init_daily_logins = 1;
-        } elseif (now()->diffInDays($user->last_login) > 0 && $hasTaskToday) {
+        } elseif (now()->diffInDays(Carbon::parse($user->last_login)) > 0 && $hasTaskToday) {
             $init_daily_logins = $user->init_daily_logins + 1;
         }
 
@@ -46,7 +46,7 @@ class LoginEvent
             ->first();
         if ($lastTaskSubmitted) {
             $hasUncompletedTask = $this->hasUncompletedTask($user, $lastTaskSubmitted->submitted_date);
-            if (!empty($lastTaskSubmitted) && now()->diffInDays($lastTaskSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedTask) {
+            if (now()->diffInDays($lastTaskSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedTask) {
                 $init_daily_tasks = 0;
             }
         }
@@ -58,7 +58,7 @@ class LoginEvent
             ->first();
         if ($lastAnswerSubmitted) {
             $hasUncompletedAnswer = $this->hasUncompletedTask($user, $lastAnswerSubmitted->submitted_date);
-            if (!empty($lastAnswerSubmitted) && now()->diffInDays($lastAnswerSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
+            if (now()->diffInDays($lastAnswerSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
                 $init_daily_answers = 0;
             }
         }
@@ -79,17 +79,17 @@ class LoginEvent
      */
     public function hasUncompletedTask($user, $lastDay = null) {
         $now = Carbon::now();
-        $ongoingTreatmentPlan = $user->treatmentPlans()
+        $lastTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now)
+            ->orderBy('start_date', 'DESC')
             ->first();
         $hasUncompletedTask = false;
-        if ($ongoingTreatmentPlan) {
-            $uncompletedTasks = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)->where('completed', 0)->get();
+        if ($lastTreatmentPlan) {
+            $uncompletedTasks = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)->where('completed', 0)->get();
             foreach ($uncompletedTasks as $activity) {
                 $numberDay = $activity->day + (($activity->week - 1) * 7);
                 $numberDay -= 1;
-                $taskDate = Carbon::parse($ongoingTreatmentPlan->start_date)->addDays($numberDay);
+                $taskDate = Carbon::parse($lastTreatmentPlan->start_date)->addDays($numberDay);
                 if (!is_null($lastDay)) {
                     $lastDay = Carbon::parse($lastDay);
                     if ($taskDate < $now && $taskDate > $lastDay) {
