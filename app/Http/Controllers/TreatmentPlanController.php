@@ -396,16 +396,22 @@ class TreatmentPlanController extends Controller
             event(new PodcastCalculatorEvent($activity));
         }
 
-        // Update user daily task.
-        $lastSubmittedActivity = Activity::where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->first();
-        $completedDateDiff = now()->diffInDays($lastSubmittedActivity->submitted_date->format('Y-m-d'));
         $user = Auth::user();
-        if ($completedDateDiff === 0 && $user->init_daily_tasks > 0) {
-            $init_daily_tasks = $user->init_daily_tasks;
-        } elseif ($completedDateDiff === 1) {
+        $now = Carbon::now();
+        $ongoingTreatmentPlan = $user->treatmentPlans()
+            ->whereDate('start_date', '<=', $now)
+            ->whereDate('end_date', '>=', $now)
+            ->first();
+        // Update user daily task.
+        $submittedActivity = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)
+            ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+            ->where('completed', 1)
+            ->whereDate('submitted_date', '>=', $now->startOfDay())
+            ->whereDate('submitted_date', '<=', $now->endOfDay())
+            ->get();
+        $init_daily_tasks = $user->init_daily_tasks;
+        if ($submittedActivity->count() <= 1) {
             $init_daily_tasks = $user->init_daily_tasks + 1;
-        } else {
-            $init_daily_tasks = 1;
         }
         $user->update([
             'init_daily_tasks' => $init_daily_tasks,
@@ -525,17 +531,22 @@ class TreatmentPlanController extends Controller
                 'submitted_date' => now(),
             ]);
         }
-
-        // Update user daily answers completed.
         $user = Auth::user();
-        $lastSubmittedQuestionnaire = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('completed', 1)->orderBy('submitted_date', 'DESC')->first();
-        $completedDateDiff = now()->diffInDays($lastSubmittedQuestionnaire->submitted_date->format('Y-m-d'));
-        if ($completedDateDiff === 0 && $user->init_daily_answers > 0) {
-            $init_daily_answers = $user->init_daily_answers;
-        } elseif ($completedDateDiff === 1) {
+        $now = Carbon::now();
+        $ongoingTreatmentPlan = $user->treatmentPlans()
+            ->whereDate('start_date', '<=', $now)
+            ->whereDate('end_date', '>=', $now)
+            ->first();
+        // Update user daily answers completed.
+        $submittedQuestionnaire = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)
+            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+            ->where('completed', 1)
+            ->whereDate('submitted_date', '>=', $now->startOfDay())
+            ->whereDate('submitted_date', '<=', $now->endOfDay())
+            ->get();
+        $init_daily_answers = $user->init_daily_answers;
+        if ($submittedQuestionnaire->count() <= 1) {
             $init_daily_answers = $user->init_daily_answers + 1;
-        } else {
-            $init_daily_answers = 1;
         }
         $user->update([
             'init_daily_answers' => $init_daily_answers,
