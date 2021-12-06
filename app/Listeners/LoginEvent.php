@@ -94,6 +94,9 @@ class LoginEvent
                 $numberDay = $task->day + (($task->week - 1) * 7);
                 $numberDay -= 1;
                 $taskDate = Carbon::parse($lastTreatmentPlan->start_date)->addDays($numberDay)->format('Y-m-d');
+                if (!isset($completedTask[$taskDate])) {
+                    $completedTask[$taskDate] = 0;
+                }
                 if ($task->completed == 1) {
                     $completedTask[$taskDate] += 1;
                 } else {
