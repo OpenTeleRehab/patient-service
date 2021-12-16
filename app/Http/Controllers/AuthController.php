@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\LoginEvent;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -69,6 +70,7 @@ class AuthController extends Controller
                 'profile' => new UserResource($user),
                 'token' => $token,
             ];
+            event(new LoginEvent($request));
             return ['success' => true, 'data' => $data];
         }
 
