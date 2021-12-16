@@ -391,23 +391,24 @@ class TreatmentPlanController extends Controller
                 'completed_reps' => $activity['reps'] ?? null,
                 'submitted_date' => now(),
             ]);
+            $timezone = $activity['timezone'];
 
             // Calculate completed percent and total pain threshold.
             event(new PodcastCalculatorEvent($activity));
         }
 
         $user = Auth::user();
-        $now = Carbon::now();
+        $nowLocal = Carbon::now($timezone);
         $ongoingTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now)
+            ->whereDate('start_date', '<=', $nowLocal)
+            ->whereDate('end_date', '>=', $nowLocal)
             ->first();
         // Update user daily task.
         $submittedActivity = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)
             ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->where('completed', 1)
-            ->whereDate('submitted_date', '>=', $now->startOfDay())
-            ->whereDate('submitted_date', '<=', $now->endOfDay())
+            ->whereDate('submitted_date', '>=', $nowLocal->startOfDay())
+            ->whereDate('submitted_date', '<=', $nowLocal->endOfDay())
             ->get();
         $init_daily_tasks = $user->init_daily_tasks;
         if ($submittedActivity->count() <= 1) {
@@ -525,6 +526,7 @@ class TreatmentPlanController extends Controller
                     'answer' => serialize($answer),
                 ]);
             }
+            $timezone = $questionnaireAnswer['timezone'];
 
             Activity::where('id',$questionnaireAnswer['id'])->update([
                 'completed' => true,
@@ -532,17 +534,17 @@ class TreatmentPlanController extends Controller
             ]);
         }
         $user = Auth::user();
-        $now = Carbon::now();
+        $nowLocal = Carbon::now($timezone);
         $ongoingTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now)
+            ->whereDate('start_date', '<=', $nowLocal)
+            ->whereDate('end_date', '>=', $nowLocal)
             ->first();
         // Update user daily answers completed.
         $submittedQuestionnaire = Activity::where('treatment_plan_id', $ongoingTreatmentPlan->id)
             ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->where('completed', 1)
-            ->whereDate('submitted_date', '>=', $now->startOfDay())
-            ->whereDate('submitted_date', '<=', $now->endOfDay())
+            ->whereDate('submitted_date', '>=', $nowLocal->startOfDay())
+            ->whereDate('submitted_date', '<=', $nowLocal->endOfDay())
             ->get();
         $init_daily_answers = $user->init_daily_answers;
         if ($submittedQuestionnaire->count() <= 1) {

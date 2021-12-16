@@ -2,51 +2,60 @@
 
 namespace App\Listeners;
 
+use App\Events\LoginEvent;
 use App\Models\Activity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Class LoginEvent
+ * Class InitBadge
  * @package App\Listeners
  */
-class LoginEvent
+class InitBadge
 {
-
     /**
      * Handle the event.
      *
+     * @param LoginEvent $loginEvent
+     *
      * @return void
      */
-    public function handle()
+    public function handle(LoginEvent $loginEvent)
     {
         $user = Auth::user();
         $init_daily_logins = $user->init_daily_logins;
         $init_daily_tasks = $user->init_daily_tasks;
         $init_daily_answers = $user->init_daily_answers;
 
-        $now = Carbon::now(config('app.timezone'));
-        $lastTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
-            ->orderBy('start_date', 'DESC')
-            ->first();
+        $timezone = $loginEvent->request['timezone'];
+        $nowLocal = Carbon::now($timezone);
+        $nowUTC = Carbon::now(config('app.timezone'));
+        $lastLogin = Carbon::parse($user->last_login, config('app.timezone'))
+            ->setTimezone($timezone)
+            ->format('Y-m-d');
 
-        $hasTaskSinceLastLogin = $this->hasTaskSinceLastLogin($user);
-        $hasTaskToday = $this->hasTaskToday($user);
-        if ($now->diffInDays(Carbon::parse($user->last_login)->format('Y-m-d')) > 1 && $hasTaskSinceLastLogin) {
+        $hasTaskSinceLastLogin = $this->hasTaskSinceLastLogin($user, $nowLocal, $timezone);
+        $hasTaskToday = $this->hasTaskToday($user, $nowLocal);
+        if ($nowLocal->diffInDays($lastLogin) > 1 && $hasTaskSinceLastLogin) {
             $init_daily_logins = 1;
-        } elseif ($now->diffInDays(Carbon::parse($user->last_login)->format('Y-m-d')) > 0 && $hasTaskToday) {
+        } elseif ($nowLocal->diffInDays($lastLogin) > 0 && $hasTaskToday) {
             $init_daily_logins = $user->init_daily_logins + 1;
         }
 
+        $lastTreatmentPlan = $user->treatmentPlans()
+            ->whereDate('start_date', '<=', $nowLocal)
+            ->orderBy('start_date', 'DESC')
+            ->first();
         $lastTaskSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
             ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->where('completed', 1)
             ->orderBy('submitted_date', 'DESC')
             ->first();
         if ($lastTaskSubmitted) {
-            $hasUncompletedTask = $this->hasUncompletedTask($user, '<>', $lastTaskSubmitted->submitted_date);
-            if ($now->diffInDays($lastTaskSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedTask) {
+            $lastSubmittedDate = Carbon::parse($lastTaskSubmitted->submitted_date, config('app.timezone'))
+                ->setTimezone($timezone);
+            $hasUncompletedTask = $this->hasUncompletedTask($user, $nowLocal, '<>', $lastSubmittedDate);
+            if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedTask) {
                 $init_daily_tasks = 0;
             }
         }
@@ -57,14 +66,16 @@ class LoginEvent
             ->orderBy('submitted_date', 'DESC')
             ->first();
         if ($lastAnswerSubmitted) {
-            $hasUncompletedAnswer = $this->hasUncompletedTask($user, '=', $lastAnswerSubmitted->submitted_date);
-            if ($now->diffInDays($lastAnswerSubmitted->submitted_date->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
+            $lastSubmittedDate = Carbon::parse($lastAnswerSubmitted->submitted_date, config('app.timezone'))
+                ->setTimezone($timezone);
+            $hasUncompletedAnswer = $this->hasUncompletedTask($user, $nowLocal, '=', $lastSubmittedDate);
+            if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
                 $init_daily_answers = 0;
             }
         }
 
         $user->update([
-            'last_login' => now(),
+            'last_login' => $nowUTC,
             'init_daily_logins' => $init_daily_logins,
             'init_daily_tasks' => $init_daily_tasks,
             'init_daily_answers' => $init_daily_answers,
@@ -73,14 +84,15 @@ class LoginEvent
     }
 
     /**
-     * @param $lastDay
      * @param $user
+     * @param $nowLocal
+     * @param $isQuestionnaire
+     * @param $lastDay
      * @return bool
      */
-    public function hasUncompletedTask($user, $isQuestionnaire, $lastDay) {
-        $now = Carbon::now(config('app.timezone'));
+    public function hasUncompletedTask($user, $nowLocal, $isQuestionnaire, $lastDay) {
         $lastTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
+            ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
         $hasUncompletedTask = false;
@@ -112,19 +124,20 @@ class LoginEvent
 
     /**
      * @param $user
+     * @param $nowLocal
+     * @param $timezone
      * @return bool
      */
-    public function hasTaskSinceLastLogin($user) {
-        $now = Carbon::now(config('app.timezone'));
+    public function hasTaskSinceLastLogin($user, $nowLocal, $timezone) {
         $lastTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
+            ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
         $hasTask = false;
         if ($lastTreatmentPlan) {
             $tasks = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
-                ->whereDate('submitted_date', '>=', Carbon::parse($user->last_login))
-                ->whereDate('submitted_date', '<=', $now)
+                ->whereDate('submitted_date', '>=', Carbon::parse($user->last_login)->setTimezone($timezone))
+                ->whereDate('submitted_date', '<=', $nowLocal)
                 ->get();
             if ($tasks->count() > 0) {
                 $hasTask = true;
@@ -135,12 +148,12 @@ class LoginEvent
 
     /**
      * @param $user
+     * @param $nowLocal
      * @return bool
      */
-    public function hasTaskToday($user) {
-        $now = Carbon::now(config('app.timezone'));
+    public function hasTaskToday($user, $nowLocal) {
         $lastTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', $now)
+            ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
         $hasTask = false;
@@ -150,7 +163,7 @@ class LoginEvent
                 $numberDay = $task->day + (($task->week - 1) * 7);
                 $numberDay -= 1;
                 $taskDate = Carbon::parse($lastTreatmentPlan->start_date)->addDays($numberDay);
-                if ($taskDate >= $now->startOfDay() && $taskDate <= $now->endOfDay()) {
+                if ($taskDate >= $nowLocal->startOfDay() && $taskDate <= $nowLocal->endOfDay()) {
                     $hasTask = true;
                     break;
                 }
