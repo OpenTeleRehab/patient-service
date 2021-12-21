@@ -46,31 +46,33 @@ class InitBadge
             ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
-        $lastTaskSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
-            ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
-            ->where('completed', 1)
-            ->orderBy('submitted_date', 'DESC')
-            ->first();
-        if ($lastTaskSubmitted) {
-            $lastSubmittedDate = Carbon::parse($lastTaskSubmitted->submitted_date, config('app.timezone'))
-                ->setTimezone($timezone);
-            $hasUncompletedTask = $this->hasUncompletedTask($user, $nowLocal, '<>', $lastSubmittedDate);
-            if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedTask) {
-                $init_daily_tasks = 0;
+        if ($lastTreatmentPlan) {
+            $lastTaskSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
+                ->where('type', '<>', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+                ->where('completed', 1)
+                ->orderBy('submitted_date', 'DESC')
+                ->first();
+            if ($lastTaskSubmitted) {
+                $lastSubmittedDate = Carbon::parse($lastTaskSubmitted->submitted_date, config('app.timezone'))
+                    ->setTimezone($timezone);
+                $hasUncompletedTask = $this->hasUncompletedTask($user, $nowLocal, '<>', $lastSubmittedDate);
+                if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedTask) {
+                    $init_daily_tasks = 0;
+                }
             }
-        }
 
-        $lastAnswerSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
-            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
-            ->where('completed', 1)
-            ->orderBy('submitted_date', 'DESC')
-            ->first();
-        if ($lastAnswerSubmitted) {
-            $lastSubmittedDate = Carbon::parse($lastAnswerSubmitted->submitted_date, config('app.timezone'))
-                ->setTimezone($timezone);
-            $hasUncompletedAnswer = $this->hasUncompletedTask($user, $nowLocal, '=', $lastSubmittedDate);
-            if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
-                $init_daily_answers = 0;
+            $lastAnswerSubmitted = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
+                ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+                ->where('completed', 1)
+                ->orderBy('submitted_date', 'DESC')
+                ->first();
+            if ($lastAnswerSubmitted) {
+                $lastSubmittedDate = Carbon::parse($lastAnswerSubmitted->submitted_date, config('app.timezone'))
+                    ->setTimezone($timezone);
+                $hasUncompletedAnswer = $this->hasUncompletedTask($user, $nowLocal, '=', $lastSubmittedDate);
+                if ($nowLocal->diffInDays($lastSubmittedDate->format('Y-m-d')) > 0 && $hasUncompletedAnswer) {
+                    $init_daily_answers = 0;
+                }
             }
         }
 
