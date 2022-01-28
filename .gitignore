@@ -11,6 +11,7 @@
 /tests/Mock/*
 !/tests/Mock/.gitignore
 .env
+.env_vn
 .env.backup
 .phpunit.result.cache
 Homestead.json
