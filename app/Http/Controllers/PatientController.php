@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Mpdf\Output\Destination;
 
 class PatientController extends Controller
@@ -1044,21 +1045,25 @@ class PatientController extends Controller
             }
 
             foreach ($user->chat_rooms as $room_id) {
-                $messages = RocketChatHelper::getMessages($user, $room_id);
-                $room_usernames = RocketChatHelper::getRoom($user, $room_id);
-                $patient = RocketChatHelper::getUser($room_usernames['patient_username']);
-                $therapist = RocketChatHelper::getUser($room_usernames['therapist_username']);
+                try {
+                    $messages = RocketChatHelper::getMessages($user, $room_id);
+                    $room_usernames = RocketChatHelper::getRoom($user, $room_id);
+                    $patient = RocketChatHelper::getUser($room_usernames['patient_username']);
+                    $therapist = RocketChatHelper::getUser($room_usernames['therapist_username']);
 
-                foreach ($messages as $message) {
-                    if (isset($message['file'])) {
-                        $download_file = file_get_contents(env('ROCKET_CHAT_URL') . '/file-upload/' . $message['file']['_id'] . '/' . $message['file']['_id'] . '?rc_uid=' . env('ROCKET_CHAT_ADMIN_USER_ID') . '&rc_token=' . env('ROCKET_CHAT_ADMIN_AUTH_TOKEN'));
-                        $zip->addFromString($message['file']['name'], $download_file);
+                    foreach ($messages as $message) {
+                        if (isset($message['file'])) {
+                            $download_file = file_get_contents(env('ROCKET_CHAT_URL') . '/file-upload/' . $message['file']['_id'] . '/' . $message['file']['_id'] . '?rc_uid=' . env('ROCKET_CHAT_ADMIN_USER_ID') . '&rc_token=' . env('ROCKET_CHAT_ADMIN_AUTH_TOKEN'));
+                            $zip->addFromString($message['file']['name'], $download_file);
+                        }
                     }
-                }
 
-                $chatExport = new ChatExport($messages, $patient, $therapist, $timezone);
-                $file = 'chat-' . strtolower(str_replace(' ', '-', $therapist['name'])) . '.pdf';
-                $zip->addFromString($file, $chatExport->Output($file, Destination::STRING_RETURN));
+                    $chatExport = new ChatExport($messages, $patient, $therapist, $timezone);
+                    $file = 'chat-' . strtolower(str_replace(' ', '-', $therapist['name'])) . '.pdf';
+                    $zip->addFromString($file, $chatExport->Output($file, Destination::STRING_RETURN));
+                } catch (\Exception $e) {
+                    Log::debug($e->getMessage());
+                }
             }
 
             $zip->close();
