@@ -35,19 +35,19 @@ class TreatmentActivityHelper
             $response = null;
 
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/exercise/list/by-ids', [
                     'exercise_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/education-material/list/by-ids', [
                     'material_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
+                $response = Http::get(env('ADMIN_SERVICE_URL') . '/api/questionnaire/list/by-ids', [
                     'questionnaire_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')
