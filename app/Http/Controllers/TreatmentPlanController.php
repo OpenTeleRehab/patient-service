@@ -301,7 +301,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                 }
                 // TODO: move to Queued Event Listeners.
-                Http::post(env('ADMIN_SERVICE_URL') . '/api/exercise/mark-as-used/by-ids', [
+                Http::post(env('ADMIN_SERVICE_URL') . '/exercise/mark-as-used/by-ids', [
                     'exercise_ids' => $exercises,
                 ]);
             }
@@ -332,7 +332,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                 }
                 // TODO: move to Queued Event Listeners.
-                Http::post(env('ADMIN_SERVICE_URL') . '/api/education-material/mark-as-used/by-ids', [
+                Http::post(env('ADMIN_SERVICE_URL') . '/education-material/mark-as-used/by-ids', [
                     'material_ids' => $materials,
                 ]);
             }
@@ -362,7 +362,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                 }
                 // TODO: move to Queued Event Listeners.
-                Http::post(env('ADMIN_SERVICE_URL') . '/api/questionnaire/mark-as-used/by-ids', [
+                Http::post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
                     'questionnaire_ids' => $questionnaires,
                 ]);
             }
@@ -620,7 +620,7 @@ class TreatmentPlanController extends Controller
      */
     private function validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentId = null)
     {
-        $ongoingTreatmentLimit = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/get-patient-limit', [
+        $ongoingTreatmentLimit = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/get-patient-limit', [
             'therapist_id' => $therapistId,
         ]);
         $therapistOngoingTreatment = DB::table('treatment_plans')

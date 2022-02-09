@@ -29,7 +29,7 @@ class Calculator
      */
     public function handle(PodcastCalculatorEvent $event)
     {
-        $painThresholdLimit = Http::get(env('ADMIN_SERVICE_URL') . '/api/setting/library-limit', [
+        $painThresholdLimit = Http::get(env('ADMIN_SERVICE_URL') . '/setting/library-limit', [
             'type' => TreatmentPlan::PAIN_THRESHOLD_LIMIT,
         ]);
 

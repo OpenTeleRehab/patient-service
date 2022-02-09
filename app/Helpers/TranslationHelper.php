@@ -13,7 +13,7 @@ class TranslationHelper
     public static function getTranslations()
     {
         $translations = [];
-        $requestTranslation = Http::get(env('ADMIN_SERVICE_URL') . '/api/translation/i18n/patient_app', [
+        $requestTranslation = Http::get(env('ADMIN_SERVICE_URL') . '/translation/i18n/patient_app', [
             'lang' => Auth::user() ? Auth::user()->language_id : '',
         ]);
         if (!empty($requestTranslation) && $requestTranslation->successful()) {

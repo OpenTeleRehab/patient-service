@@ -39,7 +39,7 @@ class TreatmentPlanExport
      */
     public function view(): View
     {
-        $diseaseName = Http::get(env('ADMIN_SERVICE_URL') . '/api/disease/get-name/by-id', [
+        $diseaseName = Http::get(env('ADMIN_SERVICE_URL') . '/disease/get-name/by-id', [
             'disease_id' => $this->treatmentPlan->disease_id,
         ]);
         return view('exports.treatment_plan', [
