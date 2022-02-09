@@ -360,7 +360,7 @@ class PatientController extends Controller
             'secondary_therapists' => $secondaryTherapists,
         ]);
 
-        Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
+        Http::post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
             'therapist_ids' => $secondaryTherapists,
             'patient_first_name' => $user->first_name,
             'patient_last_name' => $user->last_name,
@@ -376,7 +376,7 @@ class PatientController extends Controller
 
         $chatRoomIds = [];
         if (!empty($secondaryTherapists)) {
-            $response = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/by-ids', [
+            $response = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
                 'ids' => \GuzzleHttp\json_encode($secondaryTherapists)
             ]);
 
@@ -576,7 +576,7 @@ class PatientController extends Controller
                 }
 
                 if (!empty($newSecondaryTherapistIds)) {
-                    $response = Http::get(env('THERAPIST_SERVICE_URL') . '/api/therapist/by-ids', [
+                    $response = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
                         'ids' => \GuzzleHttp\json_encode($newSecondaryTherapistIds)
                     ]);
 
@@ -596,7 +596,7 @@ class PatientController extends Controller
             $user->update($dataUpdate);
 
             if ($newSecondaryTherapistIds) {
-                Http::post(env('THERAPIST_SERVICE_URL') . '/api/therapist/new-patient-notification', [
+                Http::post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
                     'therapist_ids' => $newSecondaryTherapistIds,
                     'patient_first_name' => $user->first_name,
                     'patient_last_name' => $user->last_name,
