@@ -366,10 +366,18 @@ class PatientController extends Controller
             'patient_last_name' => $user->last_name,
         ]);
 
+        $response = Http::get(env('ADMIN_SERVICE_URL') . '/get-org-by-name');
+        if($response->successful()) {
+            $organization = $response->json();
+        } else {
+            return ['success' => false, 'message' => 'error_message.organization_not_found'];
+        }
+
         // Create unique identity.
         $clinicIdentity = $data['clinic_identity'];
-        $identity = 'P' . $clinicIdentity .
-            str_pad($user->id, 4, '0', STR_PAD_LEFT);
+        $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
+        $identity = 'P' . $orgIdentity . $clinicIdentity .
+            str_pad($user->id, 5, '0', STR_PAD_LEFT);
 
         // Create chat user.
         $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
