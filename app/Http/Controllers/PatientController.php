@@ -366,7 +366,7 @@ class PatientController extends Controller
             'patient_last_name' => $user->last_name,
         ]);
 
-        $response = Http::get(env('ADMIN_SERVICE_URL') . '/get-org-by-name');
+        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-org-by-name', ['orgName' => env('APP_NAME')]);
         if($response->successful()) {
             $organization = $response->json();
         } else {
