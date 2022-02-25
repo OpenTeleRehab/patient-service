@@ -373,6 +373,23 @@ class PatientController extends Controller
             return ['success' => false, 'message' => 'error_message.organization_not_found'];
         }
 
+        // Add to phone service db
+        $patientApiUrl = 'https://' . $organization['sub_domain_name'] . '-patient.' . env('APP_DOMAIN') . '/api/patient';
+        $adminApiUrl = 'https://' . $organization['sub_domain_name'] . '-admin.' . env('APP_DOMAIN') . '/api/admin';
+        $therapistApiUrl = 'https://' . $organization['sub_domain_name'] . '-therapist.' . env('APP_DOMAIN') . '/api/therapist';
+        $chatApiUrl = 'https://' . $organization['sub_domain_name'] . '-chat.' . env('APP_DOMAIN');
+        $chatWebsocketUrl = 'wss://' . $organization['sub_domain_name'] . '-chat.' . env('APP_DOMAIN') . '/websocket';
+        Http::post(env('PHONE_SERVICE_URL') . '/phone', [
+            'phone' => $data['phone'],
+            'org_name' => $organization['name'],
+            'patient_api_url' => $patientApiUrl,
+            'admin_api_url' => $adminApiUrl,
+            'therapist_api_url' => $therapistApiUrl,
+            'chat_api_url' => $chatApiUrl,
+            'chat_websocket_url' => $chatWebsocketUrl,
+            'clinic_id' => $data['clinic_id'],
+        ]);
+
         // Create unique identity.
         $clinicIdentity = $data['clinic_identity'];
         $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
@@ -597,6 +614,20 @@ class PatientController extends Controller
                             $chatRoomIds = array_merge($user->chat_rooms, [$chatRoomId]);
                         }
                     }
+                }
+            }
+
+            // Update phone in phone service
+            if (isset($data['phone'])) {
+                $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
+                    'org_name' => env('APP_NAME'),
+                    'phone' => $user->phone,
+                ]);
+                if(!empty($response['data']) && $response->successful()) {
+                    $phone = $response->json()['data'];
+                    Http::put(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id'] , [
+                        'phone' => $data['phone'],
+                    ]);
                 }
             }
 
@@ -837,6 +868,17 @@ class PatientController extends Controller
      */
     public function deleteAccount(Request $request, User $user)
     {
+        // Delete phone in phone service
+        $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
+            'org_name' => env('APP_NAME'),
+            'phone' => $user->phone,
+        ]);
+
+        if(!empty($response['data']) && $response->successful()) {
+            $phone = $response->json()['data'];
+            Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
+        }
+
         $this->obfuscatedUserData($user);
         $user->delete();
 
