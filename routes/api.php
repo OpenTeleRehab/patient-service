@@ -32,6 +32,7 @@ Route::post('patient/deleteAccount/{user}', [PatientController::class, 'deleteAc
 Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById']);
 Route::get('patient/list/by-clinic-id', [PatientController::class, 'getByClinicId']);
 Route::get('patient/list/global', [PatientController::class, 'getPatientsForGlobalData']);
+Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']);
 Route::get('patient/id/{id}', [PatientController::class, 'getById']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);

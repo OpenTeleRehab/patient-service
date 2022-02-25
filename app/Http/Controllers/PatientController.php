@@ -1216,4 +1216,15 @@ class PatientController extends Controller
     public function getById($id) {
         return json_encode(User::find(intval($id)));
     }
+
+    /**
+     * @return array
+     */
+    public function getPatientDataForPhoneService()
+    {
+        return [
+            'data' => User::all(),
+            'domain' => env('APP_DOMAIN')
+        ];
+    }
 }
