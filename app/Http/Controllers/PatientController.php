@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ChatExport;
 use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
+use App\Helpers\ApiHelper;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
@@ -374,19 +375,14 @@ class PatientController extends Controller
         }
 
         // Add to phone service db
-        $patientApiUrl = 'https://' . $organization['sub_domain_name'] . '-patient.' . env('APP_DOMAIN') . '/api/patient';
-        $adminApiUrl = 'https://' . $organization['sub_domain_name'] . '-admin.' . env('APP_DOMAIN') . '/api/admin';
-        $therapistApiUrl = 'https://' . $organization['sub_domain_name'] . '-therapist.' . env('APP_DOMAIN') . '/api/therapist';
-        $chatApiUrl = 'https://' . $organization['sub_domain_name'] . '-chat.' . env('APP_DOMAIN');
-        $chatWebsocketUrl = 'wss://' . $organization['sub_domain_name'] . '-chat.' . env('APP_DOMAIN') . '/websocket';
         Http::post(env('PHONE_SERVICE_URL') . '/phone', [
             'phone' => $data['phone'],
             'org_name' => $organization['name'],
-            'patient_api_url' => $patientApiUrl,
-            'admin_api_url' => $adminApiUrl,
-            'therapist_api_url' => $therapistApiUrl,
-            'chat_api_url' => $chatApiUrl,
-            'chat_websocket_url' => $chatWebsocketUrl,
+            'patient_api_url' => ApiHelper::createApiUrl($data['stage'], 'patient', $organization['sub_domain_name'], $organization['type']),
+            'admin_api_url' => ApiHelper::createApiUrl($data['stage'], 'admin', $organization['sub_domain_name'], $organization['type']),
+            'therapist_api_url' => ApiHelper::createApiUrl($data['stage'], 'therapist', $organization['sub_domain_name'], $organization['type']),
+            'chat_api_url' => ApiHelper::createApiUrl($data['stage'], 'chat', $organization['sub_domain_name'], $organization['type']),
+            'chat_websocket_url' => ApiHelper::createApiUrl($data['stage'], 'websocket', $organization['sub_domain_name'], $organization['type']),
             'clinic_id' => $data['clinic_id'],
         ]);
 
