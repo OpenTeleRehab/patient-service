@@ -30,7 +30,7 @@ class AlterPatientIdentity extends Command
      */
     public function handle()
     {
-        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-org-by-name', ['orgName' => env('APP_NAME')]);
+        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
         if ($response->successful()) {
             $organization = $response->json();
             $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
