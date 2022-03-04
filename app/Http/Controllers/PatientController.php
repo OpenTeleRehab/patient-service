@@ -367,7 +367,7 @@ class PatientController extends Controller
             'patient_last_name' => $user->last_name,
         ]);
 
-        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-org-by-name', ['orgName' => env('APP_NAME')]);
+        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
         if($response->successful()) {
             $organization = $response->json();
         } else {
@@ -384,6 +384,7 @@ class PatientController extends Controller
             'chat_api_url' => ApiHelper::createApiUrl($data['stage'], 'chat', $organization['sub_domain_name'], $organization['type']),
             'chat_websocket_url' => ApiHelper::createApiUrl($data['stage'], 'websocket', $organization['sub_domain_name'], $organization['type']),
             'clinic_id' => $data['clinic_id'],
+            'sub_domain' => $organization['sub_domain_name'],
         ]);
 
         // Create unique identity.
@@ -616,7 +617,7 @@ class PatientController extends Controller
             // Update phone in phone service
             if (isset($data['phone'])) {
                 $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
-                    'org_name' => env('APP_NAME'),
+                    'sub_domain' => env('APP_NAME'),
                     'phone' => $user->phone,
                 ]);
                 if(!empty($response['data']) && $response->successful()) {
@@ -866,7 +867,7 @@ class PatientController extends Controller
     {
         // Delete phone in phone service
         $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
-            'org_name' => env('APP_NAME'),
+            'sub_domain' => env('APP_NAME'),
             'phone' => $user->phone,
         ]);
 
