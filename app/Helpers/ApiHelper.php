@@ -20,7 +20,7 @@ class ApiHelper
         $apiUrl = '';
         switch ($stage) {
             case 'local':
-                $urlString = $orgType == 'hi' ? $stage . '-hi-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-' . $subDomain;
+                $urlString = $orgType == 'hi' ? $stage . '-hi-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-' . $subDomain;
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . '.' . env('APP_DOMAIN') . '/websocket';
                     break;
@@ -32,7 +32,7 @@ class ApiHelper
                     break;
                 }
             case 'demo':
-                $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-' . $subDomain;
+                $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-' . $subDomain;
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . '-' . env('APP_DOMAIN') . '/websocket';
                     break;
