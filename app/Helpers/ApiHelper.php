@@ -20,19 +20,19 @@ class ApiHelper
         $apiUrl = '';
         switch ($stage) {
             case 'local':
-                $urlString = $orgType == 'hi' ? $stage . '-hi-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-';
+                $urlString = $orgType == 'hi' ? $stage . '-hi-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '.' : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-';
                 if ($apiName == 'websocket') {
-                    $apiUrl = 'wss://' . $urlString . '.' . env('APP_DOMAIN') . '/websocket';
+                    $apiUrl = 'wss://' . $urlString . env('APP_DOMAIN') . '/websocket';
                     break;
                 } else if ($apiName == 'chat') {
-                    $apiUrl = 'https://' . $urlString . '.' . env('APP_DOMAIN');
+                    $apiUrl = 'https://' . $urlString . env('APP_DOMAIN');
                     break;
                 } else {
-                    $apiUrl = 'https://' . $urlString . '.' . env('APP_DOMAIN') . '/api/' . $apiName;
+                    $apiUrl = 'https://' . $urlString . env('APP_DOMAIN') . '/api/' . $apiName;
                     break;
                 }
             case 'demo':
-                $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-';
+                $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin');
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . '-' . env('APP_DOMAIN') . '/websocket';
                     break;
@@ -44,15 +44,15 @@ class ApiHelper
                     break;
                 }
             case 'live':
-                $urlString = $orgType == 'hi' ? ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-';
+                $urlString = $orgType == 'hi' ? ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '.' : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') . '-';
                 if ($apiName == 'websocket') {
-                    $apiUrl = 'wss://' . $urlString . '.' . env('APP_DOMAIN') . '/websocket';
+                    $apiUrl = 'wss://' . $urlString . env('APP_DOMAIN') . '/websocket';
                     break;
                 } else if ($apiName == 'chat') {
-                    $apiUrl = 'https://' . $urlString . '.' . env('APP_DOMAIN');
+                    $apiUrl = 'https://' . $urlString . env('APP_DOMAIN');
                     break;
                 } else {
-                    $apiUrl = 'https://' . $urlString . '.' . env('APP_DOMAIN') . '/api/' . $apiName;
+                    $apiUrl = 'https://' . $urlString . env('APP_DOMAIN') . '/api/' . $apiName;
                     break;
                 }
             default:
