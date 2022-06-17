@@ -588,6 +588,9 @@ class TreatmentPlanController extends Controller
      */
     public function exportOnGoing(Request $request)
     {
+        $user = Auth::user();
+        $request['lang'] = $user->language_id;
+
         $treatmentPlan = TreatmentPlan::where('patient_id', Auth::id())
             ->whereDate('start_date', '<=', Carbon::now())
             ->whereDate('end_date', '>=', Carbon::now())
@@ -606,6 +609,9 @@ class TreatmentPlanController extends Controller
      */
     public function export(Request $request, TreatmentPlan $treatmentPlan)
     {
+        $user = Auth::user();
+        $request['lang'] = $user->language_id;
+
         $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
         return $treatmentPlanExport->outPut();
     }
