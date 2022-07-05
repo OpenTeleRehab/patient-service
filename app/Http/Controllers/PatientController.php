@@ -347,6 +347,7 @@ class PatientController extends Controller
         }
 
         $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
+
         $user = User::create([
             'therapist_id' => $data['therapist_id'],
             'phone' => $data['phone'],
@@ -359,6 +360,7 @@ class PatientController extends Controller
             'date_of_birth' => $dateOfBirth,
             'note' => $data['note'],
             'secondary_therapists' => $secondaryTherapists,
+            'enabled' => true,
         ]);
 
         Http::post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
