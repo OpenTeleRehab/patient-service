@@ -364,8 +364,29 @@ class TreatmentPlanController extends Controller
                 // TODO: move to Queued Event Listeners.
                 Http::post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
                     'questionnaire_ids' => $questionnaires,
+                    'is_used' => true
                 ]);
             }
+        }
+
+        // Unmark as used for unselect questionnaires
+        $unSelectedQuestionnaireIds = Activity::where('treatment_plan_id', $treatmentPlanId)
+            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+            ->whereNotIn('id', $activityIds)
+            ->pluck('activity_id');
+
+        $ongoingTreatmentPlanIds = TreatmentPlan::whereDate('start_date', '<=', Carbon::now())
+            ->where('id', '<>', $treatmentPlanId)
+            ->whereDate('end_date', '>=', Carbon::now())
+            ->pluck('id');
+
+        $questionnaireInUsed = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->whereIn('activity_id', $unSelectedQuestionnaireIds)->whereIn('treatment_plan_id', $ongoingTreatmentPlanIds)->get();
+
+        if (count($questionnaireInUsed) == 0 && count($unSelectedQuestionnaireIds) > 0) {
+            Http::post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
+                'questionnaire_ids' => $unSelectedQuestionnaireIds,
+                'is_used' => false
+            ]);
         }
 
         // Remove not selected activities.
