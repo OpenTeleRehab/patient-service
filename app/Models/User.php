@@ -76,7 +76,8 @@ class User extends Authenticatable
         'init_daily_answers',
         'daily_tasks',
         'daily_logins',
-        'daily_answers'
+        'daily_answers',
+        'firebase_token'
     ];
 
     /**

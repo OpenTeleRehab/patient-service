@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('hi:chat-cleanup')->daily()->runInBackground();
         $schedule->command('hi:treatment-cleanup')->daily()->runInBackground();
         $schedule->command('hi:appointment-cleanup')->daily()->runInBackground();
+        $schedule->command('hi:daily-reminder')->daily()->runInBackground();
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\TreatmentPlanController;
 use \App\Http\Controllers\AppointmentController;
 use \App\Http\Controllers\ChartController;
+use \App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -52,6 +53,7 @@ Route::group(['middleware' => ['auth:api', 'user']], function () {
     Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
     Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy']);
     Route::post('auth/enable-kid-theme', [AuthController::class, 'enableKidTheme']);
+    Route::post('auth/create-firebase-token', [AuthController::class, 'createFirebaseToken']);
     Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity']);
     Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
     Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
@@ -76,3 +78,5 @@ Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, '
 
 Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
 Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, 'getBadgeIcon']);
+
+Route::get('/push-notification', [NotificationController::class, 'pushNotification']);

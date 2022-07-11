@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -176,5 +177,20 @@ class AuthController extends Controller
         ]);
 
         return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function createFirebaseToken(Request $request)
+    {
+        $user = Auth::user();
+        $user->update([
+            'firebase_token' => $request->get('firebase_token'),
+        ]);
+
+        return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
     }
 }

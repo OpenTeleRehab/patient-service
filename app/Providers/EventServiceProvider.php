@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Events\LoginEvent;
 use App\Events\PodcastCalculatorEvent;
+use App\Events\PodcastNotificationEvent;
 use App\Listeners\Calculator;
 use App\Listeners\InitBadge;
+use App\Listeners\SendPodcastNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -26,7 +28,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         PodcastCalculatorEvent::class => [
             Calculator::class
-        ]
+        ],
+        PodcastNotificationEvent::class => [
+            SendPodcastNotification::class
+        ],
     ];
 
     /**
@@ -36,5 +41,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        //
     }
 }
