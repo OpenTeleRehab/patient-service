@@ -912,6 +912,17 @@ class PatientController extends Controller
         $users = User::where('therapist_id', $therapistId)->get();
         if (count($users) > 0) {
             foreach ($users as $user) {
+                // Delete phone in phone service
+                $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
+                    'sub_domain' => env('APP_NAME'),
+                    'phone' => $user->phone,
+                ]);
+
+                if(!empty($response['data']) && $response->successful()) {
+                    $phone = $response->json()['data'];
+                    Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
+                }
+
                 $this->obfuscatedUserData($user);
                 $user->delete();
             }
