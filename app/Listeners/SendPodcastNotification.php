@@ -28,9 +28,11 @@ class SendPodcastNotification
     public function handle(PodcastNotificationEvent $event)
     {
         if (str_contains(Message::JITSI_CALL_AUDIO_STARTED, $event->body) ||
-            str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body)
+            str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body) ||
+            str_contains(Message::JITSI_CALL_AUDIO_MISSED, $event->body) ||
+            str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body)
         ) {
-            $data = [
+            $message = [
                 'to' => $event->token,
                 'data' => [
                     '_id' => $event->id,
@@ -39,22 +41,52 @@ class SendPodcastNotification
                     'body' => $event->body,
                     'channelId' => 'fcm_call_channel',
                 ],
+                'content_available' => true,
                 'priority' => 'high',
-                'topic' => 'all'
+                'topic' => 'all',
+                'apns' => [
+                    'payload' => [
+                        'aps' => [
+                            'content-available' => 'true'
+                        ]
+                    ],
+                    'headers' => [
+                        'apns-priority' => '5',
+                        'apns-push-type' => 'background',
+                        'apns-topic' => ''
+                    ]
+                ]
             ];
         } else {
-            $data = [
+            $message = [
                 'to' => $event->token,
                 'notification' => [
                     'title' => $event->title,
-                    'body' => $event->body
+                    'body' => $event->body,
+                    'sound' => 'default'
                 ],
                 'priority' => 'high',
-                'topic' => 'all'
+                'topic' => 'all',
+                'sound' => 'default',
+                'badge' => 1,
+                'content_available' => true,
+                'apns' => [
+                    'payload' => [
+                        'aps' => [
+                            'badge' => 1,
+                            'content-available' => true
+                        ]
+                    ],
+                    'headers' => [
+                        'apns-priority' => 5,
+                        'apns-push-type' => 'background',
+                        'apns-topic' => ''
+                    ]
+                ]
             ];
         }
 
-        $dataString = json_encode($data);
+        $dataString = json_encode($message);
 
         $headers = [
             'Authorization: key=' . env('FIREBASE_SERVER_API_KEY'),
