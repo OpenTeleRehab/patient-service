@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use App\Helpers\TranslationHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Events\PodcastNotificationEvent;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class Appointment extends Model
 {
@@ -56,6 +60,39 @@ class Appointment extends Model
             // TODO: Remove appointment if patient deleted.
             $builder->has('patient');
         });
+
+        self::created(function ($appointment) {
+            try {
+                $user = User::find($appointment->patient_id);
+                $translations = TranslationHelper::getTranslations($user->language_id);
+
+                self::notification($user, $appointment, $translations['appointment.invitation_appointment_with']);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
+
+        self::updated(function ($appointment) {
+            try {
+                $user = User::find($appointment->patient_id);
+                $translations = TranslationHelper::getTranslations($user->language_id);
+
+                self::notification($user, $appointment, $translations['appointment.updated_appointment_with']);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
+
+        self::deleted(function ($appointment) {
+            try {
+                $user = User::find($appointment->patient_id);
+                $translations = TranslationHelper::getTranslations($user->language_id);
+
+                self::notification($user, $appointment, $translations['appointment.deleted_appointment_with']);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
+        });
     }
 
     /**
@@ -64,5 +101,24 @@ class Appointment extends Model
     public function patient()
     {
         return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    /**
+     * @param object $user
+     * @param object $appointment
+     * @param string $head
+     *
+     * @return bool
+     */
+    static function notification($user, $appointment, $heading)
+    {
+        if ($user) {
+            $token = $user->firebase_token;
+            $title = $heading . ' ' . $user->first_name . ' ' . $user->last_name;
+            $body = Carbon::parse($appointment->start_date)->format('d/m/Y h:i A') . ' - ' . Carbon::parse($appointment->end_date)->format('d/m/Y h:i A');
+
+            event(new PodcastNotificationEvent($token, null, null, $title, $body));
+        }
+        return true;
     }
 }

@@ -10,8 +10,10 @@ class Message extends Model
 {
     use HasFactory;
 
+    const JITSI_CALL_AUDIO_STARTED = 'jitsi_call_audio_started';
     const JITSI_CALL_AUDIO_ENDED = 'jitsi_call_audio_ended';
     const JITSI_CALL_AUDIO_MISSED = 'jitsi_call_audio_missed';
+    const JITSI_CALL_VIDEO_STARTED = 'jitsi_call_video_started';
     const JITSI_CALL_VIDEO_ENDED = 'jitsi_call_video_ended';
     const JITSI_CALL_VIDEO_MISSED = 'jitsi_call_video_missed';
     const JITSI_CALL_ACCEPTED = 'jitsi_call_accepted';

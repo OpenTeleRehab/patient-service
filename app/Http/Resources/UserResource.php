@@ -36,6 +36,7 @@ class UserResource extends JsonResource
             'secondary_therapists' => $this->secondary_therapists,
             'privacy_and_policy_id' => $this->privacy_and_policy_id,
             'kid_theme' => $this->kid_theme,
+            'firebase_token' => $this->firebase_token,
         ];
     }
 }

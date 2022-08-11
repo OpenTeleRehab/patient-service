@@ -228,6 +228,35 @@ class RocketChatHelper
 
     /**
      * @param \App\Models\User $user
+     * @param string $chat_room
+     *
+     * @return mixed|void
+     * @throws \Illuminate\Http\Client\RequestException
+     */
+    public static function getUnreadMessages($user, $chat_room)
+    {
+        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $authToken = $userAuth['authToken'];
+        $userId = $userAuth['userId'];
+
+        $response = Http::withHeaders([
+            'X-Auth-Token' => $authToken,
+            'X-User-Id' => $userId
+        ])->asJson()->get(ROCKET_CHAT_GET_COUNTER_URL, ['roomId' => $chat_room]);
+
+        // Always logout to clear local login token on completion.
+        self::logout($userId, $authToken);
+
+        if ($response->successful()) {
+            $result = $response->json();
+            return $result['messages'];
+        }
+
+        $response->throw();
+    }
+
+    /**
+     * @param \App\Models\User $user
      * @param string $room_id
      *
      * @return mixed
