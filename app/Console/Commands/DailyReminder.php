@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Events\PodcastNotificationEvent;
-use App\Helpers\RocketChatHelper;
 use App\Helpers\TranslationHelper;
 use App\Models\Appointment;
 use App\Models\TreatmentPlan;
@@ -63,8 +62,8 @@ class DailyReminder extends Command
                    $translations = TranslationHelper::getTranslations($user->language_id);
                    $token = $user->firebase_token;
                    $title = $translations['common.activity'];
-                   $body = $translations['activity.daily_reminder']. count($activities) . $translations['common.activity'] ;
-                   event(new PodcastNotificationEvent($token, $title, $body));
+                   $body = $translations['activity.daily_reminder'] . ' ' . count($activities) . ' ' . $translations['common.activities'] ;
+                   event(new PodcastNotificationEvent($token, null, null, $title, $body));
                }
            }
 
@@ -72,8 +71,8 @@ class DailyReminder extends Command
                $translations = TranslationHelper::getTranslations($user->language_id);
                $token = $user->firebase_token;
                $title = $translations['appointment'];
-               $body = $translations['appointment.daily_reminder']. $upCommingAppointments . $translations['appointment'] ;
-               event(new PodcastNotificationEvent($token, $title, $body));
+               $body = $translations['appointment.daily_reminder'] . ' ' . $upCommingAppointments . ' ' . $translations['appointments'] ;
+               event(new PodcastNotificationEvent($token, null, null, $title, $body));
            }
        });
         return true;
