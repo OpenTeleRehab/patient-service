@@ -77,7 +77,8 @@ class User extends Authenticatable
         'daily_tasks',
         'daily_logins',
         'daily_answers',
-        'firebase_token'
+        'firebase_token',
+        'last_reminder',
     ];
 
     /**
@@ -98,6 +99,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'chat_rooms' => 'array',
         'secondary_therapists' => 'array',
+        'last_reminder' => 'datetime',
     ];
 
     /**
