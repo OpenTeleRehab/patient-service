@@ -86,13 +86,14 @@ class InitBadge
     }
 
     /**
-     * @param $user
-     * @param $nowLocal
-     * @param $isQuestionnaire
-     * @param $lastDay
+     * @param \App\Models\User $user
+     * @param \Illuminate\Support\Facades\Date $nowLocal
+     * @param string $isQuestionnaire
+     * @param \Illuminate\Support\Facades\Date $lastDay
      * @return bool
      */
-    public function hasUncompletedTask($user, $nowLocal, $isQuestionnaire, $lastDay) {
+    public function hasUncompletedTask($user, $nowLocal, $isQuestionnaire, $lastDay)
+    {
         $lastTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
@@ -125,17 +126,20 @@ class InitBadge
     }
 
     /**
-     * @param $user
-     * @param $nowLocal
-     * @param $timezone
+     * @param \App\Models\User $user
+     * @param \Illuminate\Support\Facades\Date $nowLocal
+     * @param \Illuminate\Support\Facades\Date $timezone
      * @return bool
      */
-    public function hasTaskSinceLastLogin($user, $nowLocal, $timezone) {
+    public function hasTaskSinceLastLogin($user, $nowLocal, $timezone)
+    {
         $lastTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
+
         $hasTask = false;
+
         if ($lastTreatmentPlan) {
             $tasks = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)
                 ->whereDate('submitted_date', '>=', Carbon::parse($user->last_login)->setTimezone($timezone))
@@ -149,16 +153,19 @@ class InitBadge
     }
 
     /**
-     * @param $user
-     * @param $nowLocal
+     * @param \App\Models\User $user
+     * @param \Illuminate\Support\Facades\Date $nowLocal
      * @return bool
      */
-    public function hasTaskToday($user, $nowLocal) {
+    public function hasTaskToday($user, $nowLocal)
+    {
         $lastTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $nowLocal)
             ->orderBy('start_date', 'DESC')
             ->first();
+
         $hasTask = false;
+
         if ($lastTreatmentPlan) {
             $tasks = Activity::where('treatment_plan_id', $lastTreatmentPlan->id)->get();
             foreach ($tasks as $task) {
@@ -171,6 +178,7 @@ class InitBadge
                 }
             }
         }
+
         return $hasTask;
     }
 }

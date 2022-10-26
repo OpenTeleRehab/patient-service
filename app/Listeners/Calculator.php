@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\PodcastCalculatorEvent;
 use App\Models\Activity;
+use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 use Carbon\Carbon;
@@ -29,7 +30,8 @@ class Calculator
      */
     public function handle(PodcastCalculatorEvent $event)
     {
-        $painThresholdLimit = Http::get(env('ADMIN_SERVICE_URL') . '/setting/library-limit', [
+        $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+        $painThresholdLimit = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/setting/library-limit', [
             'type' => TreatmentPlan::PAIN_THRESHOLD_LIMIT,
         ]);
 

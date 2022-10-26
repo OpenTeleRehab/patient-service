@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 class TranslationHelper
 {
     /**
+     * @param integer $language_id
+     *
      * @return array
      */
     public static function getTranslations($language_id = '')

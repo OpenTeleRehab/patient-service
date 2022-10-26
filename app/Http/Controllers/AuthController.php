@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -54,11 +53,21 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = [
-            'phone' => $request->phone,
-            'password' => $request->pin,
-            'enabled' => 1,
-        ];
+        if ($request->has('email')) {
+            $credentials = [
+                'email' => $request->email,
+                'password' => $request->pin,
+                'enabled' => 1,
+            ];
+        }
+
+        if ($request->has('phone')) {
+            $credentials = [
+                'phone' => $request->phone,
+                'password' => $request->pin,
+                'enabled' => 1,
+            ];
+        }
 
         if (Auth::attempt($credentials)) {
             /** @var User $user */
