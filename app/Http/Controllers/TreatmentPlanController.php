@@ -8,6 +8,7 @@ use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
+use App\Models\Forwarder;
 use App\Models\Goal;
 use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
