@@ -11,6 +11,7 @@ use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
 use App\Http\Resources\PatientResource;
 use App\Models\Activity;
+use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
 use App\Models\User;
 use Carbon\Carbon;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Mpdf\Output\Destination;
 
 class PatientController extends Controller
@@ -95,12 +97,12 @@ class PatientController extends Controller
                         $query->where('identity', 'like', '%' . $data['search_value'] . '%')
                             ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
                             ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%')
-                            ->orWhereHas('appointments', function($query) use ($data) {
+                            ->orWhereHas('appointments', function ($query) use ($data) {
                                 $query->where('start_date', '>', Carbon::now())
                                     ->limit(1);
-                            })->whereHas('appointments', function(Builder $query) use ($data) {
+                            })->whereHas('appointments', function (Builder $query) use ($data) {
                                 $query->whereDate('start_date', 'like', '%' . $data['search_value'] . '%');
-                            })->orWhereHas('treatmentPlans', function(Builder $query) use ($data) {
+                            })->orWhereHas('treatmentPlans', function (Builder $query) use ($data) {
                                 $query->where('name', 'like', '%' . $data['search_value'] . '%');
                             });
                     });
@@ -122,35 +124,35 @@ class PatientController extends Controller
                             $query->where('country_id', $filterObj->value);
                         } elseif ($filterObj->columnName === 'treatment_status') {
                             if ($filterObj->value == User::FINISHED_TREATMENT_PLAN) {
-                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                $query->whereHas('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('end_date', '<', Carbon::now());
-                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                })->whereDoesntHave('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('end_date', '>', Carbon::now());
-                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                })->whereDoesntHave('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('start_date', '<=', Carbon::now())
                                         ->whereDate('end_date', '>=', Carbon::now());
                                 });
                             } elseif ($filterObj->value == User::PLANNED_TREATMENT_PLAN) {
-                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                $query->whereHas('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('end_date', '>', Carbon::now());
-                                })->whereDoesntHave('treatmentPlans', function(Builder $query) {
+                                })->whereDoesntHave('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('start_date', '<=', Carbon::now())
                                         ->whereDate('end_date', '>=', Carbon::now());
                                 });
                             } else {
-                                $query->whereHas('treatmentPlans', function(Builder $query) {
+                                $query->whereHas('treatmentPlans', function (Builder $query) {
                                     $query->whereDate('start_date', '<=', Carbon::now())
                                         ->whereDate('end_date', '>=', Carbon::now());
                                 });
                             }
-                        } else if ($filterObj->columnName === 'age') {
+                        } elseif ($filterObj->columnName === 'age') {
                             $query->whereRaw('YEAR(NOW()) - YEAR(date_of_birth) = ? OR ABS(MONTH(date_of_birth) - MONTH(NOW())) = ?  OR ABS(DAY(date_of_birth) - DAY(NOW())) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
-                        } else if ($filterObj->columnName === 'ongoing_treatment_plan') {
-                            $query->whereHas('treatmentPlans', function(Builder $query) use ($filterObj) {
+                        } elseif ($filterObj->columnName === 'ongoing_treatment_plan') {
+                            $query->whereHas('treatmentPlans', function (Builder $query) use ($filterObj) {
                                 $query->where('name', 'like', '%' .  $filterObj->value . '%');
                             });
-                        } else if ($filterObj->columnName === 'secondary_therapist') {
-                            if ($filterObj->value == User::SECONDARY_TERAPIST){
+                        } elseif ($filterObj->columnName === 'secondary_therapist') {
+                            if ($filterObj->value == User::SECONDARY_TERAPIST) {
                                 $query->where(function ($query) use ($therapist_id) {
                                     $query->whereJsonContains('secondary_therapists', intval($therapist_id));
                                 });
@@ -161,10 +163,10 @@ class PatientController extends Controller
                             }
                         } elseif ($filterObj->columnName === 'next_appointment' && $filterObj->value !== '') {
                             $nexAppointment = date_create_from_format('d/m/Y', $filterObj->value);
-                            $query->whereHas('appointments', function(Builder $query) use ($filterObj) {
+                            $query->whereHas('appointments', function (Builder $query) use ($filterObj) {
                                 $query->where('start_date', '>', Carbon::now())
                                     ->limit(1);
-                            })->whereHas('appointments', function(Builder $query) use ($nexAppointment) {
+                            })->whereHas('appointments', function (Builder $query) use ($nexAppointment) {
                                 $query->whereDate('start_date', '=', date_format($nexAppointment, config('settings.defaultTimestampFormat')));
                             });
                         } else {
@@ -363,20 +365,24 @@ class PatientController extends Controller
             'enabled' => true,
         ]);
 
-        Http::post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
-            'therapist_ids' => $secondaryTherapists,
-            'patient_first_name' => $user->first_name,
-            'patient_last_name' => $user->last_name,
-        ]);
+        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
+                'therapist_ids' => $secondaryTherapists,
+                'patient_first_name' => $user->first_name,
+                'patient_last_name' => $user->last_name,
+            ]);
 
-        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
-        if($response->successful()) {
+        $access_token = Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE);
+        $response = Http::withToken($access_token)
+            ->get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
+
+        if ($response->successful()) {
             $organization = $response->json();
         } else {
             return ['success' => false, 'message' => 'error_message.organization_not_found'];
         }
 
-        // Add to phone service db
+        // Add to phone service db.
         Http::post(env('PHONE_SERVICE_URL') . '/phone', [
             'phone' => $data['phone'],
             'org_name' => $organization['name'],
@@ -400,9 +406,10 @@ class PatientController extends Controller
 
         $chatRoomIds = [];
         if (!empty($secondaryTherapists)) {
-            $response = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
-                'ids' => \GuzzleHttp\json_encode($secondaryTherapists)
-            ]);
+            $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
+                    'ids' => \GuzzleHttp\json_encode($secondaryTherapists)
+                ]);
 
             if (!empty($response) && $response->successful()) {
                 $therapists = $response->json()['data'];
@@ -600,9 +607,10 @@ class PatientController extends Controller
                 }
 
                 if (!empty($newSecondaryTherapistIds)) {
-                    $response = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
-                        'ids' => \GuzzleHttp\json_encode($newSecondaryTherapistIds)
-                    ]);
+                    $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                        ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
+                            'ids' => \GuzzleHttp\json_encode($newSecondaryTherapistIds)
+                        ]);
 
                     if (!empty($response) && $response->successful()) {
                         $therapists = $response->json()['data'];
@@ -616,13 +624,14 @@ class PatientController extends Controller
                 }
             }
 
-            // Update phone in phone service
+            // Update phone in phone service.
             if (isset($data['phone'])) {
                 $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
                     'sub_domain' => env('APP_NAME'),
                     'phone' => $user->phone,
                 ]);
-                if(!empty($response['data']) && $response->successful()) {
+
+                if (!empty($response['data']) && $response->successful()) {
                     $phone = $response->json()['data'];
                     Http::put(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id'] , [
                         'phone' => $data['phone'],
@@ -634,11 +643,12 @@ class PatientController extends Controller
             $user->update($dataUpdate);
 
             if ($newSecondaryTherapistIds) {
-                Http::post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
-                    'therapist_ids' => $newSecondaryTherapistIds,
-                    'patient_first_name' => $user->first_name,
-                    'patient_last_name' => $user->last_name,
-                ]);
+                Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                    ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
+                        'therapist_ids' => $newSecondaryTherapistIds,
+                        'patient_first_name' => $user->first_name,
+                        'patient_last_name' => $user->last_name,
+                    ]);
             }
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -768,16 +778,15 @@ class PatientController extends Controller
     public function getPatientForTherapistRemove(Request $request)
     {
         $therapistId = $request->get('therapist_id');
-        $data = $request->all();
 
         $query = User::query();
+
         if ($therapistId) {
-            $query->where(function ($query) use ($data) {
-                $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
-            });
+            $query->where('therapist_id', $therapistId)->orWhereJsonContains('secondary_therapists', $therapistId);
         }
 
         $patients = $query->get();
+
         return ['success' => true, 'data' => PatientForTherapistRemoveResource::collection($patients)];
     }
 
@@ -867,13 +876,13 @@ class PatientController extends Controller
      */
     public function deleteAccount(Request $request, User $user)
     {
-        // Delete phone in phone service
+        // Delete phone in phone service.
         $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
             'sub_domain' => env('APP_NAME'),
             'phone' => $user->phone,
         ]);
 
-        if(!empty($response['data']) && $response->successful()) {
+        if (!empty($response['data']) && $response->successful()) {
             $phone = $response->json()['data'];
             Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
         }
@@ -912,13 +921,13 @@ class PatientController extends Controller
         $users = User::where('therapist_id', $therapistId)->get();
         if (count($users) > 0) {
             foreach ($users as $user) {
-                // Delete phone in phone service
+                // Delete phone in phone service.
                 $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
                     'sub_domain' => env('APP_NAME'),
                     'phone' => $user->phone,
                 ]);
 
-                if(!empty($response['data']) && $response->successful()) {
+                if (!empty($response['data']) && $response->successful()) {
                     $phone = $response->json()['data'];
                     Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
                 }
@@ -944,20 +953,20 @@ class PatientController extends Controller
         $oldTherapistChatRooms = $request->get('chat_rooms');
         $newTherapistChatRooms = $request->get('new_chat_rooms');
 
-        // Remove chat room of previous therapist
+        // Remove chat room of previous therapist.
         $chatRooms = array_intersect($oldTherapistChatRooms, $user->chat_rooms);
         $rooms = $user->chat_rooms;
         if (($key = array_search(reset($chatRooms), $rooms)) !== false) {
             unset($rooms[$key]);
         }
 
-        // Remove secondary therapists if transfered therapist
+        // Remove secondary therapists if transfered therapist.
         $secondaryTherapists = $user->secondary_therapists;
         if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
             unset($secondaryTherapists[$key]);
         }
 
-        //Update own activities
+        // Update own activities.
         $ongoingTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', Carbon::now())
             ->whereDate('end_date', '>=', Carbon::now())
@@ -979,10 +988,10 @@ class PatientController extends Controller
             TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
         }
 
-        // Check if chat rooms of new therapist exist
+        // Check if chat rooms of new therapist exist.
         $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms, $user->chat_rooms);
         if (!$chatRoomOfNewTherapists) {
-            // Create chat room for new therapist and patient
+            // Create chat room for new therapist and patient.
             $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
             TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapistId);
             $newChatRooms = array_merge($rooms, [$chatRoomId]);
@@ -990,7 +999,7 @@ class PatientController extends Controller
             $newChatRooms = $rooms;
         }
 
-        // Update user chatrooms
+        // Update user chatrooms.
         $updateData['chat_rooms'] = $newChatRooms;
         $updateData['therapist_id'] = $therapistId;
         $updateData['secondary_therapists'] = $secondaryTherapists;
@@ -1247,14 +1256,16 @@ class PatientController extends Controller
      * @param Request $request
      * @return \Illuminate\Support\Collection
      */
-    public function getPatientsForGlobalData (Request $request) {
+    public function getPatientsForGlobalData(Request $request)
+    {
         $yesterday = Carbon::yesterday();
         if ($request->has('all')) {
-            $users = User::withTrashed()->get();
+            $users = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))->withTrashed()->get();
         } else {
-            $users = User::withTrashed()
+            $users = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
                 ->whereDate('updated_at', '>=', $yesterday->startOfDay())
                 ->whereDate('updated_at', '<=', $yesterday->endOfDay())
+                ->withTrashed()
                 ->get();
         }
 
@@ -1265,7 +1276,8 @@ class PatientController extends Controller
      * @param integer $id
      * @return User
      */
-    public function getById($id) {
+    public function getById($id)
+    {
         return json_encode(User::find(intval($id)));
     }
 

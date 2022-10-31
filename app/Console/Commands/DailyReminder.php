@@ -43,39 +43,37 @@ class DailyReminder extends Command
      */
     public function handle()
     {
-       User::each(function ($user) {
-           if ($user->last_reminder == null || Carbon::now()->gt($user->last_reminder)) {
-               $upCommingAppointments = Appointment::where('therapist_status', '<>',
-                   Appointment::STATUS_ACCEPTED)->where('patient_status', '<>',
-                       Appointment::STATUS_ACCEPTED)->whereDate('end_date', Carbon::now())->where('patient_id',
-                       $user->id)->count();
-               $ongoingTreatmentPlan = TreatmentPlan::whereDate('start_date', '<=',
-                   Carbon::now())->whereDate('end_date', '>=', Carbon::now())->where('patient_id', $user->id)->first();
-               if ($ongoingTreatmentPlan) {
-                   $activities = array_filter($ongoingTreatmentPlan->activities->toArray(), function ($activity) {
-                       return $activity['completed'] == 0;
-                   });
+        User::each(function ($user) {
+            if ($user->last_reminder == null || Carbon::now()->gt($user->last_reminder)) {
+                $upCommingAppointments = Appointment::where('therapist_status', '<>', Appointment::STATUS_ACCEPTED)->where('patient_status', '<>', Appointment::STATUS_ACCEPTED)->whereDate('end_date', Carbon::now())->where('patient_id', $user->id)->count();
+                $ongoingTreatmentPlan = TreatmentPlan::whereDate('start_date', '<=', Carbon::now())->whereDate('end_date', '>=', Carbon::now())->where('patient_id', $user->id)->first();
 
-                   if (count($activities) > 0) {
-                       $translations = TranslationHelper::getTranslations($user->language_id);
-                       $token = $user->firebase_token;
-                       $title = $translations['common.activity'];
-                       $body = $translations['activity.daily_reminder'] . ' ' . count($activities) . ' ' . $translations['common.activities'];
-                       event(new PodcastNotificationEvent($token, null, null, $title, $body));
-                   }
-               }
+                if ($ongoingTreatmentPlan) {
+                    $activities = array_filter($ongoingTreatmentPlan->activities->toArray(), function ($activity) {
+                        return $activity['completed'] == 0;
+                    });
 
-               if ($upCommingAppointments > 0) {
-                   $translations = TranslationHelper::getTranslations($user->language_id);
-                   $token = $user->firebase_token;
-                   $title = $translations['appointment'];
-                   $body = $translations['appointment.daily_reminder'] . ' ' . $upCommingAppointments . ' ' . $translations['appointments'];
-                   event(new PodcastNotificationEvent($token, null, null, $title, $body));
-               }
+                    if (count($activities) > 0) {
+                        $translations = TranslationHelper::getTranslations($user->language_id);
+                        $token = $user->firebase_token;
+                        $title = $translations['common.activity'];
+                        $body = $translations['activity.daily_reminder'] . ' ' . count($activities) . ' ' . $translations['common.activities'];
+                        event(new PodcastNotificationEvent($token, null, null, $title, $body));
+                    }
+                }
 
-               $user->update(['last_reminder' => Carbon::now()->endOfDay()]);
-           }
-       });
+                if ($upCommingAppointments > 0) {
+                    $translations = TranslationHelper::getTranslations($user->language_id);
+                    $token = $user->firebase_token;
+                    $title = $translations['appointment'];
+                    $body = $translations['appointment.daily_reminder'] . ' ' . $upCommingAppointments . ' ' . $translations['appointments'];
+                    event(new PodcastNotificationEvent($token, null, null, $title, $body));
+                }
+
+                $user->update(['last_reminder' => Carbon::now()->endOfDay()]);
+            }
+        });
+
         return true;
     }
 }

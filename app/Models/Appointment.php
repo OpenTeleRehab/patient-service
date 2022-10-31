@@ -104,13 +104,13 @@ class Appointment extends Model
     }
 
     /**
-     * @param object $user
-     * @param object $appointment
-     * @param string $head
+     * @param \App\Models\User $user
+     * @param \App\Models\Appointment $appointment
+     * @param string $heading
      *
      * @return bool
      */
-    static function notification($user, $appointment, $heading)
+    public static function notification($user, $appointment, $heading)
     {
         if ($user) {
             $token = $user->firebase_token;

@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Helpers\TranslationHelper;
 use App\Helpers\TreatmentActivityHelper;
+use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -39,9 +40,12 @@ class TreatmentPlanExport
      */
     public function view(): View
     {
-        $diseaseName = Http::get(env('ADMIN_SERVICE_URL') . '/disease/get-name/by-id', [
+        $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+
+        $diseaseName = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/disease/get-name/by-id', [
             'disease_id' => $this->treatmentPlan->disease_id,
         ]);
+
         return view('exports.treatment_plan', [
             'diseaseName' => $diseaseName,
             'treatmentPlan' => $this->treatmentPlan,

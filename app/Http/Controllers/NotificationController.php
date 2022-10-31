@@ -12,9 +12,9 @@ class NotificationController extends Controller
     /**
      * @param \Illuminate\Http\Request $request
      *
-     * @return array
+     * @return array|void|null
      */
-    function pushNotification(Request $request)
+    public function pushNotification(Request $request)
     {
         $user = User::where('identity', $request->get('identity'))->firstOrFail();
 

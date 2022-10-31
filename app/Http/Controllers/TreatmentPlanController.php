@@ -171,11 +171,11 @@ class TreatmentPlanController extends Controller
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param \App\Models\TreatmentPlan $treatmentPlan
+     * @param int $id
      *
      * @return array
      */
-    public function update(Request $request, TreatmentPlan $treatmentPlan)
+    public function update(Request $request, $id)
     {
         $patientId = $request->get('patient_id');
         $description = $request->get('description');
@@ -186,7 +186,7 @@ class TreatmentPlanController extends Controller
 
         // Check if there is any overlap schedule.
         $overlapRecords = TreatmentPlan::where('patient_id', $patientId)
-            ->where('id', '<>', $treatmentPlan->id)
+            ->where('id', '<>', $id)
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
                     ->orWhereBetween('end_date', [$startDate, $endDate]);
@@ -197,12 +197,13 @@ class TreatmentPlanController extends Controller
         }
 
         // Check if ongoing treatment over the limit.
-        $overLimit = $this->validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentPlan->id);
+        $overLimit = $this->validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $id);
+
         if (!empty($overLimit)) {
             return $overLimit;
         }
 
-        $treatmentPlan->update([
+        TreatmentPlan::where('id', $id)->update([
             'name' => $request->get('name'),
             'description' => $description,
             'start_date' => $startDate,
@@ -211,8 +212,9 @@ class TreatmentPlanController extends Controller
             'disease_id' => $disease_id,
         ]);
 
-        $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
-        $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
+        $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
+        $this->updateOrCreateGoals($id, $request->get('goals', []));
+
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
     }
 
@@ -225,6 +227,7 @@ class TreatmentPlanController extends Controller
     private function updateOrCreateGoals(int $treatmentPlanId, array $goals = [])
     {
         $goalIds = [];
+
         foreach ($goals as $goal) {
             $goalObj = Goal::updateOrCreate(
                 [
@@ -260,6 +263,7 @@ class TreatmentPlanController extends Controller
     private function updateOrCreateActivities(int $treatmentPlanId, array $activities, $createdBy)
     {
         $activityIds = [];
+
         foreach ($activities as $activity) {
             $customExercises = isset($activity['customExercises']) ? $activity['customExercises'] : [];
             $exercises = isset($activity['exercises']) ? $activity['exercises'] : [];
@@ -362,14 +366,15 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                 }
                 // TODO: move to Queued Event Listeners.
-                Http::post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
+                $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+                Http::withToken($access_token)->post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
                     'questionnaire_ids' => $questionnaires,
                     'is_used' => true
                 ]);
             }
         }
 
-        // Unmark as used for unselect questionnaires
+        // Unmark as used for unselect questionnaires.
         $unSelectedQuestionnaireIds = Activity::where('treatment_plan_id', $treatmentPlanId)
             ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
             ->whereNotIn('id', $activityIds)
@@ -383,7 +388,8 @@ class TreatmentPlanController extends Controller
         $questionnaireInUsed = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->whereIn('activity_id', $unSelectedQuestionnaireIds)->whereIn('treatment_plan_id', $ongoingTreatmentPlanIds)->get();
 
         if (count($questionnaireInUsed) == 0 && count($unSelectedQuestionnaireIds) > 0) {
-            Http::post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
+            $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+            Http::withToken($access_token)->post(env('ADMIN_SERVICE_URL') . '/questionnaire/mark-as-used/by-ids', [
                 'questionnaire_ids' => $unSelectedQuestionnaireIds,
                 'is_used' => false
             ]);
@@ -576,7 +582,6 @@ class TreatmentPlanController extends Controller
             'daily_answers' => $init_daily_answers > $user->daily_answers ? $init_daily_answers : $user->daily_answers,
         ]);
         return ['success' => true];
-
     }
 
     /**
@@ -630,8 +635,10 @@ class TreatmentPlanController extends Controller
      */
     public function export(Request $request, TreatmentPlan $treatmentPlan)
     {
-        $user = Auth::user();
-        $request['lang'] = $user->language_id;
+        if (Auth::check()) {
+            $user = Auth::user();
+            $request['lang'] = $user->language_id;
+        }
 
         $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
         return $treatmentPlanExport->outPut();
@@ -647,9 +654,11 @@ class TreatmentPlanController extends Controller
      */
     private function validateOngoingTreatmentOverLimit($startDate, $endDate, $therapistId, $treatmentId = null)
     {
-        $ongoingTreatmentLimit = Http::get(env('THERAPIST_SERVICE_URL') . '/therapist/get-patient-limit', [
-            'therapist_id' => $therapistId,
-        ]);
+        $ongoingTreatmentLimit = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapist/get-patient-limit', [
+                'therapist_id' => $therapistId,
+            ]);
+
         $therapistOngoingTreatment = DB::table('treatment_plans')
             ->where('created_by', $therapistId)
             ->where(function ($query) use ($startDate, $endDate) {
@@ -685,8 +694,10 @@ class TreatmentPlanController extends Controller
      * @param Request $request
      * @return \Illuminate\Support\Collection
      */
-    public function getTreatmentPlanForGlobalData (Request $request) {
+    public function getTreatmentPlanForGlobalData(Request $request)
+    {
         $yesterday = Carbon::yesterday();
+
         if ($request->has('all')) {
             $treatmentPlans = TreatmentPlan::all();
         } else {

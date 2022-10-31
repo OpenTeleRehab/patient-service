@@ -11,7 +11,8 @@ class LoginEvent
 
     /**
      * Create a new event instance.
-     * @param array
+     *
+     * @param object $request
      *
      * @return void
      */

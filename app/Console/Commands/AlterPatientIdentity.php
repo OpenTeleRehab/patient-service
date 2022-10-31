@@ -7,8 +7,18 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
+/**
+ * @deprecated
+ */
 class AlterPatientIdentity extends Command
 {
+    /**
+     * Unused - One time migration
+     *
+     * @var boolean
+     */
+    protected $hidden = true;
+
     /**
      * The name and signature of the console command.
      *
@@ -41,7 +51,7 @@ class AlterPatientIdentity extends Command
                 $identity = 'P' . $orgIdentity . $clinicIdentity .
                     str_pad($user->id, 5, '0', STR_PAD_LEFT);
 
-                // Update user chat username and email
+                // Update user chat username and email.
                 $data = [
                     'email' => $identity . '@hi.org',
                     'username' => $identity,
@@ -50,7 +60,7 @@ class AlterPatientIdentity extends Command
                 if ($user->chat_user_id) {
                     $result = RocketChatHelper::updateUser($user->chat_user_id, $data);
                     if ($result) {
-                        // Update user identity and chat password
+                        // Update user identity and chat password.
                         User::where('id', $user->id)->update([
                             'identity' => $identity,
                             'chat_password' => hash('sha256', $data['password'])

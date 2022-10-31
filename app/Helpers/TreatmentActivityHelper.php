@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Http\Resources\QuestionnaireAnswerResource;
 use App\Models\Activity;
+use App\Models\Forwarder;
 use App\Models\Goal;
 use App\Models\TreatmentPlan;
 use Illuminate\Http\Request;
@@ -31,23 +32,25 @@ class TreatmentActivityHelper
             $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
                 ->modify('+' . ($activity->day - 1) . ' day')
                 ->format(config('settings.defaultTimestampFormat'));
+
             $activityObj = [];
             $response = null;
+            $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
 
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
+                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
                     'exercise_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
+                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
                     'material_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')
                 ]);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
-                $response = Http::get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
+                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
                     'questionnaire_ids' => [$activity->activity_id],
                     'lang' => $request->get('lang'),
                     'therapist_id' => $request->get('therapist_id')

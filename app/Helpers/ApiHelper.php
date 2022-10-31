@@ -8,10 +8,10 @@ namespace App\Helpers;
 class ApiHelper
 {
     /**
-     * @param $stage
-     * @param $apiName
-     * @param $subDomain
-     * @param $orgType
+     * @param string $stage
+     * @param string $apiName
+     * @param string $subDomain
+     * @param string $orgType
      *
      * @return string
      */
@@ -24,7 +24,7 @@ class ApiHelper
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . env('APP_DOMAIN') . '/websocket';
                     break;
-                } else if ($apiName == 'chat') {
+                } elseif ($apiName == 'chat') {
                     $apiUrl = 'https://' . $urlString . env('APP_DOMAIN');
                     break;
                 } else {
@@ -36,7 +36,7 @@ class ApiHelper
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . '-' . env('APP_DOMAIN') . '/websocket';
                     break;
-                } else if ($apiName == 'chat') {
+                } elseif ($apiName == 'chat') {
                     $apiUrl = 'https://' . $urlString . '-' . env('APP_DOMAIN');
                     break;
                 } else {
@@ -48,7 +48,7 @@ class ApiHelper
                 if ($apiName == 'websocket') {
                     $apiUrl = 'wss://' . $urlString . env('APP_DOMAIN') . '/websocket';
                     break;
-                } else if ($apiName == 'chat') {
+                } elseif ($apiName == 'chat') {
                     $apiUrl = 'https://' . $urlString . env('APP_DOMAIN');
                     break;
                 } else {

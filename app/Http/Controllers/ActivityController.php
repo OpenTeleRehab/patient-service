@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\Forwarder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -216,20 +217,22 @@ class ActivityController extends Controller
      */
     private function getActivitiesFromAdminService($type, $activityIds, Request $request)
     {
+        $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+
         if ($type === Activity::ACTIVITY_TYPE_EXERCISE) {
-            $response = Http::get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
                 'exercise_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
                 'therapist_id' => $request->get('therapist_id')
             ]);
         } elseif ($type === Activity::ACTIVITY_TYPE_MATERIAL) {
-            $response = Http::get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
                 'material_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
                 'therapist_id' => $request->get('therapist_id')
             ]);
         } else {
-            $response = Http::get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
                 'questionnaire_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
                 'therapist_id' => $request->get('therapist_id')
