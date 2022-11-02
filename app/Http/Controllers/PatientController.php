@@ -416,7 +416,7 @@ class PatientController extends Controller
                 foreach ($therapists as $therapist) {
                     $therapistIdentity = $therapist['identity'];
                     $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
-                    TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
+                    TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapist['id']);
                     array_push($chatRoomIds, $chatRoomId);
                 }
             }
@@ -425,7 +425,7 @@ class PatientController extends Controller
         // Create chat room.
         $therapistIdentity = $data['therapist_identity'];
         $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
-        TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $data['therapist_id']);
+        TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $data['therapist_id']);
 
         $updateData['identity'] = $identity;
         $updateData['chat_rooms'] = array_merge($chatRoomIds, [$chatRoomId]);
@@ -617,7 +617,7 @@ class PatientController extends Controller
                         foreach ($therapists as $therapist) {
                             $therapistIdentity = $therapist['identity'];
                             $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
-                            TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapist['id']);
+                            TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapist['id']);
                             $chatRoomIds = array_merge($user->chat_rooms, [$chatRoomId]);
                         }
                     }
@@ -993,7 +993,7 @@ class PatientController extends Controller
         if (!$chatRoomOfNewTherapists) {
             // Create chat room for new therapist and patient.
             $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
-            TherapistServiceHelper::AddNewChatRoom($request->bearerToken(), $chatRoomId, $therapistId);
+            TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapistId);
             $newChatRooms = array_merge($rooms, [$chatRoomId]);
         } else {
             $newChatRooms = $rooms;
