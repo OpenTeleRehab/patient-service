@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Events\LoginEvent;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -53,38 +56,53 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        if ($request->has('email')) {
-            $credentials = [
-                'email' => $request->email,
-                'password' => $request->pin,
-                'enabled' => 1,
-            ];
+        try {
+            $this->checkTooManyFailedAttempts();
+
+            if ($request->has('email')) {
+                $credentials = [
+                    'email' => $request->email,
+                    'password' => $request->pin,
+                    'enabled' => 1,
+                ];
+            }
+
+            if ($request->has('phone')) {
+                $credentials = [
+                    'phone' => $request->phone,
+                    'password' => $request->pin,
+                    'enabled' => 1,
+                ];
+            }
+
+            if (Auth::attempt($credentials)) {
+                /** @var User $user */
+                $user = Auth::user();
+
+                // Always make sure old access token is cleared.
+                $user->tokens()->delete();
+
+                // Clear login attempts.
+                RateLimiter::clear($this->throttleKey());
+
+                // Broadcast login event.
+                event(new LoginEvent($request));
+
+                $data = [
+                    'profile' => new UserResource($user),
+                    'token' => $user->createToken(config('auth.guards.api.tokenName'))->accessToken,
+                ];
+
+                return ['success' => true, 'data' => $data];
+            } else {
+                // Increment the counter for a given key for a given decay time.
+                RateLimiter::hit($this->throttleKey(), 3600);
+
+                return ['success' => false, 'message' => 'error.invalid_credentials'];
+            }
+        } catch (Exception $error) {
+            return ['success' => false, 'message' => 'error.login.attempts'];
         }
-
-        if ($request->has('phone')) {
-            $credentials = [
-                'phone' => $request->phone,
-                'password' => $request->pin,
-                'enabled' => 1,
-            ];
-        }
-
-        if (Auth::attempt($credentials)) {
-            /** @var User $user */
-            $user = Auth::user();
-            // Always make sure old access token is cleared.
-            $user->tokens()->delete();
-
-            $token = $user->createToken(config('auth.guards.api.tokenName'))->accessToken;
-            $data = [
-                'profile' => new UserResource($user),
-                'token' => $token,
-            ];
-            event(new LoginEvent($request));
-            return ['success' => true, 'data' => $data];
-        }
-
-        return ['success' => false, 'message' => 'error.invalid_credentials'];
     }
 
     /**
@@ -201,5 +219,31 @@ class AuthController extends Controller
         ]);
 
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
+    }
+
+    /**
+     * Get the rate limiting throttle key for the request.
+     *
+     * @return string
+     */
+    private function throttleKey()
+    {
+        $username = request('email') ? request('email') : request('phone');
+
+        return Str::lower($username) . '|' . request()->ip();
+    }
+
+    /**
+     * Ensure the login request is not rate limited.
+     *
+     * @return void
+     */
+    private function checkTooManyFailedAttempts()
+    {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 10)) {
+            return;
+        }
+
+        throw new Exception('Too many failed login attempts.');
     }
 }
