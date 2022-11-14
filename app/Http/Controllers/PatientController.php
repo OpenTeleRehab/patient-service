@@ -1260,9 +1260,13 @@ class PatientController extends Controller
     {
         $yesterday = Carbon::yesterday();
         if ($request->has('all')) {
-            $users = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))->withTrashed()->get();
+            $users = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
+                ->orWhereNull('email')
+                ->withTrashed()
+                ->get();
         } else {
             $users = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
+                ->orWhereNull('email')
                 ->whereDate('updated_at', '>=', $yesterday->startOfDay())
                 ->whereDate('updated_at', '<=', $yesterday->endOfDay())
                 ->withTrashed()
