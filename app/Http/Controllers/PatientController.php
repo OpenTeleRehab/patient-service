@@ -372,8 +372,7 @@ class PatientController extends Controller
                 'patient_last_name' => $user->last_name,
             ]);
 
-        $access_token = Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE);
-        $response = Http::withToken($access_token)
+        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE))
             ->get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
 
         if ($response->successful()) {

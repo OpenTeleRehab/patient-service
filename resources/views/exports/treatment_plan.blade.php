@@ -100,8 +100,12 @@
                             @else
                                 <img width="190" src="http://localhost/images/material.png">
                             @endif
+
                             <h4>{{ $activity['title'] }}</h4>
-                            <span>{{ $translations[$activity['file']['fileGroupType']] ?? '' }}</span>
+
+                            @if($activity['file'])
+                                <span>{{ $translations[$activity['file']['fileGroupType']] }}</span>
+                            @endif
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
