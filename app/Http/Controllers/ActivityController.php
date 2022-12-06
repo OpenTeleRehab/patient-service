@@ -97,15 +97,7 @@ class ActivityController extends Controller
         $activitiesObjIds = [];
         $result = [];
         foreach ($activities as $activity) {
-            if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
-                $type = Activity::ACTIVITY_TYPE_EXERCISE;
-            } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
-                $type = Activity::ACTIVITY_TYPE_MATERIAL;
-            } else {
-                $type = Activity::ACTIVITY_TYPE_QUESTIONNAIRE;
-            }
-
-            $response = $this->getActivitiesFromAdminService($type, $activity->activity_id, $request);
+            $response = $this->getActivitiesFromAdminService($activity->type, $activity->activity_id, $request);
             if (!empty($response) && $response->successful()) {
                 if ($response->json()['data']) {
                     $activityObj = $response->json()['data'][0];
@@ -223,19 +215,16 @@ class ActivityController extends Controller
             $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
                 'exercise_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
-                'therapist_id' => $request->get('therapist_id')
             ]);
         } elseif ($type === Activity::ACTIVITY_TYPE_MATERIAL) {
             $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
                 'material_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
-                'therapist_id' => $request->get('therapist_id')
             ]);
         } else {
             $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
                 'questionnaire_ids' => [$activityIds],
                 'lang' => $request->get('lang'),
-                'therapist_id' => $request->get('therapist_id')
             ]);
         }
 

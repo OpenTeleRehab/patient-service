@@ -46,10 +46,12 @@ class TreatmentPlanExport
             'disease_id' => $this->treatmentPlan->disease_id,
         ]);
 
+        $activityData = TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true);
+
         return view('exports.treatment_plan', [
             'diseaseName' => $diseaseName,
             'treatmentPlan' => $this->treatmentPlan,
-            'activities' => TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true),
+            'activities' => $activityData['activities'],
             'translations' => TranslationHelper::getTranslations(),
         ]);
     }

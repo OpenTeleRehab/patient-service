@@ -498,9 +498,11 @@ class TreatmentPlanController extends Controller
 
         $data = [];
         if ($treatmentPlan) {
+            $activityData = TreatmentActivityHelper::getActivities($treatmentPlan, $request, $includedGoals);
             $data = array_merge($treatmentPlan->toArray(), [
                 'goals' => GoalResource::collection($treatmentPlan->goals),
-                'activities' => TreatmentActivityHelper::getActivities($treatmentPlan, $request, $includedGoals),
+                'activities' => $activityData['activities'],
+                'previewData' => $activityData['previewData'],
             ]);
         }
         return ['success' => true, 'data' => $data];
