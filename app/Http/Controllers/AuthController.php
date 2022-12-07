@@ -79,9 +79,6 @@ class AuthController extends Controller
                 /** @var User $user */
                 $user = Auth::user();
 
-                // Always make sure old access token is cleared.
-                $user->tokens()->delete();
-
                 // Clear login attempts.
                 RateLimiter::clear($this->throttleKey());
 
