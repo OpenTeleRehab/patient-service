@@ -9,6 +9,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ForwarderController;
+use App\Http\Controllers\AssistiveTechnologyController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -82,6 +83,9 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
 
     Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'exportOnGoing']);
     Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
+
+    // Assistive technology
+    Route::apiResource('patient-assistive-technologies', AssistiveTechnologyController::class);
 
     // Admin Service
     Route::name('admin.')->group(function () {
