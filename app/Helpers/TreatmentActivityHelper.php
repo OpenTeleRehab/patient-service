@@ -27,60 +27,84 @@ class TreatmentActivityHelper
             return [$activity->week, $activity->day];
         });
 
+        $exercises = [];
+        $materials = [];
+        $questionnaires = [];
+
+        $exerciseIds = $activities
+            ->where('type', Activity::ACTIVITY_TYPE_EXERCISE)
+            ->pluck('activity_id')
+            ->unique();
+        $materialIds = $activities
+            ->where('type', Activity::ACTIVITY_TYPE_MATERIAL)
+            ->pluck('activity_id')
+            ->unique();
+        $questionnaireIds = $activities
+            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+            ->pluck('activity_id')
+            ->unique();
+
+        $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+        if ($exerciseIds->count()) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
+                'exercise_ids' => $exerciseIds->toArray(),
+                'lang' => $request->get('lang')
+            ]);
+
+            if (!empty($response) && $response->successful()) {
+                $exercises = $response->json()['data'];
+            }
+        }
+
+        if ($materialIds->count()) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
+                'material_ids' => $materialIds->toArray(),
+                'lang' => $request->get('lang')
+            ]);
+
+            if (!empty($response) && $response->successful()) {
+                $materials = $response->json()['data'];
+            }
+        }
+
+        if ($questionnaireIds->count()) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
+                'questionnaire_ids' => $questionnaireIds->toArray(),
+                'lang' => $request->get('lang')
+            ]);
+
+            if (!empty($response) && $response->successful()) {
+                $questionnaires = $response->json()['data'];
+            }
+        }
+
         $previousActivity = $activities ? $activities->first() : null;
         foreach ($activities as $key => $activity) {
             $date = $treatmentPlan->start_date->modify('+' . ($activity->week - 1) . ' week')
                 ->modify('+' . ($activity->day - 1) . ' day')
                 ->format(config('settings.defaultTimestampFormat'));
 
-            $activityObj = [];
-            $response = null;
-            $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
-
             if ($activity->type === Activity::ACTIVITY_TYPE_EXERCISE) {
-                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/exercise/list/by-ids', [
-                    'exercise_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
+                $activityFilter = array_filter($exercises, fn($n) => $n['id'] == $activity->activity_id);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_MATERIAL) {
-                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/education-material/list/by-ids', [
-                    'material_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
+                $activityFilter = array_filter($materials, fn($n) => $n['id'] == $activity->activity_id);
             } elseif ($activity->type === Activity::ACTIVITY_TYPE_QUESTIONNAIRE) {
-                $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/questionnaire/list/by-ids', [
-                    'questionnaire_ids' => [$activity->activity_id],
-                    'lang' => $request->get('lang'),
-                    'therapist_id' => $request->get('therapist_id')
-                ]);
-            } else {
-                $goal = Goal::find($activity->activity_id);
-                if ($goal) {
-                    $activityObj = [
-                        'id' => $activity->id,
-                        'title' => $goal->title,
-                        'frequency' => $goal->frequency,
-                    ];
-                }
+                $activityFilter = array_filter($questionnaires, fn($n) => $n['id'] == $activity->activity_id);
             }
 
-            if (!empty($response) && $response->successful()) {
-                if ($response->json()['data']) {
-                    $activityObj = $response->json()['data'][0];
-                    $activityObj['id'] = $activity->id;
+            if (empty($activityFilter)) {
+                continue;
+            }
 
-                    // Custom Sets/Reps in Treatment.
-                    if ($activity->sets !== null) {
-                        $activityObj['sets'] = $activity->sets;
-                    }
-                    if ($activity->reps !== null) {
-                        $activityObj['reps'] = $activity->reps;
-                    }
-                } else {
-                    continue;
-                }
+            $activityObj = array_shift($activityFilter);
+            $activityObj['id'] = $activity->id;
+
+            // Custom Sets/Reps in Treatment.
+            if ($activity->sets !== null) {
+                $activityObj['sets'] = $activity->sets;
+            }
+            if ($activity->reps !== null) {
+                $activityObj['reps'] = $activity->reps;
             }
 
             $result[] = array_merge([
@@ -141,7 +165,13 @@ class TreatmentActivityHelper
             $previousActivity = clone $activity;
         }
 
-        return $result;
+        return [
+            'activities' => $result,
+            'previewData' => [
+                'exercises' => $exercises,
+                'materials' => $materials,
+                'questionnaires' => $questionnaires
+            ]];
     }
 
     /**
