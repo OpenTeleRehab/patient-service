@@ -60,5 +60,9 @@ class AssistiveTechnology extends Model
                 'end_date' => date_create_from_format('Y-m-d H:i:s', $followUpDate . ' ' . '10:00:00')
             ]);
         });
+
+        self::deleted(function ($assistive_technology) {
+            Appointment::where('id', $assistive_technology->appointment_id)->delete();
+        });
     }
 }

@@ -125,4 +125,23 @@ class AssistiveTechnologyController extends Controller
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_delete'];
     }
+
+    /**
+     * @return mixed
+     */
+    public function getAssistiveTechnologyProvidedPatients()
+    {
+        return AssistiveTechnology::join('users', 'assistive_technologies.patient_id', 'users.id')
+            ->withTrashed()
+            ->get([
+                'assistive_technologies.*',
+                'users.identity',
+                'users.clinic_id',
+                'users.country_id',
+                'users.therapist_id',
+                'users.date_of_birth',
+                'users.enabled',
+                'users.gender',
+            ]);
+    }
 }
