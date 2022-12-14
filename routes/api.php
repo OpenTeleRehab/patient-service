@@ -87,11 +87,6 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::name('admin.')->group(function () {
         Route::get('profession', [ForwarderController::class, 'index']);
     });
-
-    // Therapist Service
-    Route::name('therapist.')->group(function () {
-        Route::get('therapist/by-ids', [ForwarderController::class, 'index']);
-    });
 });
 
 // Public
@@ -105,4 +100,8 @@ Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, '
 
 Route::name('admin.')->group(function () {
     Route::get('country/list/by-clinic', [ForwarderController::class, 'index']);
+});
+
+Route::name('therapist.')->group(function () {
+    Route::get('therapist/by-ids', [ForwarderController::class, 'index']);
 });
