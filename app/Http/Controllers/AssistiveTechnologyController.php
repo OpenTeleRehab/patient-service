@@ -142,6 +142,7 @@ class AssistiveTechnologyController extends Controller
                 'users.date_of_birth',
                 'users.enabled',
                 'users.gender',
+                'users.id as patient_id'
             ]);
     }
 }
