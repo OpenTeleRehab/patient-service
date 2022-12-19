@@ -14,14 +14,15 @@ use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use Mpdf\Output\Destination;
+use Twilio\Jwt\AccessToken;
+use Twilio\Jwt\Grants\VideoGrant;
 
 class PatientController extends Controller
 {
@@ -1249,6 +1250,38 @@ class PatientController extends Controller
     public function getBadgeIcon($filename)
     {
         return response()->file(public_path('badges/' . $filename));
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return array
+     */
+    public function getCallAccessToken(Request $request)
+    {
+        $twilioAccountSid = env('TWILIO_ACCOUNT_SID');
+        $twilioApiKey = env('TWILIO_API_KEY');
+        $twilioApiSecret = env('TWILIO_API_KEY_SECRET');
+
+        $user = Auth::user();
+
+        // Create access token, which we will serialize and send to the client.
+        $token = new AccessToken(
+            $twilioAccountSid,
+            $twilioApiKey,
+            $twilioApiSecret,
+            3600,
+            $user['first_name'],
+        );
+
+        // Create Video grant.
+        $videoGrant = new VideoGrant();
+        $videoGrant->setRoom($request->room_id);
+
+        // Add grant to token.
+        $token->addGrant($videoGrant);
+
+        return ['success' => true, 'token' => $token->toJWT()];
     }
 
     /**
