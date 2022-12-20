@@ -908,7 +908,7 @@ class PatientController extends Controller
         }
 
         //Remove phone numbers from phone service
-        Http::post(env('PHONE_SERVICE_URL') . 'phone/delete/by-clinic', [
+        Http::post(env('PHONE_SERVICE_URL') . '/phone/delete/by-clinic', [
             'clinic_id' => $clinicId,
         ]);
 
