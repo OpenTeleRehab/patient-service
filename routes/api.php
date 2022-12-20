@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ChartController;
@@ -97,6 +99,9 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
 // Public
 Route::post('register/send-code', [RegistrationController::class, 'sendCode']);
 Route::post('register/verify-code', [RegistrationController::class, 'verifyCode']);
+
+//App Setting
+Route::get('app/settings', [SettingController::class, 'getSetting']);
 
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
