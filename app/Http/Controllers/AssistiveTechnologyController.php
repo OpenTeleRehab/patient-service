@@ -68,24 +68,28 @@ class AssistiveTechnologyController extends Controller
     {
         $provisionDate = str_replace('/', '-', $request->get('provisionDate'));
         $followUpDate = str_replace('/', '-', $request->get('followUpDate'));
+        $appointmentFrom = $request->get('appointmentFrom');
+        $appointmentTo = $request->get('appointmentTo');
+        $appointment = null;
 
-        $appointment = Appointment::create([
-            'patient_id' => $request->get('patientId'),
-            'therapist_id' => $request->get('therapistId'),
-            'therapist_status' => Appointment::STATUS_ACCEPTED,
-            'patient_status' => Appointment::STATUS_INVITED,
-            'start_date' => date_create_from_format('Y-m-d H:i:s', $followUpDate . ' ' . '01:00:00'),
-            'end_date' => date_create_from_format('Y-m-d H:i:s', $followUpDate . ' ' . '10:00:00'),
-            'note' => AssistiveTechnology::ASSISTIVE_TECHNOLOGY_FOLLOW_UP,
-        ]);
+        if ($followUpDate) {
+            $appointment = Appointment::create([
+                'patient_id' => $request->get('patientId'),
+                'therapist_id' => $request->get('therapistId'),
+                'therapist_status' => Appointment::STATUS_ACCEPTED,
+                'patient_status' => Appointment::STATUS_INVITED,
+                'start_date' => $appointmentFrom,
+                'end_date' => $appointmentTo,
+            ]);
+        }
 
         AssistiveTechnology::create([
             'assistive_technology_id' => $request->get('assistiveTechnologyId'),
             'patient_id' => $request->get('patientId'),
             'therapist_id' => $request->get('therapistId'),
-            'appointment_id' => $appointment->id,
+            'appointment_id' => $appointment ? $appointment->id : null,
             'provision_date' => date('Y-m-d', strtotime($provisionDate)),
-            'follow_up_date' => date('Y-m-d', strtotime($followUpDate)),
+            'follow_up_date' => $followUpDate ? date('Y-m-d', strtotime($followUpDate)) : null,
         ]);
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_add'];
@@ -103,12 +107,22 @@ class AssistiveTechnologyController extends Controller
     {
         $provisionDate = str_replace('/', '-', $request->get('provisionDate'));
         $followUpDate = str_replace('/', '-', $request->get('followUpDate'));
+        $appointmentFrom = $request->get('appointmentFrom');
+        $appointmentTo = $request->get('appointmentTo');
 
-        AssistiveTechnology::find($id)->update([
+        $assistive = AssistiveTechnology::find($id);
+        $assistive->update([
             'assistive_technology_id' => $request->get('assistiveTechnologyId'),
             'provision_date' => date('Y-m-d', strtotime($provisionDate)),
-            'follow_up_date' => date('Y-m-d', strtotime($followUpDate)),
+            'follow_up_date' => $followUpDate ? date('Y-m-d', strtotime($followUpDate)) : null,
         ]);
+
+        if ($assistive->appointment_id) {
+            Appointment::find($assistive->appointment_id)->update([
+                'start_date' => $appointmentFrom,
+                'end_date' => $appointmentTo,
+            ]);
+        }
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_update'];
     }
@@ -144,5 +158,18 @@ class AssistiveTechnologyController extends Controller
                 'users.gender',
                 'users.id as patient_id'
             ]);
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return bool
+     */
+    public function getUsedAssistiveTechnology(Request $request)
+    {
+        $assistiveTechnologyId = $request->get('assistive_technology_id');
+        $assistiveTechnology = AssistiveTechnology::where('assistive_technology_id', $assistiveTechnologyId)->count();
+
+        return $assistiveTechnology > 0;
     }
 }

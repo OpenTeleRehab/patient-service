@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Appointment;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Carbon;
 
 class AssistiveTechnologyResource extends JsonResource
 {
@@ -21,6 +21,7 @@ class AssistiveTechnologyResource extends JsonResource
             'patient_id' => $this->patient_id,
             'provision_date' => $this->provision_date ? $this->provision_date->format(config('settings.date_format')) : '',
             'follow_up_date' => $this->follow_up_date ? $this->follow_up_date->format(config('settings.date_format')) : '',
+            'appointment' => $this->appointment,
         ];
     }
 }

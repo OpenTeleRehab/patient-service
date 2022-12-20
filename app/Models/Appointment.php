@@ -81,6 +81,11 @@ class Appointment extends Model
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
+
+            if ($appointment->assistiveTechnology) {
+                $assistiveTechnology = AssistiveTechnology::where('appointment_id', $appointment->id)->first();
+                $assistiveTechnology->update(['follow_up_date' => date_format($appointment->start_date, config('settings.defaultTimestampFormat'))]);
+            }
         });
 
         self::deleted(function ($appointment) {
@@ -101,6 +106,14 @@ class Appointment extends Model
     public function patient()
     {
         return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function assistiveTechnology()
+    {
+        return $this->belongsTo(AssistiveTechnology::class, 'id', 'appointment_id');
     }
 
     /**
