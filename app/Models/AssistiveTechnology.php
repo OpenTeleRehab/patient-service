@@ -9,8 +9,6 @@ class AssistiveTechnology extends Model
 {
     use SoftDeletes;
 
-    const ASSISTIVE_TECHNOLOGY_FOLLOW_UP = 'AT_FOLLOW_UP';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -44,6 +42,14 @@ class AssistiveTechnology extends Model
     protected $dates = ['follow_up_date'];
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function appointment()
+    {
+        return $this->hasOne(Appointment::class, 'id', 'appointment_id');
+    }
+
+    /**
      * Bootstrap the model and its traits.
      *
      * @return void
@@ -51,15 +57,6 @@ class AssistiveTechnology extends Model
     protected static function boot()
     {
         parent::boot();
-
-        self::updated(function ($assistive_technology) {
-            $followUpDate = $assistive_technology->follow_up_date->format('Y-m-d');
-
-            Appointment::where('id', $assistive_technology->appointment_id)->update([
-                'start_date' => date_create_from_format('Y-m-d H:i:s', $followUpDate . ' ' . '01:00:00'),
-                'end_date' => date_create_from_format('Y-m-d H:i:s', $followUpDate . ' ' . '10:00:00')
-            ]);
-        });
 
         self::deleted(function ($assistive_technology) {
             Appointment::where('id', $assistive_technology->appointment_id)->delete();

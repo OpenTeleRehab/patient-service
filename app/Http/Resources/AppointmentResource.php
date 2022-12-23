@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Appointment;
+use App\Models\AssistiveTechnology;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
 
@@ -27,6 +29,7 @@ class AppointmentResource extends JsonResource
             'patient_status' => $this->patient_status,
             'note' => $this->note,
             'created_by_therapist' => $this->created_by_therapist,
+            'assistive_technology' => $this->assistiveTechnology,
         ];
     }
 }

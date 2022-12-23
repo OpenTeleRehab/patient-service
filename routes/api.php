@@ -89,6 +89,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     // Assistive technology
     Route::apiResource('patient-assistive-technologies', AssistiveTechnologyController::class);
     Route::get('assistive-technologies/get-at-patient', [AssistiveTechnologyController::class, 'getAssistiveTechnologyProvidedPatients']);
+    Route::get('assistive-technologies/get-used-at', [AssistiveTechnologyController::class, 'getUsedAssistiveTechnology']);
 
     // Admin Service
     Route::name('admin.')->group(function () {
