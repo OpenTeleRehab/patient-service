@@ -44,7 +44,10 @@ class AssistiveTechnologyController extends Controller
             });
         }
 
-        // TODO: Search assistive technology by name.
+        if ($request->has('search_value')) {
+            $query->whereIn('assistive_technology_id', $request->get('search_value'));
+        }
+
         $assistiveTechnologies = $query->paginate($request->get('page_size'));
 
         return [
@@ -73,6 +76,13 @@ class AssistiveTechnologyController extends Controller
         $appointment = null;
 
         if ($followUpDate) {
+            // Check if overlap with any appointment.
+            $overlap = $this->validateOverlap($appointmentFrom, $appointmentTo, $request->get('therapistId'), $request->get('patientId'));
+
+            if ($overlap) {
+                return ['success' => false, 'message' => 'error_message.appointment_overlap'];
+            }
+
             $appointment = Appointment::create([
                 'patient_id' => $request->get('patientId'),
                 'therapist_id' => $request->get('therapistId'),
@@ -111,18 +121,35 @@ class AssistiveTechnologyController extends Controller
         $appointmentTo = $request->get('appointmentTo');
 
         $assistive = AssistiveTechnology::find($id);
+
+        if ($assistive->appointment_id) {
+            // Check if overlap with any appointment.
+            $overlap = $this->validateOverlap($appointmentFrom, $appointmentTo, $request->get('therapistId'), $request->get('patientId'), $assistive->appointment_id);
+
+            if ($overlap) {
+                return ['success' => false, 'message' => 'error_message.appointment_overlap'];
+            }
+
+            $appointment = Appointment::find($assistive->appointment_id);
+
+            $updateField = [
+                'start_date' => $appointmentFrom,
+                'end_date' => $appointmentTo,
+            ];
+
+            // Update patient status if appointment date changed.
+            if ($appointmentFrom != $appointment->start_date || $appointmentTo != $appointment->end_date) {
+                $updateField['patient_status'] = Appointment::STATUS_INVITED;
+            }
+
+            $appointment->update($updateField);
+        }
+
         $assistive->update([
             'assistive_technology_id' => $request->get('assistiveTechnologyId'),
             'provision_date' => date('Y-m-d', strtotime($provisionDate)),
             'follow_up_date' => $followUpDate ? date('Y-m-d', strtotime($followUpDate)) : null,
         ]);
-
-        if ($assistive->appointment_id) {
-            Appointment::find($assistive->appointment_id)->update([
-                'start_date' => $appointmentFrom,
-                'end_date' => $appointmentTo,
-            ]);
-        }
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_update'];
     }
@@ -171,5 +198,42 @@ class AssistiveTechnologyController extends Controller
         $assistiveTechnology = AssistiveTechnology::where('assistive_technology_id', $assistiveTechnologyId)->count();
 
         return $assistiveTechnology > 0;
+    }
+
+    /**
+     * @param \Illuminate\Support\Facades\Date $startDate
+     * @param \Illuminate\Support\Facades\Date $endDate
+     * @param integer $therapistId
+     * @param integer $patientId
+     * @param integer|null $appointmentId
+     *
+     * @return boolean
+     */
+    private function validateOverlap($startDate, $endDate, $therapistId, $patientId, $appointmentId = null)
+    {
+        $overlap = Appointment::where(function ($query) use ($therapistId, $patientId) {
+            $query->where('therapist_id', $therapistId)
+                ->orWhere('patient_id', $patientId);
+        })->where(function ($query) use ($startDate, $endDate) {
+            $query->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<=', $startDate)
+                    ->where('end_date', '>', $startDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '>', $startDate)
+                    ->where('end_date', '<', $endDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '>=', $startDate)
+                    ->where('end_date', '<', $startDate);
+            })->orWhere(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<', $endDate)
+                    ->where('end_date', '>=', $endDate);
+            });
+        });
+
+        if ($appointmentId) {
+            $overlap->where('id', '!=', $appointmentId);
+        }
+
+        return $overlap->count();
     }
 }
