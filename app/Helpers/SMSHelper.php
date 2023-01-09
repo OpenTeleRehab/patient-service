@@ -67,7 +67,7 @@ class SMSHelper
         $client = new \Twilio\Rest\Client(env('SMS_SID'), env('SMS_TOKEN'));
         return $client->verify->v2->services(env('SMS_VERIFY_SERVICE_SID'))
             ->verificationChecks
-            ->create($code, ['to' => $to])
+            ->create(['code'=> $code, 'to' => $to])
             ->valid;
     }
 }
