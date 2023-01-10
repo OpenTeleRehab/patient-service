@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('patient/get-call-access-token', [PatientController::class, 'getCallAccessToken']);
+
 Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);
     Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
@@ -50,7 +52,6 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']); // Deprecated from phone service
     Route::get('patient/profile/export', [PatientController::class, 'export']);
     Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
-    Route::get('patient/get-call-access-token', [PatientController::class, 'getCallAccessToken']);
     Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
     Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
     Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
@@ -102,7 +103,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
 Route::post('register/send-code', [RegistrationController::class, 'sendCode']);
 Route::post('register/verify-code', [RegistrationController::class, 'verifyCode']);
 
-//App Setting
+// App Setting
 Route::get('app/settings', [SettingController::class, 'getSetting']);
 
 Route::post('auth/login', [AuthController::class, 'login']);
