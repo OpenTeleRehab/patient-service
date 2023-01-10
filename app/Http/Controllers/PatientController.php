@@ -1268,7 +1268,7 @@ class PatientController extends Controller
         $twilioApiKey = env('TWILIO_API_KEY');
         $twilioApiSecret = env('TWILIO_API_KEY_SECRET');
 
-        $user = Auth::user();
+        $user = User::where('identity', $request->identity)->first();
 
         // Create access token, which we will serialize and send to the client.
         $token = new AccessToken(
