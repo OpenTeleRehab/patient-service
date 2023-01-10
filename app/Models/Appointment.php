@@ -97,6 +97,11 @@ class Appointment extends Model
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
+
+            if ($appointment->assistiveTechnology) {
+                $assistiveTechnology = AssistiveTechnology::where('appointment_id', $appointment->id)->first();
+                $assistiveTechnology->update(['follow_up_date' => null, 'appointment_id' => null]);
+            }
         });
     }
 
