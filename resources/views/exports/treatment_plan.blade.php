@@ -83,9 +83,9 @@
                             @if($file['fileType'] === 'audio/mpeg')
                                 <img width="190" src="http://localhost/images/music.png">
                             @elseif($file['fileType'] === 'video/mp4')
-                                <img width="190" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $file['id'] . '?thumbnail=1'}}">
+                                <img width="190" src="{{ 'http://admin_service/api/file/' . $file['id'] . '?thumbnail=1' }}">
                             @else
-                                <img width="190" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $file['id']}}">
+                                <img width="190" src="{{ 'http://admin_service/api/file/' . $file['id'] }}">
                             @endif
 
                             <h4>{{ $activity['title'] }}</h4>
@@ -96,7 +96,7 @@
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                             @if($activity['file'] && ($activity['file']['hasThumbnail'] || $activity['file']['fileGroupType'] === 'common.type.image'))
-                                <img width="190" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $activity['file']['id'] . '?thumbnail=' . $activity['file']['hasThumbnail']}}">
+                                <img width="190" src="{{ 'http://admin_service/api/file/' . $activity['file']['id'] . '?thumbnail=' . $activity['file']['hasThumbnail'] }}">
                             @else
                                 <img width="190" src="http://localhost/images/material.png">
                             @endif
@@ -158,9 +158,9 @@
                         @if($file['fileType'] === 'audio/mpeg')
                             <img width="390" src="http://localhost/images/music.png">
                         @elseif($file['fileType'] === 'video/mp4')
-                            <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $file['id'] . '?thumbnail=1'}}">
+                            <img width="390" src="{{ 'http://admin_service/api/file/' . $file['id'] . '?thumbnail=1' }}">
                         @else
-                            <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $file['id']}}">
+                            <img width="390" src="{{ 'http://admin_service/api/file/' . $file['id'] }}">
                         @endif
 
                         @if($activity['sets'] > 0)
@@ -175,7 +175,7 @@
 
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                         @if($activity['file'] && $activity['file']['fileGroupType'] == 'common.type.image')
-                            <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $activity['file']['id'] }}">
+                            <img width="390" src="{{ 'http://admin_service/api/file/' . $file['id'] . $activity['file']['id'] }}">
                         @elseif($activity['file'])
                             <span>{{ $translations['activity.file_attachment'] ?? 'File attachment' }}: <i>{{ $activity['title'] }}_{{ $activity['file']['fileName'] }}</i></span>
                         @endif
@@ -190,7 +190,7 @@
                             <div class="mb-1">
                                 <h5>{{ $translations['activity.question'] ?? 'Question' }} {{ $loop->iteration }}</h5>
                                 @if($question['file'])
-                                    <img width="390" src="{{ env("ADMIN_SERVICE_URL") . '/api/file/' . $question['file']['id'] }}">
+                                    <img width="390" src="{{ 'http://admin_service/api/file/' . $question['file']['id'] }}">
                                 @endif
                                 <p>{{ $question['title'] }}</p>
 
