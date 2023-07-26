@@ -85,7 +85,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);
     Route::apiResource('appointment', AppointmentController::class);
 
-    Route::get('treatment-plan/export/on-going', [TreatmentPlanController::class, 'exportOnGoing']);
+    Route::get('treatment-plan/on-going/export', [TreatmentPlanController::class, 'exportOnGoing']);
     Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
 
     // Assistive technology
