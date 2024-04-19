@@ -876,6 +876,8 @@ class PatientController extends Controller
      */
     public function deleteAccount(Request $request, User $user)
     {
+        $hardDelete = $request->boolean('hard_delete');
+
         // Delete phone in phone service.
         $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
             'sub_domain' => env('APP_NAME'),
@@ -887,8 +889,12 @@ class PatientController extends Controller
             Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
         }
 
-        $this->obfuscatedUserData($user);
-        $user->delete();
+        if ($hardDelete) {
+            $user->forceDelete();
+        } else {
+            $this->obfuscatedUserData($user);
+            $user->delete();
+        }
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
@@ -908,7 +914,7 @@ class PatientController extends Controller
             }
         }
 
-        //Remove phone numbers from phone service
+        // Remove phone numbers from phone service.
         Http::post(env('PHONE_SERVICE_URL') . '/phone/delete/by-clinic', [
             'clinic_id' => $clinicId,
         ]);
@@ -923,7 +929,10 @@ class PatientController extends Controller
     public function deleteByTherapistId(Request $request)
     {
         $therapistId = $request->get('therapist_id');
+        $hardDelete = $request->boolean('hard_delete');
+
         $users = User::where('therapist_id', $therapistId)->get();
+
         if (count($users) > 0) {
             foreach ($users as $user) {
                 // Delete phone in phone service.
@@ -938,7 +947,12 @@ class PatientController extends Controller
                 }
 
                 $this->obfuscatedUserData($user);
-                $user->delete();
+
+                if ($hardDelete) {
+                    $user->forceDelete();
+                } else {
+                    $user->delete();
+                }
             }
         }
 
