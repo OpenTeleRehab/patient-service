@@ -10,6 +10,7 @@ use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
 use App\Http\Resources\PatientResource;
+use App\Http\Resources\UserResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
@@ -1057,6 +1058,23 @@ class PatientController extends Controller
         ]);
     }
 
+    public function transfer(Request $request)
+    {
+        $this->validate($request, [
+            'patient_id' => 'required|exists:users,id',
+            'therapist_id' => 'required',
+            'therapist_type' => 'required|in:lead,supplementary',
+        ]);
+
+        $user = User::find($request->get('patient_id'));
+
+        if ($request->get('therapist_type') === 'lead') {
+            $user->update(['therapist_id' => $request->get('therapist_id')]);
+        }
+
+        return ['success' => true, 'message' => 'success_message.transfer_accept'];
+    }
+
     /**
      * @param \Illuminate\Http\Request $request
      *
@@ -1334,6 +1352,20 @@ class PatientController extends Controller
     public function getById($id)
     {
         return json_encode(User::find(intval($id)));
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getByIds(Request $request)
+    {
+        $patient_ids = $request->get('patient_ids', []);
+
+        return [
+            'success' => true,
+            'data' => UserResource::collection(User::whereIn('id', $patient_ids)->get()),
+        ];
     }
 
     /**

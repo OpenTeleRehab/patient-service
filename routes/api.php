@@ -45,11 +45,13 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
 
     // Patients
     Route::get('patient/id/{id}', [PatientController::class, 'getById']);
+    Route::get('patient/list/by-ids', [PatientController::class, 'getByIds']);
     Route::get('patient/list/global', [PatientController::class, 'getPatientsForGlobalData']);
     Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId']);
     Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds']);
     Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove']);
     Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']); // Deprecated from phone service
+    Route::get('patient/transfer', [PatientController::class, 'transfer']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
     Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
     Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
