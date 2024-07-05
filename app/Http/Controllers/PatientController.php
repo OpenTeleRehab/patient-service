@@ -1020,7 +1020,7 @@ class PatientController extends Controller
         }
 
         // Update user chatrooms.
-        $updateData['chat_rooms'] = $newChatRooms;
+        $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
         $updateData['therapist_id'] = $therapistId;
         $updateData['secondary_therapists'] = $secondaryTherapists;
 
