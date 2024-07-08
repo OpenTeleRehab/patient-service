@@ -556,7 +556,6 @@ class PatientController extends Controller
         try {
             $user = User::findOrFail($id);
             $data = $request->all();
-            $newSecondaryTherapistIds = [];
             $dataUpdate = [
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -597,31 +596,30 @@ class PatientController extends Controller
                 $dataUpdate['language_id'] = $data['language_id'];
             }
 
-            $chatRoomIds = $user->chat_rooms;
             if (isset($data['secondary_therapists'])) {
-                $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
+                $newTherapistIds= array_diff($data['secondary_therapists'], $user->secondary_therapists);
 
-                if ($user->secondary_therapists) {
-                    $newSecondaryTherapistIds = array_values(array_diff($data['secondary_therapists'], $user->secondary_therapists));
-                } else {
-                    $newSecondaryTherapistIds = $data['secondary_therapists'];
-                }
-
-                if (!empty($newSecondaryTherapistIds)) {
-                    $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
-                        ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
-                            'ids' => \GuzzleHttp\json_encode($newSecondaryTherapistIds)
-                        ]);
-
-                    if (!empty($response) && $response->successful()) {
-                        $therapists = $response->json()['data'];
-                        foreach ($therapists as $therapist) {
-                            $therapistIdentity = $therapist['identity'];
-                            $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
-                            TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapist['id']);
-                            $chatRoomIds = array_merge($user->chat_rooms, [$chatRoomId]);
-                        }
+                if ($newTherapistIds) {
+                    foreach ($newTherapistIds as $therapistId) {
+                        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                            ->post(env('THERAPIST_SERVICE_URL') . '/transfer', [
+                                'patient_id' => $user->id,
+                                'clinic_id' => $user->clinic_id,
+                                'from_therapist_id' => $user->therapist_id,
+                                'to_therapist_id' => $therapistId,
+                                'therapist_type' => 'supplementary',
+                                'status' => 'invited',
+                            ]);
                     }
+
+                    Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                        ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
+                            'therapist_ids' => $newTherapistIds,
+                            'patient_first_name' => $user->first_name,
+                            'patient_last_name' => $user->last_name,
+                        ]);
+                } else {
+                    $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
                 }
             }
 
@@ -640,17 +638,8 @@ class PatientController extends Controller
                 }
             }
 
-            $dataUpdate['chat_rooms'] = $chatRoomIds;
+            $dataUpdate['chat_rooms'] = $user->chat_rooms;
             $user->update($dataUpdate);
-
-            if ($newSecondaryTherapistIds) {
-                Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
-                    ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
-                        'therapist_ids' => $newSecondaryTherapistIds,
-                        'patient_first_name' => $user->first_name,
-                        'patient_last_name' => $user->last_name,
-                    ]);
-            }
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -972,57 +961,66 @@ class PatientController extends Controller
         $therapistIdentity = $request->get('therapist_identity');
         $oldTherapistChatRooms = $request->get('chat_rooms');
         $newTherapistChatRooms = $request->get('new_chat_rooms');
+        $chatRooms = $user->chat_rooms;
 
-        // Remove chat room of previous therapist.
-        $chatRooms = array_intersect($oldTherapistChatRooms, $user->chat_rooms);
-        $rooms = $user->chat_rooms;
-        if (($key = array_search(reset($chatRooms), $rooms)) !== false) {
-            unset($rooms[$key]);
-        }
+        if ($request->get('therapist_type') === 'supplementary') {
+            $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists, [$therapistId]));
 
-        // Remove secondary therapists if transfered therapist.
-        $secondaryTherapists = $user->secondary_therapists;
-        if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
-            unset($secondaryTherapists[$key]);
-        }
-
-        // Update own activities.
-        $ongoingTreatmentPlan = $user->treatmentPlans()
-            ->whereDate('start_date', '<=', Carbon::now())
-            ->whereDate('end_date', '>=', Carbon::now())
-            ->get();
-        $plannedTreatmentPlans = $user->treatmentPlans()
-            ->whereDate('end_date', '>', Carbon::now())
-            ->orderBy('start_date')
-            ->get();
-
-        if (count($plannedTreatmentPlans) > 0) {
-            foreach ($plannedTreatmentPlans as $treatmentPlan) {
-                Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
-                TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
-            }
-        }
-
-        if (count($ongoingTreatmentPlan) > 0) {
-            Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
-            TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
-        }
-
-        // Check if chat rooms of new therapist exist.
-        $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms, $user->chat_rooms);
-        if (!$chatRoomOfNewTherapists) {
-            // Create chat room for new therapist and patient.
             $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
             TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapistId);
-            $newChatRooms = array_merge($rooms, [$chatRoomId]);
-        } else {
-            $newChatRooms = $rooms;
-        }
 
-        // Update user chatrooms.
-        $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
-        $updateData['therapist_id'] = $therapistId;
-        $updateData['secondary_therapists'] = $secondaryTherapists;
+            $updateData['chat_rooms'] = array_values(array_unique(array_merge($chatRooms, [$chatRoomId])));
+        } else {
+            // Remove chat room of previous therapist.
+            $intersectChatRooms = array_intersect($oldTherapistChatRooms, $chatRooms);
+            if (($key = array_search(reset($intersectChatRooms), $chatRooms)) !== false) {
+                unset($chatRooms[$key]);
+            }
+
+            // Remove secondary therapists if transfered therapist.
+            $secondaryTherapists = $user->secondary_therapists;
+            if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
+                unset($secondaryTherapists[$key]);
+            }
+
+            // Update own activities.
+            $ongoingTreatmentPlan = $user->treatmentPlans()
+                ->whereDate('start_date', '<=', Carbon::now())
+                ->whereDate('end_date', '>=', Carbon::now())
+                ->get();
+            $plannedTreatmentPlans = $user->treatmentPlans()
+                ->whereDate('end_date', '>', Carbon::now())
+                ->orderBy('start_date')
+                ->get();
+
+            if (count($plannedTreatmentPlans) > 0) {
+                foreach ($plannedTreatmentPlans as $treatmentPlan) {
+                    Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+                    TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+                }
+            }
+
+            if (count($ongoingTreatmentPlan) > 0) {
+                Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+                TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+            }
+
+            // Check if chat rooms of new therapist exist.
+            $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms, $chatRooms);
+            if (!$chatRoomOfNewTherapists) {
+                // Create chat room for new therapist and patient.
+                $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $user->identity);
+                TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapistId);
+                $newChatRooms = array_merge($chatRooms, [$chatRoomId]);
+            } else {
+                $newChatRooms = $chatRooms;
+            }
+
+            // Update user chatrooms.
+            $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
+            $updateData['therapist_id'] = $therapistId;
+            $updateData['secondary_therapists'] = $secondaryTherapists;
+        }
 
         $user->update($updateData);
         $user->save();
