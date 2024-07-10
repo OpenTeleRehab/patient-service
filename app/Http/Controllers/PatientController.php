@@ -350,8 +350,6 @@ class PatientController extends Controller
             return abort(409, 'error_message.phone_exists');
         }
 
-        $secondaryTherapists = isset($data['secondary_therapists']) ? $data['secondary_therapists'] : [];
-
         $user = User::create([
             'therapist_id' => $data['therapist_id'],
             'phone' => $data['phone'],
@@ -363,13 +361,13 @@ class PatientController extends Controller
             'clinic_id' => $data['clinic_id'],
             'date_of_birth' => $dateOfBirth,
             'note' => $data['note'],
-            'secondary_therapists' => $secondaryTherapists,
+            'secondary_therapists' => [],
             'enabled' => true,
         ]);
 
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
-                'therapist_ids' => $secondaryTherapists,
+                'therapist_ids' => $request->get('secondary_therapists', []),
                 'patient_first_name' => $user->first_name,
                 'patient_last_name' => $user->last_name,
             ]);
@@ -405,31 +403,26 @@ class PatientController extends Controller
         // Create chat user.
         $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
 
-        $chatRoomIds = [];
-        if (!empty($secondaryTherapists)) {
-            $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
-                ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
-                    'ids' => \GuzzleHttp\json_encode($secondaryTherapists)
-                ]);
-
-            if (!empty($response) && $response->successful()) {
-                $therapists = $response->json()['data'];
-                foreach ($therapists as $therapist) {
-                    $therapistIdentity = $therapist['identity'];
-                    $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
-                    TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapist['id']);
-                    array_push($chatRoomIds, $chatRoomId);
-                }
-            }
-        }
-
         // Create chat room.
         $therapistIdentity = $data['therapist_identity'];
         $chatRoomId = RocketChatHelper::createChatRoom($therapistIdentity, $identity);
         TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $data['therapist_id']);
 
+        // Invite secondary therapist.
+        foreach ($request->get('secondary_therapists', []) as $therapistId) {
+            Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                ->post(env('THERAPIST_SERVICE_URL') . '/transfer', [
+                    'patient_id' => $user->id,
+                    'clinic_id' => $user->clinic_id,
+                    'from_therapist_id' => $user->therapist_id,
+                    'to_therapist_id' => $therapistId,
+                    'therapist_type' => 'supplementary',
+                    'status' => 'invited',
+                ]);
+        }
+
         $updateData['identity'] = $identity;
-        $updateData['chat_rooms'] = array_merge($chatRoomIds, [$chatRoomId]);
+        $updateData['chat_rooms'] = [$chatRoomId];
 
         $user->fill($updateData);
         $user->save();
