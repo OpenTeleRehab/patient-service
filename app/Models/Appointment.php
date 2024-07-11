@@ -63,25 +63,14 @@ class Appointment extends Model
 
         self::created(function ($appointment) {
             try {
-                $user = User::find($appointment->patient_id);
-                $translations = TranslationHelper::getTranslations($user->language_id);
-
-                self::notification($user, $appointment, $translations['appointment.invitation_appointment_with']);
+                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
+                self::notification($appointment, $translations['appointment.invitation_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
         });
 
         self::updated(function ($appointment) {
-            try {
-                $user = User::find($appointment->patient_id);
-                $translations = TranslationHelper::getTranslations($user->language_id);
-
-                self::notification($user, $appointment, $translations['appointment.updated_appointment_with']);
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-
             if ($appointment->assistiveTechnology) {
                 $assistiveTechnology = AssistiveTechnology::where('appointment_id', $appointment->id)->first();
                 $assistiveTechnology->update(['follow_up_date' => date_format($appointment->start_date, config('settings.defaultTimestampFormat'))]);
@@ -90,10 +79,8 @@ class Appointment extends Model
 
         self::deleted(function ($appointment) {
             try {
-                $user = User::find($appointment->patient_id);
-                $translations = TranslationHelper::getTranslations($user->language_id);
-
-                self::notification($user, $appointment, $translations['appointment.deleted_appointment_with']);
+                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
+                self::notification($appointment, $translations['appointment.deleted_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
@@ -128,14 +115,13 @@ class Appointment extends Model
      *
      * @return bool
      */
-    public static function notification($user, $appointment, $heading)
+    public static function notification($appointment, $heading)
     {
-        if ($user) {
-            $token = $user->firebase_token;
-            $title = $heading . ' ' . $user->first_name . ' ' . $user->last_name;
+        if ($appointment->patient) {
+            $token = $appointment->patient->firebase_token;
             $body = Carbon::parse($appointment->start_date)->format('d/m/Y h:i A') . ' - ' . Carbon::parse($appointment->end_date)->format('d/m/Y h:i A');
 
-            event(new PodcastNotificationEvent($token, null, null, $title, $body));
+            event(new PodcastNotificationEvent($token, null, null, $heading, $body));
         }
         return true;
     }
