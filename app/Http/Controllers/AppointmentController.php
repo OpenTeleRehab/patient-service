@@ -75,8 +75,12 @@ class AppointmentController extends Controller
             ->whereMonth('start_date', $date->format('m'))
             ->get();
 
-        $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('therapist_id', $request->get('therapist_id'));
+        $appointments = Appointment::where('therapist_id', $request->get('therapist_id'));
+        $newAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+            ->where('created_by_therapist', 0)
+            ->where('therapist_status', Appointment::STATUS_INVITED)
+            ->orderBy('start_date')
+            ->get();
 
         if ($request->get('selected_from_date')) {
             $selectedFromDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_from_date'));
@@ -90,6 +94,7 @@ class AppointmentController extends Controller
         $data = [
             'calendarData' => $calendarData,
             'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
+            'newAppointments' => AppointmentResource::collection($newAppointments),
         ];
         return ['success' => true, 'data' => $data];
     }
