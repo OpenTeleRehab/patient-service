@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\TranslationHelper;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AppointmentController extends Controller
 {
@@ -254,6 +257,13 @@ class AppointmentController extends Controller
         }
         $appointment->update($updateFile);
 
+        try {
+            $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
+            Appointment::notification($appointment, $translations['appointment.updated_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
+
         return ['success' => true, 'message' => 'success_message.appointment_update'];
     }
 
@@ -327,8 +337,22 @@ class AppointmentController extends Controller
             'therapist_status' => $request->get('status')
         ]);
 
-        $message = 'success_message.appointment_update';
-        return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
+        try {
+            $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
+
+            $statusTranslation = $translations['appointment.invitation.' . $request->get('status')];
+            $patientName = $appointment->patient->first_name . ' ' . $appointment->patient->last_name;
+
+            Appointment::notification($appointment, $translations['appointment.updated_appointment_with'] . ' ' . $patientName . ' ' . $statusTranslation);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
+
+        return [
+            'success' => true,
+            'message' => 'success_message.appointment_update',
+            'data' => new AppointmentResource($appointment)
+        ];
     }
 
     /**
