@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\TranslationHelper;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
-use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -76,9 +76,11 @@ class AppointmentController extends Controller
             ->get();
 
         $appointments = Appointment::where('therapist_id', $request->get('therapist_id'));
+
         $newAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('created_by_therapist', 0)
             ->where('therapist_status', Appointment::STATUS_INVITED)
+            ->where('start_date', '>', Carbon::now())
             ->orderBy('start_date')
             ->get();
 
@@ -93,6 +95,10 @@ class AppointmentController extends Controller
                 ->where('start_date', '<=', $selectedToDate);
         } else {
             $appointments->where('end_date', '>', $now);
+        }
+
+        if ($request->get('patient_id')) {
+            $appointments->where('patient_id', $request->get('patient_id'));
         }
 
         $data = [
@@ -401,7 +407,11 @@ class AppointmentController extends Controller
      */
     public function destroy(Appointment $appointment)
     {
-        $appointment->delete();
+        if ($appointment->created_by_therapist) {
+            $appointment->update(['therapist_status' => Appointment::STATUS_CANCELLED]);
+        } else {
+            $appointment->update(['patient_status' => Appointment::STATUS_CANCELLED]);
+        }
 
         return ['success' => true, 'message' => 'success_message.appointment_delete'];
     }
