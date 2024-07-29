@@ -82,6 +82,10 @@ class AppointmentController extends Controller
             ->orderBy('start_date')
             ->get();
 
+        $upComingAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+            ->where('end_date', '>=', $now)
+            ->count();
+
         if ($request->get('selected_from_date')) {
             $selectedFromDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_from_date'));
             $selectedToDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_to_date'));
@@ -92,6 +96,7 @@ class AppointmentController extends Controller
         }
 
         $data = [
+            'upcomingAppointments' => $upComingAppointments,
             'calendarData' => $calendarData,
             'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
             'newAppointments' => AppointmentResource::collection($newAppointments),
