@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Resources;
+
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,11 +18,6 @@ class PatientResource extends JsonResource
     {
         $upcomingTreatmentPlan = $this->treatmentPlans()
             ->whereDate('end_date', '>', Carbon::now())
-            ->orderBy('start_date')
-            ->first();
-
-        $upcomingAppointment = $this->appointments()
-            ->where('start_date', '>', Carbon::now())
             ->orderBy('start_date')
             ->first();
 
@@ -61,7 +57,8 @@ class PatientResource extends JsonResource
                 'is_secondary_therapist' => $this->isSecondaryTherapist($this->secondary_therapists, $request),
                 'completed_percent' => $this->completed_percent,
                 'total_pain_threshold' => $this->total_pain_threshold,
-                'upcoming_appointment' => $upcomingAppointment,
+                'next_appointment' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->first(),
+                'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
             ]);
         }
 

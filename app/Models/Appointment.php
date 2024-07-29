@@ -15,6 +15,7 @@ class Appointment extends Model
     const STATUS_INVITED = 'invited';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_REJECTED = 'rejected';
+    const STATUS_CANCELLED = 'cancelled';
 
     use HasFactory;
 
