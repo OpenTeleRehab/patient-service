@@ -413,7 +413,7 @@ class AppointmentController extends Controller
             $appointment->update(['patient_status' => Appointment::STATUS_CANCELLED]);
         }
 
-        return ['success' => true, 'message' => 'success_message.appointment_delete'];
+        return ['success' => true, 'message' => 'success_message.appointment_cancel'];
     }
 
     /**
