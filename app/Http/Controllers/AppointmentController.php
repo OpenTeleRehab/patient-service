@@ -292,6 +292,8 @@ class AppointmentController extends Controller
     {
         $appointments = Appointment::where('patient_id', Auth::id())
             ->where('end_date', '>=', $request->get('now'))
+            ->where('therapist_status', '!=', Appointment::STATUS_CANCELLED)
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
             ->orderBy('start_date')
             ->paginate($request->get('page_size'));
 
