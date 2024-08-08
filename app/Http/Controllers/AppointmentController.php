@@ -73,20 +73,37 @@ class AppointmentController extends Controller
         $calendarData = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->whereYear('start_date', $date->format('Y'))
             ->whereMonth('start_date', $date->format('m'))
+            ->where('therapist_status', '!=', Appointment::STATUS_CANCELLED)
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
             ->get();
 
-        $appointments = Appointment::where('therapist_id', $request->get('therapist_id'));
+        $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+            ->where('therapist_status', '!=', Appointment::STATUS_CANCELLED)
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
+
 
         $newAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('created_by_therapist', 0)
             ->where('therapist_status', Appointment::STATUS_INVITED)
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
             ->where('start_date', '>', Carbon::now())
             ->orderBy('start_date')
             ->get();
 
         $upComingAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+            ->where('created_by_therapist', 0)
             ->where('end_date', '>=', $now)
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
+            ->orWhere(function ($query) {
+                $query->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
+                    ->where('unread', true);
+            })
             ->count();
+
+        $unreadAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+            ->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
+            ->where('unread', true)
+            ->get();
 
         if ($request->get('selected_from_date')) {
             $selectedFromDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_from_date'));
@@ -106,6 +123,7 @@ class AppointmentController extends Controller
             'calendarData' => $calendarData,
             'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
             'newAppointments' => AppointmentResource::collection($newAppointments),
+            'unreadAppointments' => AppointmentResource::collection($unreadAppointments),
         ];
         return ['success' => true, 'data' => $data];
     }
@@ -412,7 +430,10 @@ class AppointmentController extends Controller
         if ($appointment->created_by_therapist) {
             $appointment->update(['therapist_status' => Appointment::STATUS_CANCELLED]);
         } else {
-            $appointment->update(['patient_status' => Appointment::STATUS_CANCELLED]);
+            $appointment->update([
+                'patient_status' => Appointment::STATUS_CANCELLED,
+                'unread' => true,
+            ]);
         }
 
         return ['success' => true, 'message' => 'success_message.appointment_cancel'];
@@ -465,11 +486,29 @@ class AppointmentController extends Controller
      */
     public function updatePatientStatus(Request $request, Appointment $appointment)
     {
-        $appointment->update([
-            'patient_status' => $request->get('status')
-        ]);
+        $status = $request->get('status');
+        $arr = ['patient_status' => $status];
+    
+        if (in_array($status, [Appointment::STATUS_ACCEPTED, Appointment::STATUS_REJECTED])) {
+            $arr['unread'] = true;
+        }
+
+        $appointment->update($arr);
 
         $message = 'success_message.appointment_update';
         return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function updateAsRead(Request $request)
+    {
+        Appointment::whereIn('id', $request)->update(['unread' => false]);
+
+        return ['success' => true, 'message' => 'success_message.unread_update'];
     }
 }

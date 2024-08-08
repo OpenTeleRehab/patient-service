@@ -85,6 +85,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment']);
     Route::post('appointment/update-patient-status/{appointment}', [AppointmentController::class, 'updatePatientStatus']);
     Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);
+    Route::put('appointment/update-as-read', [AppointmentController::class, 'updateAsRead']);
     Route::apiResource('appointment', AppointmentController::class);
 
     Route::get('treatment-plan/on-going/export', [TreatmentPlanController::class, 'exportOnGoing']);
