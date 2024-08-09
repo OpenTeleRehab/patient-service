@@ -93,6 +93,7 @@ class AppointmentController extends Controller
         $upComingAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('created_by_therapist', 0)
             ->where('end_date', '>=', $now)
+            ->where('therapist_status', Appointment::STATUS_INVITED)
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
             ->orWhere(function ($query) {
                 $query->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
