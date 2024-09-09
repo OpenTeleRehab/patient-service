@@ -4,22 +4,21 @@ namespace App\Listeners;
 
 use App\Events\PodcastNotificationEvent;
 use App\Models\Message;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use Google\Auth\Credentials\ServiceAccountCredentials;
 
 class SendPodcastNotification
 {
     /**
      * Handle the event.
      *
-     * @param  PodcastNotificationEvent  $event
+     * @param PodcastNotificationEvent $event
      * @return string
      */
     public function handle(PodcastNotificationEvent $event)
     {
         if (str_contains(Message::JITSI_CALL_AUDIO_STARTED, $event->body) || str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body) || str_contains(Message::JITSI_CALL_AUDIO_MISSED, $event->body) || str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body)) {
             $message = [
-                'to' => $event->token,
+                'token' => $event->token,
                 'data' => [
                     '_id' => $event->id,
                     'rid' => $event->rid,
@@ -27,61 +26,52 @@ class SendPodcastNotification
                     'body' => $event->body,
                     'channelId' => 'fcm_call_channel',
                 ],
-                'content_available' => true,
-                'priority' => 'high',
-                'topic' => 'all',
+                'notification' => [
+                    'title' => $event->title,
+                    'body' => $event->body,
+                ],
                 'apns' => [
                     'payload' => [
                         'aps' => [
-                            'content-available' => 'true'
+                            'badge' => 1,
+                            'content-available' => 1
                         ]
                     ],
                     'headers' => [
-                        'apns-priority' => '5',
                         'apns-push-type' => 'background',
-                        'apns-topic' => ''
+                        'apns-priority' => '5',
+                        'apns-topic' => '',
                     ]
                 ]
             ];
         } else {
             $message = [
-                'to' => $event->token,
+                'token' => $event->token,
                 'notification' => [
                     'title' => $event->title,
                     'body' => $event->body,
-                    'sound' => 'default'
                 ],
-                'priority' => 'high',
-                'topic' => 'all',
-                'sound' => 'default',
-                'badge' => 1,
-                'content_available' => true,
                 'apns' => [
                     'payload' => [
                         'aps' => [
                             'badge' => 1,
-                            'content-available' => true
                         ]
                     ],
-                    'headers' => [
-                        'apns-priority' => 5,
-                        'apns-push-type' => 'background',
-                        'apns-topic' => ''
-                    ]
                 ]
             ];
         }
 
-        $dataString = json_encode($message);
+        $dataString = json_encode(['message' => $message]);
 
         $headers = [
-            'Authorization: key=' . env('FIREBASE_SERVER_API_KEY'),
+            'Authorization: Bearer ' . $this->getAccessToken(),
             'Content-Type: application/json',
         ];
 
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+        $projectId = env('FIREBASE_PROJECT_ID');
+        curl_setopt($ch, CURLOPT_URL, "https://fcm.googleapis.com/v1/projects/$projectId/messages:send");
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -89,5 +79,14 @@ class SendPodcastNotification
         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
 
         return curl_exec($ch);
+    }
+
+    private function getAccessToken()
+    {
+        $keyFilePath = storage_path(env('FIREBASE_SERVICE_ACCOUNT_FILE'));
+        $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+        $credentials = new ServiceAccountCredentials($scopes, $keyFilePath);
+
+        return $credentials->fetchAuthToken()['access_token'];
     }
 }
