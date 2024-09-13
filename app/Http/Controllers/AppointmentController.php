@@ -78,7 +78,7 @@ class AppointmentController extends Controller
             ->get();
 
         $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('therapist_status', '!=', Appointment::STATUS_CANCELLED)
+            ->whereNotIn('therapist_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_INVITED])
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
 
 
