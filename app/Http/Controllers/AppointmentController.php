@@ -90,16 +90,18 @@ class AppointmentController extends Controller
             ->orderBy('start_date')
             ->get();
 
-        $upComingAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
-            ->where('created_by_therapist', 0)
-            ->where('end_date', '>=', $now)
-            ->where('therapist_status', Appointment::STATUS_INVITED)
-            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
-            ->orWhere(function ($query) {
-                $query->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
-                    ->where('unread', true);
-            })
-            ->count();
+        // Count the number of unread patient actions for a therapist and the number of pending appointment requests from patients
+        $upComingAppointments = Appointment::where(function ($query) use ($request, $now) {
+            $query->where('therapist_id', $request->get('therapist_id'))
+                ->where('created_by_therapist', 0)
+                ->where('end_date', '>=', $now)
+                ->where('therapist_status', Appointment::STATUS_INVITED)
+                ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
+        })->orWhere(function ($query) use ($request) {
+            $query->where('therapist_id', $request->get('therapist_id'))
+                ->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
+                ->where('unread', true);
+        })->count();
 
         $unreadAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
