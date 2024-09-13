@@ -37,7 +37,7 @@ class Calculator
 
         $activity = Activity::find($event->activity['id']);
         $ongoingTreatmentPlan = TreatmentPlan::find($activity->treatment_plan_id);
-        $dateDiff = intval(date_diff(date_create($ongoingTreatmentPlan->start_date), date_create(Carbon::now()->format('Y-m-d')), true)->format('%d'));
+        $dateDiff = intval(date_diff(date_create($ongoingTreatmentPlan->start_date), date_create(Carbon::now()->format('Y-m-d')), true)->format('%d')) + 1;
         $totalPainThreshold = 0;
         $totalCompleted = 0;
 
