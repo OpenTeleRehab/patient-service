@@ -85,10 +85,7 @@ class AppointmentController extends Controller
         $newAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
             ->where('created_by_therapist', 0)
             ->where('therapist_status', Appointment::STATUS_INVITED)
-            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
-            ->where('start_date', '>', Carbon::now())
-            ->orderBy('start_date')
-            ->get();
+            ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
 
         // Count the number of unread patient actions for a therapist and the number of pending appointment requests from patients
         $upComingAppointments = Appointment::where(function ($query) use ($request, $now) {
@@ -111,10 +108,15 @@ class AppointmentController extends Controller
         if ($request->get('selected_from_date')) {
             $selectedFromDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_from_date'));
             $selectedToDate = date_create_from_format('Y-m-d H:i:s', $request->get('selected_to_date'));
+
             $appointments->where('start_date', '>=', $selectedFromDate)
                 ->where('start_date', '<=', $selectedToDate);
+
+            $newAppointments->where('start_date', '>=', $selectedFromDate)
+            ->where('start_date', '<=', $selectedToDate);
         } else {
             $appointments->where('end_date', '>', $now);
+            $newAppointments->where('end_date', '>', $now);
         }
 
         if ($request->get('patient_id')) {
@@ -125,7 +127,7 @@ class AppointmentController extends Controller
             'upcomingAppointments' => $upComingAppointments,
             'calendarData' => $calendarData,
             'approves' => AppointmentResource::collection($appointments->orderBy('start_date')->get()),
-            'newAppointments' => AppointmentResource::collection($newAppointments),
+            'newAppointments' => AppointmentResource::collection($newAppointments->orderBy('start_date')->get()),
             'unreadAppointments' => AppointmentResource::collection($unreadAppointments),
         ];
         return ['success' => true, 'data' => $data];
