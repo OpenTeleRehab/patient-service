@@ -861,6 +861,12 @@ class PatientController extends Controller
     {
         $hardDelete = $request->boolean('hard_delete');
 
+        // Remove all active requests of patient transfer
+        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
+                'patient_id' => $user->id,
+        ]);
+
         // Delete phone in phone service.
         $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
             'sub_domain' => env('APP_NAME'),
@@ -1017,6 +1023,12 @@ class PatientController extends Controller
 
         $user->update($updateData);
         $user->save();
+
+        // Remove all active requests of patient transfer
+        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
+                'patient_id' => $user->id,
+            ]);
 
         return ['success' => true, 'message' => 'success_message.transfered_account'];
     }
