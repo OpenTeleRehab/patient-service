@@ -9,15 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 use App\Events\PodcastNotificationEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Appointment extends Model
 {
+    use HasFactory, LogsActivity;
+
     const STATUS_INVITED = 'invited';
     const STATUS_ACCEPTED = 'accepted';
     const STATUS_REJECTED = 'rejected';
     const STATUS_CANCELLED = 'cancelled';
-
-    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +36,16 @@ class Appointment extends Model
         'created_by_therapist',
         'unread',
     ];
+
+    /**
+     * Spatie\Activitylog config
+     */
+    protected static $logAttributes = ['*'];
+    protected static $logAttributesToIgnore = [
+        'id', 'created_at', 'updated_at'
+    ];
+    protected static $logOnlyDirty = true;
+    protected static $submitEmptyLogs = false;
 
     /**
      * The attributes that should be cast to native types.

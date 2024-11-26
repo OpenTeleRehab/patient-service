@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class TreatmentPlan extends Model
 {
+    use LogsActivity;
+
     const STATUS_PLANNED = 'planned';
     const STATUS_ON_GOING = 'on_going';
     const STATUS_FINISHED = 'finished';
@@ -32,6 +35,16 @@ class TreatmentPlan extends Model
         'created_by',
         'disease_id',
     ];
+
+    /**
+     * Spatie\Activitylog config
+     */
+    protected static $logAttributes = ['*'];
+    protected static $logAttributesToIgnore = [
+        'id', 'created_at', 'updated_at'
+    ];
+    protected static $logOnlyDirty = true;
+    protected static $submitEmptyLogs = false;
 
     /**
      * The attributes that should be cast to native types.

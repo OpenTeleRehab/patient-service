@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class AssistiveTechnology extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +23,16 @@ class AssistiveTechnology extends Model
         'provision_date',
         'follow_up_date',
     ];
+
+    /**
+     * Spatie\Activitylog config
+     */
+    protected static $logAttributes = ['*'];
+    protected static $logAttributesToIgnore = [
+        'id', 'created_at', 'updated_at'
+    ];
+    protected static $logOnlyDirty = true;
+    protected static $submitEmptyLogs = false;
 
     /**
      * The attributes that should be cast to native types.

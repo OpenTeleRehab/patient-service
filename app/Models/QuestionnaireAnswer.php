@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class QuestionnaireAnswer extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -19,6 +20,14 @@ class QuestionnaireAnswer extends Model
         'question_id',
         'answer',
     ];
+
+    /**
+     * Spatie\Activitylog config
+     */
+    protected static $logAttributes = ['*'];
+    protected static $logAttributesToIgnore = ['id'];
+    protected static $logOnlyDirty = true;
+    protected static $submitEmptyLogs = false;
 
     /**
      * Indicates if the model should be timestamped.
