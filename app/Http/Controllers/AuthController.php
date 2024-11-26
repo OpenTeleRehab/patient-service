@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddLogToAdminServiceEvent;
 use App\Events\LoginEvent;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 class AuthController extends Controller
 {
@@ -145,6 +147,10 @@ class AuthController extends Controller
         $user->update([
             'password' => Hash::make($pinCode),
         ]);
+
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         // Always make sure old access token is cleared.
         $user->tokens()->delete();
