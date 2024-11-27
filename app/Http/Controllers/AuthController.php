@@ -176,6 +176,10 @@ class AuthController extends Controller
             'term_and_condition_id' => $request->get('term_and_condition_id'),
         ]);
 
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
 
@@ -190,6 +194,10 @@ class AuthController extends Controller
         $user->update([
             'privacy_and_policy_id' => $request->get('privacy_and_policy_id'),
         ]);
+
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
@@ -206,6 +214,10 @@ class AuthController extends Controller
             'kid_theme' => $request->get('kid_theme'),
         ]);
 
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+
         return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
     }
 
@@ -220,6 +232,10 @@ class AuthController extends Controller
         $user->update([
             'firebase_token' => $request->get('firebase_token'),
         ]);
+
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
 
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
     }
