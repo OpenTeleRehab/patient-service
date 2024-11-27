@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Spatie\Activitylog\Models\Activity as ActivityLogActivityLog;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class TreatmentPlanController extends Controller
 {
@@ -169,7 +169,7 @@ class TreatmentPlanController extends Controller
 
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
@@ -221,7 +221,7 @@ class TreatmentPlanController extends Controller
         ]);
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
         $this->updateOrCreateGoals($id, $request->get('goals', []));
@@ -253,7 +253,7 @@ class TreatmentPlanController extends Controller
             $goalIds[] = $goalObj->id;
             // Activity log
             $lastLoggedActivity = ActivityLog::all()->last();
-            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         // Remove deleted goals.
@@ -262,7 +262,7 @@ class TreatmentPlanController extends Controller
             ->delete();
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         Activity::where('treatment_plan_id', $treatmentPlanId)
             ->where('type', Activity::ACTIVITY_TYPE_GOAL)
@@ -270,7 +270,7 @@ class TreatmentPlanController extends Controller
             ->delete();
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
     }
 
     /**
@@ -325,7 +325,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                     // Activity log
                     $lastLoggedActivity = ActivityLog::all()->last();
-                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 Http::post(env('ADMIN_SERVICE_URL') . '/exercise/mark-as-used/by-ids', [
@@ -358,7 +358,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                     // Activity log
                     $lastLoggedActivity = ActivityLog::all()->last();
-                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 Http::post(env('ADMIN_SERVICE_URL') . '/education-material/mark-as-used/by-ids', [
@@ -391,7 +391,7 @@ class TreatmentPlanController extends Controller
                     $activityIds[] = $activityObj->id;
                     // Activity log
                     $lastLoggedActivity = ActivityLog::all()->last();
-                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
@@ -431,7 +431,7 @@ class TreatmentPlanController extends Controller
 
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
     }
 
     /**
@@ -458,7 +458,7 @@ class TreatmentPlanController extends Controller
 
             // Activity log
             $lastLoggedActivity = ActivityLog::all()->last();
-            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         $nowLocal = Carbon::now($timezone);
@@ -483,7 +483,7 @@ class TreatmentPlanController extends Controller
         ]);
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true];
     }
@@ -598,7 +598,7 @@ class TreatmentPlanController extends Controller
 
                 // Activity log
                 $lastLoggedActivity = ActivityLog::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
             $timezone = $questionnaireAnswer['timezone'];
 
@@ -609,7 +609,7 @@ class TreatmentPlanController extends Controller
 
             // Activity log
             $lastLoggedActivity = ActivityLog::all()->last();
-            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         $nowLocal = Carbon::now($timezone);
@@ -635,7 +635,7 @@ class TreatmentPlanController extends Controller
 
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true];
     }
@@ -661,7 +661,7 @@ class TreatmentPlanController extends Controller
             ]);
             // Activity log
             $lastLoggedActivity = ActivityLog::all()->last();
-            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
         return ['success' => true];
     }

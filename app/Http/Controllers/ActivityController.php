@@ -203,7 +203,7 @@ class ActivityController extends Controller
 
         // Activity log
         $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'message.activity_delete'];
     }

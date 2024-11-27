@@ -219,7 +219,7 @@ class AppointmentController extends Controller
         ]);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.appointment_add'];
     }
@@ -302,7 +302,7 @@ class AppointmentController extends Controller
         $appointment->update($updateFile);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         try {
             $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
@@ -387,7 +387,7 @@ class AppointmentController extends Controller
         ]);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         try {
             $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
@@ -453,7 +453,7 @@ class AppointmentController extends Controller
         }
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.appointment_cancel'];
     }
@@ -496,7 +496,7 @@ class AppointmentController extends Controller
         );
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true];
     }
@@ -518,7 +518,7 @@ class AppointmentController extends Controller
         $appointment->update($arr);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         $message = 'success_message.appointment_update';
         return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
@@ -535,7 +535,7 @@ class AppointmentController extends Controller
         Appointment::whereIn('id', $request)->update(['unread' => false]);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.unread_update'];
     }

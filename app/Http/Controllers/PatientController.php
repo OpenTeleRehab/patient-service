@@ -25,7 +25,7 @@ use Carbon\Carbon;
 use Mpdf\Output\Destination;
 use Twilio\Jwt\AccessToken;
 use Twilio\Jwt\Grants\VideoGrant;
-use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class PatientController extends Controller
 {
@@ -368,7 +368,7 @@ class PatientController extends Controller
         ]);
 
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
@@ -434,7 +434,7 @@ class PatientController extends Controller
         $user->save();
 
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         if (!$user) {
@@ -645,7 +645,7 @@ class PatientController extends Controller
             $user->update($dataUpdate);
 
              // Activity log
-            $lastLoggedActivity = Activity::all()->last();
+            $lastLoggedActivity = ActivityLog::all()->last();
             event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -835,7 +835,7 @@ class PatientController extends Controller
         $user->update(['enabled' => $enabled]);
 
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.activate_deactivate_account', 'enabled' => $enabled];
@@ -904,7 +904,7 @@ class PatientController extends Controller
             $user->delete();
         }
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
@@ -924,8 +924,8 @@ class PatientController extends Controller
                 $user->delete();
 
                 // Activity log
-                $lastLoggedActivity = Activity::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
 
@@ -970,7 +970,7 @@ class PatientController extends Controller
                 }
 
                 // Activity log
-                $lastLoggedActivity = Activity::all()->last();
+                $lastLoggedActivity = ActivityLog::all()->last();
                 event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
@@ -1026,12 +1026,12 @@ class PatientController extends Controller
                 foreach ($plannedTreatmentPlans as $treatmentPlan) {
                     Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
                     // Activity log
-                    $lastLoggedActivity = Activity::all()->last();
+                    $lastLoggedActivity = ActivityLog::all()->last();
                     event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
                     TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
                     // Activity log
-                    $lastLoggedActivity = Activity::all()->last();
+                    $lastLoggedActivity = ActivityLog::all()->last();
                     event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
             }
@@ -1039,12 +1039,12 @@ class PatientController extends Controller
             if (count($ongoingTreatmentPlan) > 0) {
                 Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
                 // Activity log
-                $lastLoggedActivity = Activity::all()->last();
+                $lastLoggedActivity = ActivityLog::all()->last();
                 event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
                 TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
                 // Activity log
-                $lastLoggedActivity = Activity::all()->last();
+                $lastLoggedActivity = ActivityLog::all()->last();
                 event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
 
@@ -1068,7 +1068,7 @@ class PatientController extends Controller
         $user->update($updateData);
         $user->save();
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         // Remove all active requests of patient transfer
@@ -1092,7 +1092,7 @@ class PatientController extends Controller
         $user->delete();
 
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
+        $lastLoggedActivity = ActivityLog::all()->last();
         event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
@@ -1200,8 +1200,8 @@ class PatientController extends Controller
         $patient->save();
 
         // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.deleted_chat_rooms'];
     }

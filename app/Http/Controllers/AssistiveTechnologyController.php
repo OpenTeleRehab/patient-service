@@ -182,7 +182,7 @@ class AssistiveTechnologyController extends Controller
         AssistiveTechnology::find($id)->delete();
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user());
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_delete'];
     }

@@ -37,6 +37,9 @@ class AuthController extends Controller
         }
 
         $user->update($data);
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return $this->savePinCode($user, $request->pin);
     }
@@ -81,11 +84,20 @@ class AuthController extends Controller
                 /** @var User $user */
                 $user = Auth::user();
 
+                activity()
+                   ->withProperties(['user_id' => $user->id])
+                   ->useLog('patient_service')
+                   ->log('login');
+
                 // Clear login attempts.
                 RateLimiter::clear($this->throttleKey());
 
                 // Broadcast login event.
                 event(new LoginEvent($request));
+
+                // Activity log
+                $lastLoggedActivity = Activity::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
                 $data = [
                     'profile' => new UserResource($user),
@@ -112,6 +124,15 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
         $user->tokens()->delete();
+
+        activity()
+            ->withProperties(['user_id' => $user->id])
+            ->useLog('patient_service')
+            ->log('logout');
+
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true];
     }
@@ -178,7 +199,7 @@ class AuthController extends Controller
 
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
@@ -197,7 +218,7 @@ class AuthController extends Controller
 
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
@@ -216,7 +237,7 @@ class AuthController extends Controller
 
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
     }
@@ -235,7 +256,7 @@ class AuthController extends Controller
 
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user);
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
     }
