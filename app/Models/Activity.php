@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Activity extends Model
 {
@@ -39,12 +40,18 @@ class Activity extends Model
     ];
 
     /**
-     * Spatie\Activitylog config
+     * Get the options for activity logging.
+     *
+     * @return \Spatie\Activitylog\LogOptions
      */
-    protected static $logAttributes = ['*'];
-    protected static $logAttributesToIgnore = ['id'];
-    protected static $logOnlyDirty = true;
-    protected static $submitEmptyLogs = false;
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['id']);
+    }
 
     /**
      * Indicates if the model should be timestamped.

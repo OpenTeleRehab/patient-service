@@ -11,6 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
@@ -82,14 +83,18 @@ class User extends Authenticatable
     ];
 
     /**
-     * Spatie\Activitylog config
+     * Get the options for activity logging.
+     *
+     * @return \Spatie\Activitylog\LogOptions
      */
-    protected static $logAttributes = ['*'];
-    protected static $logAttributesToIgnore = [
-        'id', 'password', 'remember_token', 'created_at', 'updated_at', 'deleted_at'
-    ];
-    protected static $logOnlyDirty = true;
-    protected static $submitEmptyLogs = false;
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['id', 'password', 'remember_token', 'created_at', 'updated_at', 'deleted_at']);
+    }
 
     /**
      * The attributes that should be hidden for arrays.
