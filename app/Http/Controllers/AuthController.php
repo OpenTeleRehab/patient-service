@@ -39,7 +39,7 @@ class AuthController extends Controller
         $user->update($data);
         // Activity log
         $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return $this->savePinCode($user, $request->pin);
     }
