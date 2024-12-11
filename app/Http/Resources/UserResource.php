@@ -38,6 +38,7 @@ class UserResource extends JsonResource
             'kid_theme' => $this->kid_theme,
             'firebase_token' => $this->firebase_token,
             'last_reminder' => $this->last_reminder,
+            'location' => $this->location,
         ];
     }
 }

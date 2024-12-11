@@ -80,6 +80,7 @@ class User extends Authenticatable
         'daily_answers',
         'firebase_token',
         'last_reminder',
+        'location',
     ];
 
     /**

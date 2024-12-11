@@ -365,6 +365,7 @@ class PatientController extends Controller
             'note' => $data['note'],
             'secondary_therapists' => [],
             'enabled' => true,
+            'location' => $data['location'],
         ]);
 
         // Activity log
@@ -563,6 +564,7 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
+                'location' => $data['location'],
             ];
 
             if (isset($data['phone'])) {

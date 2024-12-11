@@ -59,6 +59,7 @@ class PatientResource extends JsonResource
                 'total_pain_threshold' => $this->total_pain_threshold,
                 'next_appointment' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->first(),
                 'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
+                'location' => $this->location,
             ]);
         }
 
