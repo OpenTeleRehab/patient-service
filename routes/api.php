@@ -100,6 +100,12 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::name('admin.')->group(function () {
         Route::get('profession', [ForwarderController::class, 'index']);
     });
+
+    // Global Admin Service
+    Route::name('global_admin.')->group(function () {
+        Route::post('survey/skip', [ForwarderController::class, 'store']);
+        Route::post('survey/submit', [ForwarderController::class, 'store']);
+    });
 });
 
 // Public
