@@ -12,6 +12,7 @@ use App\Http\Controllers\ChartController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ForwarderController;
 use App\Http\Controllers\AssistiveTechnologyController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -106,6 +107,9 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
         Route::post('survey/skip', [ForwarderController::class, 'store']);
         Route::post('survey/submit', [ForwarderController::class, 'store']);
     });
+
+    // Report
+    Route::get('questionnaire-result/export', [ReportController::class, 'exportQuestionnaireResult']);
 });
 
 // Public

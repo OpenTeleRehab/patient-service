@@ -77,4 +77,12 @@ class Activity extends Model
     {
         return $this->hasMany(QuestionnaireAnswer::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\belongsTo
+     */
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(TreatmentPlan::class);
+    }
 }

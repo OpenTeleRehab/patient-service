@@ -11,6 +11,10 @@ class QuestionnaireAnswer extends Model
 {
     use HasFactory, LogsActivity;
 
+    const QUESTIONNAIRE_TYPE_CHECKBOX = 'checkbox';
+    const QUESTIONNAIRE_TYPE_MULTIPLE = 'multiple';
+    const QUESTIONNAIRE_TYPE_OPEN_NUMBER = 'open-number';
+
     /**
      * The attributes that are mass assignable.
      *
