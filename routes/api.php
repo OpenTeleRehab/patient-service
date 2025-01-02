@@ -12,6 +12,7 @@ use App\Http\Controllers\ChartController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ForwarderController;
 use App\Http\Controllers\AssistiveTechnologyController;
+use App\Http\Controllers\CallHistoryController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::get('patient/transfer', [PatientController::class, 'transfer']);
     Route::get('patient/profile/export', [PatientController::class, 'export']);
     Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
+    Route::get('patient/list/get-raw-data', [PatientController::class, 'getPatientRawData']);
     Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
     Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
     Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
@@ -110,6 +112,8 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
 
     // Report
     Route::get('questionnaire-result/export', [ReportController::class, 'exportQuestionnaireResult']);
+    // Call history
+    Route::apiResource('call-history', CallHistoryController::class);
 });
 
 // Public

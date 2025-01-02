@@ -10,6 +10,7 @@ use App\Helpers\ApiHelper;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
+use App\Http\Resources\PatientRawDataResource;
 use App\Http\Resources\PatientResource;
 use App\Http\Resources\UserResource;
 use App\Models\Activity;
@@ -1368,7 +1369,7 @@ class PatientController extends Controller
             $twilioApiKey,
             $twilioApiSecret,
             3600,
-            $user['first_name'],
+            $user['identity']. '_' . $user['country_id'],
         );
 
         // Create Video grant.
@@ -1436,6 +1437,83 @@ class PatientController extends Controller
         return [
             'data' => User::all(),
             'domain' => env('APP_DOMAIN')
+        ];
+    }
+
+    public function getPatientRawData(Request $request)
+    {
+        $data = $request->all();
+        $query = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
+            ->orWhereNull('email');
+
+        if (isset($data['country'])) {
+            $query->where('country_id', $data['country']);
+        }
+
+        if (isset($data['clinic'])) {
+            $query->where('clinic_id', $data['clinic']);
+        }
+
+        if (isset($data['search_value'])) {
+            $query->where(function ($query) use ($data) {
+                $query->where('identity', 'like', '%' . $data['search_value'] . '%');
+            });
+        }
+
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    if ($filterObj->columnName === 'date_of_birth') {
+                        $dateOfBirth = date_create_from_format('d/m/Y', $filterObj->value);
+                        $query->where('date_of_birth', date_format($dateOfBirth, config('settings.defaultTimestampFormat')));
+                    } elseif (($filterObj->columnName === 'region' || $filterObj->columnName === 'clinic') && $filterObj->value !== '') {
+                        $query->where('clinic_id', $filterObj->value);
+                    } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
+                        $query->where('country_id', $filterObj->value);
+                    } elseif ($filterObj->columnName === 'treatment_status') {
+                        if ($filterObj->value == User::FINISHED_TREATMENT_PLAN) {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '<', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '>', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        } elseif ($filterObj->value == User::PLANNED_TREATMENT_PLAN) {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '>', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        } else {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        }
+                    } elseif ($filterObj->columnName === 'gender') {
+                        $query->where($filterObj->columnName, $filterObj->value);
+                    } elseif ($filterObj->columnName === 'age') {
+                        $query->whereRaw('YEAR(NOW()) - YEAR(date_of_birth) = ? OR ABS(MONTH(date_of_birth) - MONTH(NOW())) = ?  OR ABS(DAY(date_of_birth) - DAY(NOW())) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
+                    } elseif ($filterObj->columnName === 'ongoing_treatment_plan') {
+                        $query->whereHas('treatmentPlans', function (Builder $query) use ($filterObj) {
+                            $query->where('name', 'like', '%' .  $filterObj->value . '%');
+                        });
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $patients = $query->get();
+        return [
+            'success' => true,
+            'data' => PatientRawDataResource::collection($patients),
         ];
     }
 }

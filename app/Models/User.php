@@ -171,6 +171,23 @@ class User extends Authenticatable
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assistiveTechnologies()
+    {
+        return $this->hasMany(AssistiveTechnology::class, 'patient_id', 'id');
+    }
+
+    
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function callHistories()
+    {
+        return $this->hasMany(CallHistory::class, 'patient_id', 'id');
+    }
+
+    /**
      * Get the user's full name.
      *
      * @return string
