@@ -56,25 +56,29 @@ class CallHistoryController extends Controller
                     // For other patient service host
                     if ($request->get('country_id') && $identity[1] === $request->get('country_id')) {
                         $patient = User::where('identity', $identity[0])->first();
-                        CallHistory::updateOrCreate([
-                            'patient_id' => $patient?->id,
-                            'date' => $room->dateCreated,
-                        ],
-                        [
-                            'patient_id' => $patient?->id,
-                            'date' => $room->dateCreated,
-                        ]);
+                        if ($patient) {
+                            CallHistory::updateOrCreate([
+                                'patient_id' => $patient?->id,
+                                'date' => $room->dateCreated,
+                            ],
+                            [
+                                'patient_id' => $patient?->id,
+                                'date' => $room->dateCreated,
+                            ]);
+                        }
                         
                     } else if ($request->get('host_country_ids') && !in_array($identity[1], $request->get('host_country_ids'))) { // This for golbal paitent host
                         $patient = User::where('identity', $identity[0])->first();
-                        CallHistory::updateOrCreate([
-                            'patient_id' => $patient?->id,
-                            'date' => $room->dateCreated,
-                        ],
-                        [
-                            'patient_id' => $patient?->id,
-                            'date' => $room->dateCreated,
-                        ]);
+                        if ($patient) {
+                            CallHistory::updateOrCreate([
+                                'patient_id' => $patient?->id,
+                                'date' => $room->dateCreated,
+                            ],
+                            [
+                                'patient_id' => $patient?->id,
+                                'date' => $room->dateCreated,
+                            ]);
+                        }
                     }
                 }
             }
