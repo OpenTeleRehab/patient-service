@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 define("GADMIN_KEYCLOAK_TOKEN_URL", env('KEYCLOAK_URL') . '/auth/realms/' . env('GADMIN_KEYCLOAK_REAMLS_NAME') . '/protocol/openid-connect/token');
 define("ADMIN_KEYCLOAK_TOKEN_URL", env('KEYCLOAK_URL') . '/auth/realms/' . env('ADMIN_KEYCLOAK_REAMLS_NAME') . '/protocol/openid-connect/token');
 define("THERAPIST_KEYCLOAK_TOKEN_URL", env('KEYCLOAK_URL') . '/auth/realms/' . env('THERAPIST_KEYCLOAK_REAMLS_NAME') . '/protocol/openid-connect/token');
+define("KEYCLOAK_GROUPS_URL", env('KEYCLOAK_URL') . '/auth/admin/realms/' . env('ADMIN_KEYCLOAK_REAMLS_NAME') . '/groups');
 
 /**
  * Class KeycloakHelper
@@ -116,5 +117,24 @@ class KeycloakHelper
         }
 
         return null;
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return array
+     */
+    public static function getUserGroup($token)
+    {
+        $response = Http::withToken($token)->get(KEYCLOAK_GROUPS_URL);
+        $userGroups = [];
+        if ($response->successful()) {
+            $groups = $response->json();
+            foreach ($groups as $group) {
+                $userGroups[$group['name']] = $group['id'];
+            }
+        }
+
+        return $userGroups;
     }
 }

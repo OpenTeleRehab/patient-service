@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Activity extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     const ACTIVITY_TYPE_EXERCISE = 'exercise';
     const ACTIVITY_TYPE_MATERIAL = 'material';
@@ -38,6 +40,20 @@ class Activity extends Model
     ];
 
     /**
+     * Get the options for activity logging.
+     *
+     * @return \Spatie\Activitylog\LogOptions
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['id']);
+    }
+
+    /**
      * Indicates if the model should be timestamped.
      *
      * @var boolean
@@ -60,5 +76,13 @@ class Activity extends Model
     public function answers()
     {
         return $this->hasMany(QuestionnaireAnswer::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\belongsTo
+     */
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(TreatmentPlan::class);
     }
 }

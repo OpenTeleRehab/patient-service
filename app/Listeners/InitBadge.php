@@ -26,11 +26,10 @@ class InitBadge
         $init_daily_logins = $user->init_daily_logins;
         $init_daily_tasks = $user->init_daily_tasks;
         $init_daily_answers = $user->init_daily_answers;
-
-        $timezone = $loginEvent->request['timezone'];
+        $timezone = $loginEvent->request['timezone'] ?? config('app.timezone', 'UTC');
         $nowLocal = Carbon::now($timezone);
         $nowUTC = Carbon::now(config('app.timezone'));
-        $lastLogin = Carbon::parse($user->last_login, config('app.timezone'))
+        $lastLogin = Carbon::parse($user->last_login, $timezone)
             ->setTimezone($timezone)
             ->format('Y-m-d');
 

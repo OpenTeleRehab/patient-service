@@ -10,10 +10,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, LogsActivity;
 
     const ADMIN_GROUP_GLOBAL_ADMIN = 'global_admin';
     const ADMIN_GROUP_COUNTRY_ADMIN = 'country_admin';
@@ -36,8 +38,6 @@ class User extends Authenticatable
     const SILVER_DAILY_ANSWERS = 5;
     const GOLD_DAILY_ANSWERS = 8;
     const DIAMOND_DAILY_ANSWERS = 11;
-
-    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -80,7 +80,22 @@ class User extends Authenticatable
         'daily_answers',
         'firebase_token',
         'last_reminder',
+        'location',
     ];
+
+    /**
+     * Get the options for activity logging.
+     *
+     * @return \Spatie\Activitylog\LogOptions
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['id', 'password', 'remember_token', 'created_at', 'updated_at', 'deleted_at']);
+    }
 
     /**
      * The attributes that should be hidden for arrays.
@@ -153,5 +168,32 @@ class User extends Authenticatable
     public function appointments()
     {
         return $this->hasMany(Appointment::class, 'patient_id', 'id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assistiveTechnologies()
+    {
+        return $this->hasMany(AssistiveTechnology::class, 'patient_id', 'id');
+    }
+
+    
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function callHistories()
+    {
+        return $this->hasMany(CallHistory::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Get the user's full name.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name}";
     }
 }

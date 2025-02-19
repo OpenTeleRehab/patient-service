@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddLogToAdminServiceEvent;
 use App\Events\PodcastCalculatorEvent;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class TreatmentPlanController extends Controller
 {
@@ -165,6 +167,10 @@ class TreatmentPlanController extends Controller
             return ['success' => false, 'message' => 'error_message.treatment_plan_assign_to_patient'];
         }
 
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
+
         $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
         return ['success' => true, 'message' => 'success_message.treatment_plan_assign_to_patient', 'data' => $treatmentPlan];
@@ -178,6 +184,7 @@ class TreatmentPlanController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $user = Auth::user();
         $patientId = $request->get('patient_id');
         $description = $request->get('description');
         $therapistId = $request->get('therapist_id');
@@ -212,6 +219,9 @@ class TreatmentPlanController extends Controller
             'total_of_weeks' => $request->get('total_of_weeks', 1),
             'disease_id' => $disease_id,
         ]);
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
         $this->updateOrCreateGoals($id, $request->get('goals', []));
@@ -228,7 +238,7 @@ class TreatmentPlanController extends Controller
     private function updateOrCreateGoals(int $treatmentPlanId, array $goals = [])
     {
         $goalIds = [];
-
+        $user = Auth::user();
         foreach ($goals as $goal) {
             $goalObj = Goal::updateOrCreate(
                 [
@@ -241,17 +251,26 @@ class TreatmentPlanController extends Controller
                 ]
             );
             $goalIds[] = $goalObj->id;
+            // Activity log
+            $lastLoggedActivity = ActivityLog::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         // Remove deleted goals.
         Goal::where('treatment_plan_id', $treatmentPlanId)
             ->whereNotIn('id', $goalIds)
             ->delete();
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         Activity::where('treatment_plan_id', $treatmentPlanId)
             ->where('type', Activity::ACTIVITY_TYPE_GOAL)
             ->whereNotIn('id', $goalIds)
             ->delete();
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
     }
 
     /**
@@ -264,7 +283,7 @@ class TreatmentPlanController extends Controller
     private function updateOrCreateActivities(int $treatmentPlanId, array $activities, $createdBy)
     {
         $activityIds = [];
-
+        $user = Auth::user();
         foreach ($activities as $activity) {
             $customExercises = isset($activity['customExercises']) ? $activity['customExercises'] : [];
             $exercises = isset($activity['exercises']) ? $activity['exercises'] : [];
@@ -304,6 +323,9 @@ class TreatmentPlanController extends Controller
                         $updateFields,
                     );
                     $activityIds[] = $activityObj->id;
+                    // Activity log
+                    $lastLoggedActivity = ActivityLog::all()->last();
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 Http::post(env('ADMIN_SERVICE_URL') . '/exercise/mark-as-used/by-ids', [
@@ -333,8 +355,10 @@ class TreatmentPlanController extends Controller
                             'created_by' => isset($existedMaterial) ? $existedMaterial['created_by'] : $createdBy,
                         ],
                     );
-
                     $activityIds[] = $activityObj->id;
+                    // Activity log
+                    $lastLoggedActivity = ActivityLog::all()->last();
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 Http::post(env('ADMIN_SERVICE_URL') . '/education-material/mark-as-used/by-ids', [
@@ -365,6 +389,9 @@ class TreatmentPlanController extends Controller
                         ],
                     );
                     $activityIds[] = $activityObj->id;
+                    // Activity log
+                    $lastLoggedActivity = ActivityLog::all()->last();
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
                 // TODO: move to Queued Event Listeners.
                 $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
@@ -401,6 +428,10 @@ class TreatmentPlanController extends Controller
             ->where('type', '<>', Activity::ACTIVITY_TYPE_GOAL)
             ->whereNotIn('id', $activityIds)
             ->delete();
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
     }
 
     /**
@@ -410,6 +441,7 @@ class TreatmentPlanController extends Controller
      */
     public function completeActivity(Request $request)
     {
+        $user = Auth::user();
         $activities = json_decode($request[0], true);
         foreach ($activities as $activity) {
             Activity::where('id', $activity['id'])->update([
@@ -423,9 +455,12 @@ class TreatmentPlanController extends Controller
 
             // Calculate completed percent and total pain threshold.
             event(new PodcastCalculatorEvent($activity));
+
+            // Activity log
+            $lastLoggedActivity = ActivityLog::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
-        $user = Auth::user();
         $nowLocal = Carbon::now($timezone);
         $ongoingTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $nowLocal)
@@ -446,6 +481,10 @@ class TreatmentPlanController extends Controller
             'init_daily_tasks' => $init_daily_tasks,
             'daily_tasks' => $init_daily_tasks > $user->daily_tasks ? $init_daily_tasks : $user->daily_tasks,
         ]);
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
+
         return ['success' => true];
     }
 
@@ -547,6 +586,7 @@ class TreatmentPlanController extends Controller
      */
     public function completeQuestionnaire(Request $request)
     {
+        $user = Auth::user();
         $questionnaireAnswers = json_decode($request[0], true);
         foreach ($questionnaireAnswers as $questionnaireAnswer) {
             foreach ($questionnaireAnswer['answers'] as $key => $answer) {
@@ -555,6 +595,10 @@ class TreatmentPlanController extends Controller
                     'question_id' => $key,
                     'answer' => serialize($answer),
                 ]);
+
+                // Activity log
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
             $timezone = $questionnaireAnswer['timezone'];
 
@@ -562,8 +606,12 @@ class TreatmentPlanController extends Controller
                 'completed' => true,
                 'submitted_date' => now(),
             ]);
+
+            // Activity log
+            $lastLoggedActivity = ActivityLog::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
-        $user = Auth::user();
+
         $nowLocal = Carbon::now($timezone);
         $ongoingTreatmentPlan = $user->treatmentPlans()
             ->whereDate('start_date', '<=', $nowLocal)
@@ -584,6 +632,11 @@ class TreatmentPlanController extends Controller
             'init_daily_answers' => $init_daily_answers,
             'daily_answers' => $init_daily_answers > $user->daily_answers ? $init_daily_answers : $user->daily_answers,
         ]);
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
+
         return ['success' => true];
     }
 
@@ -594,6 +647,7 @@ class TreatmentPlanController extends Controller
      */
     public function completeGoal(Request $request)
     {
+        $user = Auth::user();
         $goals = json_decode($request[0], true);
         foreach ($goals as $goal) {
             Activity::firstOrCreate([
@@ -605,6 +659,9 @@ class TreatmentPlanController extends Controller
                 'activity_id' => $goal['goal_id'],
                 'treatment_plan_id' => $goal['treatment_plan_id'],
             ]);
+            // Activity log
+            $lastLoggedActivity = ActivityLog::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
         return ['success' => true];
     }

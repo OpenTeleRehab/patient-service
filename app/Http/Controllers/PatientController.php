@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddLogToAdminServiceEvent;
 use App\Exports\ChatExport;
 use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
@@ -9,6 +10,7 @@ use App\Helpers\ApiHelper;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
+use App\Http\Resources\PatientRawDataResource;
 use App\Http\Resources\PatientResource;
 use App\Http\Resources\UserResource;
 use App\Models\Activity;
@@ -24,6 +26,7 @@ use Carbon\Carbon;
 use Mpdf\Output\Destination;
 use Twilio\Jwt\AccessToken;
 use Twilio\Jwt\Grants\VideoGrant;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class PatientController extends Controller
 {
@@ -363,7 +366,12 @@ class PatientController extends Controller
             'note' => $data['note'],
             'secondary_therapists' => [],
             'enabled' => true,
+            'location' => $data['location'],
         ]);
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
@@ -426,6 +434,10 @@ class PatientController extends Controller
 
         $user->fill($updateData);
         $user->save();
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         if (!$user) {
             DB::rollBack();
@@ -553,6 +565,7 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
+                'location' => $data['location'],
             ];
 
             if (isset($data['phone'])) {
@@ -633,6 +646,10 @@ class PatientController extends Controller
 
             $dataUpdate['chat_rooms'] = $user->chat_rooms;
             $user->update($dataUpdate);
+
+             // Activity log
+            $lastLoggedActivity = ActivityLog::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -819,6 +836,11 @@ class PatientController extends Controller
     {
         $enabled = $request->boolean('enabled');
         $user->update(['enabled' => $enabled]);
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
+
         return ['success' => true, 'message' => 'success_message.activate_deactivate_account', 'enabled' => $enabled];
     }
 
@@ -884,6 +906,9 @@ class PatientController extends Controller
             $this->obfuscatedUserData($user);
             $user->delete();
         }
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
@@ -900,6 +925,10 @@ class PatientController extends Controller
             foreach ($users as $user) {
                 $this->obfuscatedUserData($user);
                 $user->delete();
+
+                // Activity log
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
 
@@ -942,6 +971,10 @@ class PatientController extends Controller
                 } else {
                     $user->delete();
                 }
+
+                // Activity log
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
 
@@ -995,13 +1028,27 @@ class PatientController extends Controller
             if (count($plannedTreatmentPlans) > 0) {
                 foreach ($plannedTreatmentPlans as $treatmentPlan) {
                     Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+                    // Activity log
+                    $lastLoggedActivity = ActivityLog::all()->last();
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
+
                     TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
+                    // Activity log
+                    $lastLoggedActivity = ActivityLog::all()->last();
+                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
             }
 
             if (count($ongoingTreatmentPlan) > 0) {
                 Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+                // Activity log
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
+
                 TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
+                // Activity log
+                $lastLoggedActivity = ActivityLog::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
 
             // Check if chat rooms of new therapist exist.
@@ -1023,6 +1070,9 @@ class PatientController extends Controller
 
         $user->update($updateData);
         $user->save();
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         // Remove all active requests of patient transfer
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
@@ -1043,6 +1093,10 @@ class PatientController extends Controller
         $user = Auth::user();
         $this->obfuscatedUserData($user);
         $user->delete();
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
@@ -1147,6 +1201,10 @@ class PatientController extends Controller
         $updateData['chat_rooms'] = $chatRooms;
         $patient->fill($updateData);
         $patient->save();
+
+        // Activity log
+        $lastLoggedActivity = ActivityLog::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.deleted_chat_rooms'];
     }
@@ -1311,7 +1369,7 @@ class PatientController extends Controller
             $twilioApiKey,
             $twilioApiSecret,
             3600,
-            $user['first_name'],
+            $user['identity']. '_' . $user['country_id'],
         );
 
         // Create Video grant.
@@ -1379,6 +1437,83 @@ class PatientController extends Controller
         return [
             'data' => User::all(),
             'domain' => env('APP_DOMAIN')
+        ];
+    }
+
+    public function getPatientRawData(Request $request)
+    {
+        $data = $request->all();
+        $query = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
+            ->orWhereNull('email');
+
+        if (isset($data['country'])) {
+            $query->where('country_id', $data['country']);
+        }
+
+        if (isset($data['clinic'])) {
+            $query->where('clinic_id', $data['clinic']);
+        }
+
+        if (isset($data['search_value'])) {
+            $query->where(function ($query) use ($data) {
+                $query->where('identity', 'like', '%' . $data['search_value'] . '%');
+            });
+        }
+
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    if ($filterObj->columnName === 'date_of_birth') {
+                        $dateOfBirth = date_create_from_format('d/m/Y', $filterObj->value);
+                        $query->where('date_of_birth', date_format($dateOfBirth, config('settings.defaultTimestampFormat')));
+                    } elseif (($filterObj->columnName === 'region' || $filterObj->columnName === 'clinic') && $filterObj->value !== '') {
+                        $query->where('clinic_id', $filterObj->value);
+                    } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
+                        $query->where('country_id', $filterObj->value);
+                    } elseif ($filterObj->columnName === 'treatment_status') {
+                        if ($filterObj->value == User::FINISHED_TREATMENT_PLAN) {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '<', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '>', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        } elseif ($filterObj->value == User::PLANNED_TREATMENT_PLAN) {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('end_date', '>', Carbon::now());
+                            })->whereDoesntHave('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        } else {
+                            $query->whereHas('treatmentPlans', function (Builder $query) {
+                                $query->whereDate('start_date', '<=', Carbon::now())
+                                    ->whereDate('end_date', '>=', Carbon::now());
+                            });
+                        }
+                    } elseif ($filterObj->columnName === 'gender') {
+                        $query->where($filterObj->columnName, $filterObj->value);
+                    } elseif ($filterObj->columnName === 'age') {
+                        $query->whereRaw('YEAR(NOW()) - YEAR(date_of_birth) = ? OR ABS(MONTH(date_of_birth) - MONTH(NOW())) = ?  OR ABS(DAY(date_of_birth) - DAY(NOW())) = ?', [$filterObj->value, $filterObj->value, $filterObj->value]);
+                    } elseif ($filterObj->columnName === 'ongoing_treatment_plan') {
+                        $query->whereHas('treatmentPlans', function (Builder $query) use ($filterObj) {
+                            $query->where('name', 'like', '%' .  $filterObj->value . '%');
+                        });
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $patients = $query->get();
+        return [
+            'success' => true,
+            'data' => PatientRawDataResource::collection($patients),
         ];
     }
 }

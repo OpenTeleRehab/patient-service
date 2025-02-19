@@ -35,4 +35,23 @@ class ForwarderController extends Controller
             return Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . $endpoint, $request->all());
         }
     }
+
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     *
+     * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response|\Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $service_name = $request->route()->getName();
+        $endpoint = str_replace('api/', '/', $request->path());
+
+        if ($service_name !== null && str_contains($service_name, Forwarder::GADMIN_SERVICE)) {
+            $access_token = Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE);
+            return Http::withToken($access_token)->post(env('GADMIN_SERVICE_URL') . $endpoint, $request->all());
+        }
+    }
 }

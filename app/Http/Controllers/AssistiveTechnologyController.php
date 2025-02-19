@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddLogToAdminServiceEvent;
 use App\Http\Resources\AssistiveTechnologyResource;
 use App\Models\Appointment;
 use App\Models\AssistiveTechnology;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Activity;
 
 class AssistiveTechnologyController extends Controller
 {
@@ -74,6 +77,7 @@ class AssistiveTechnologyController extends Controller
         $appointmentFrom = $request->get('appointmentFrom');
         $appointmentTo = $request->get('appointmentTo');
         $appointment = null;
+        $user = Auth::user();
 
         if ($followUpDate) {
             // Check if overlap with any appointment.
@@ -91,6 +95,9 @@ class AssistiveTechnologyController extends Controller
                 'start_date' => $appointmentFrom,
                 'end_date' => $appointmentTo,
             ]);
+            // Activity log
+            $lastLoggedActivity = Activity::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         AssistiveTechnology::create([
@@ -101,6 +108,9 @@ class AssistiveTechnologyController extends Controller
             'provision_date' => date('Y-m-d', strtotime($provisionDate)),
             'follow_up_date' => $followUpDate ? date('Y-m-d', strtotime($followUpDate)) : null,
         ]);
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_add'];
     }
@@ -119,6 +129,7 @@ class AssistiveTechnologyController extends Controller
         $followUpDate = str_replace('/', '-', $request->get('followUpDate'));
         $appointmentFrom = $request->get('appointmentFrom');
         $appointmentTo = $request->get('appointmentTo');
+        $user = Auth::user();
 
         $assistive = AssistiveTechnology::find($id);
 
@@ -143,6 +154,9 @@ class AssistiveTechnologyController extends Controller
             }
 
             $appointment->update($updateField);
+            // Activity log
+            $lastLoggedActivity = Activity::all()->last();
+            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         }
 
         $assistive->update([
@@ -150,6 +164,9 @@ class AssistiveTechnologyController extends Controller
             'provision_date' => date('Y-m-d', strtotime($provisionDate)),
             'follow_up_date' => $followUpDate ? date('Y-m-d', strtotime($followUpDate)) : null,
         ]);
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_update'];
     }
@@ -163,6 +180,9 @@ class AssistiveTechnologyController extends Controller
     public function destroy($id)
     {
         AssistiveTechnology::find($id)->delete();
+        // Activity log
+        $lastLoggedActivity = Activity::all()->last();
+        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_delete'];
     }

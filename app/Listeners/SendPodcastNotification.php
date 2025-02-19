@@ -26,10 +26,6 @@ class SendPodcastNotification
                     'body' => $event->body,
                     'channelId' => 'fcm_call_channel',
                 ],
-                'notification' => [
-                    'title' => $event->title,
-                    'body' => $event->body,
-                ],
                 'apns' => [
                     'payload' => [
                         'aps' => [
@@ -42,7 +38,10 @@ class SendPodcastNotification
                         'apns-priority' => '5',
                         'apns-topic' => '',
                     ]
-                ]
+                ],
+                'android' => [
+                    'priority' => 'high',
+                ],
             ];
         } else {
             $message = [

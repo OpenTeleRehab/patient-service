@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddLogToAdminServiceEvent;
 use App\Helpers\SMSHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Models\Activity;
 
 class RegistrationController extends Controller
 {
@@ -53,6 +55,10 @@ class RegistrationController extends Controller
             $isVerified = SMSHelper::verifyCode($to, $code, $request->get('email'));
             if ($isVerified) {
                 User::where('phone', $to)->update(['otp_code' => $code, 'enabled' => true]);
+                // Activity log
+                $lastLoggedActivity = Activity::all()->last();
+                event(new AddLogToAdminServiceEvent($lastLoggedActivity, User::where('phone', $to)->first()));
+
                 return ['success' => true, 'message' => 'success.code_verified'];
             }
             return ['success' => false, 'message' => 'error.invalid_code'];
