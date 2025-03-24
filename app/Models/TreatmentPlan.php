@@ -5,13 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class TreatmentPlan extends Model
 {
-    use LogsActivity;
-
     const STATUS_PLANNED = 'planned';
     const STATUS_ON_GOING = 'on_going';
     const STATUS_FINISHED = 'finished';
@@ -36,20 +32,6 @@ class TreatmentPlan extends Model
         'created_by',
         'disease_id',
     ];
-
-    /**
-     * Get the options for activity logging.
-     *
-     * @return \Spatie\Activitylog\LogOptions
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->logExcept(['id', 'created_at', 'updated_at']);
-    }
 
     /**
      * The attributes that should be cast to native types.

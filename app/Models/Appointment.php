@@ -9,12 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 use App\Events\PodcastNotificationEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class Appointment extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     const STATUS_INVITED = 'invited';
     const STATUS_ACCEPTED = 'accepted';
@@ -37,20 +35,6 @@ class Appointment extends Model
         'created_by_therapist',
         'unread',
     ];
-
-    /**
-     * Get the options for activity logging.
-     *
-     * @return \Spatie\Activitylog\LogOptions
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->logExcept(['id', 'created_at', 'updated_at']);
-    }
 
     /**
      * The attributes that should be cast to native types.

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\AddLogToAdminServiceEvent;
 use App\Exports\ChatExport;
 use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
@@ -26,7 +25,6 @@ use Carbon\Carbon;
 use Mpdf\Output\Destination;
 use Twilio\Jwt\AccessToken;
 use Twilio\Jwt\Grants\VideoGrant;
-use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class PatientController extends Controller
 {
@@ -369,10 +367,6 @@ class PatientController extends Controller
             'location' => $data['location'],
         ]);
 
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
                 'therapist_ids' => $request->get('secondary_therapists', []),
@@ -434,10 +428,6 @@ class PatientController extends Controller
 
         $user->fill($updateData);
         $user->save();
-
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         if (!$user) {
             DB::rollBack();
@@ -647,9 +637,6 @@ class PatientController extends Controller
             $dataUpdate['chat_rooms'] = $user->chat_rooms;
             $user->update($dataUpdate);
 
-             // Activity log
-            $lastLoggedActivity = ActivityLog::all()->last();
-            event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -837,10 +824,6 @@ class PatientController extends Controller
         $enabled = $request->boolean('enabled');
         $user->update(['enabled' => $enabled]);
 
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
         return ['success' => true, 'message' => 'success_message.activate_deactivate_account', 'enabled' => $enabled];
     }
 
@@ -906,9 +889,6 @@ class PatientController extends Controller
             $this->obfuscatedUserData($user);
             $user->delete();
         }
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
@@ -925,10 +905,6 @@ class PatientController extends Controller
             foreach ($users as $user) {
                 $this->obfuscatedUserData($user);
                 $user->delete();
-
-                // Activity log
-                $lastLoggedActivity = ActivityLog::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
 
@@ -971,10 +947,6 @@ class PatientController extends Controller
                 } else {
                     $user->delete();
                 }
-
-                // Activity log
-                $lastLoggedActivity = ActivityLog::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
         }
 
@@ -1028,27 +1000,15 @@ class PatientController extends Controller
             if (count($plannedTreatmentPlans) > 0) {
                 foreach ($plannedTreatmentPlans as $treatmentPlan) {
                     Activity::where('treatment_plan_id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
-                    // Activity log
-                    $lastLoggedActivity = ActivityLog::all()->last();
-                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
                     TreatmentPlan::where('id', $treatmentPlan['id'])->update(['created_by' => $therapistId]);
-                    // Activity log
-                    $lastLoggedActivity = ActivityLog::all()->last();
-                    event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
                 }
             }
 
             if (count($ongoingTreatmentPlan) > 0) {
                 Activity::where('treatment_plan_id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
-                // Activity log
-                $lastLoggedActivity = ActivityLog::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
                 TreatmentPlan::where('id', $ongoingTreatmentPlan[0]->id)->update(['created_by' => $therapistId]);
-                // Activity log
-                $lastLoggedActivity = ActivityLog::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
             }
 
             // Check if chat rooms of new therapist exist.
@@ -1070,9 +1030,6 @@ class PatientController extends Controller
 
         $user->update($updateData);
         $user->save();
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         // Remove all active requests of patient transfer
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
@@ -1093,10 +1050,6 @@ class PatientController extends Controller
         $user = Auth::user();
         $this->obfuscatedUserData($user);
         $user->delete();
-
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'message' => 'success_message.deleted_account'];
     }
@@ -1201,10 +1154,6 @@ class PatientController extends Controller
         $updateData['chat_rooms'] = $chatRooms;
         $patient->fill($updateData);
         $patient->save();
-
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.deleted_chat_rooms'];
     }

@@ -4,12 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class QuestionnaireAnswer extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     const QUESTIONNAIRE_TYPE_CHECKBOX = 'checkbox';
     const QUESTIONNAIRE_TYPE_MULTIPLE = 'multiple';
@@ -25,20 +23,6 @@ class QuestionnaireAnswer extends Model
         'question_id',
         'answer',
     ];
-
-    /**
-     * Get the options for activity logging.
-     *
-     * @return \Spatie\Activitylog\LogOptions
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->logExcept(['id']);
-    }
 
     /**
      * Indicates if the model should be timestamped.
