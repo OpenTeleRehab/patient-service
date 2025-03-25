@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\AddLogToAdminServiceEvent;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class ActivityController extends Controller
 {
@@ -200,10 +197,6 @@ class ActivityController extends Controller
 
         $type = $request->get('type');
         Activity::where('type', $type)->whereIn('activity_id', $activitiesIds)->delete();
-
-        // Activity log
-        $lastLoggedActivity = ActivityLog::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'message.activity_delete'];
     }

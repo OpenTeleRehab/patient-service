@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\AddLogToAdminServiceEvent;
 use App\Helpers\TranslationHelper;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Spatie\Activitylog\Models\Activity;
 
 class AppointmentController extends Controller
 {
@@ -217,9 +214,6 @@ class AppointmentController extends Controller
             'end_date' => $endDate,
             'note' => $request->get('note'),
         ]);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.appointment_add'];
     }
@@ -300,9 +294,6 @@ class AppointmentController extends Controller
             $updateFile['patient_status'] = Appointment::STATUS_INVITED;
         }
         $appointment->update($updateFile);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         try {
             $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
@@ -385,9 +376,6 @@ class AppointmentController extends Controller
         $appointment->update([
             'therapist_status' => $request->get('status')
         ]);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         try {
             $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
@@ -451,9 +439,6 @@ class AppointmentController extends Controller
                 'unread' => true,
             ]);
         }
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.appointment_cancel'];
     }
@@ -494,9 +479,6 @@ class AppointmentController extends Controller
                 'created_by_therapist' => false,
             ],
         );
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true];
     }
@@ -516,9 +498,6 @@ class AppointmentController extends Controller
         }
 
         $appointment->update($arr);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         $message = 'success_message.appointment_update';
         return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
@@ -533,9 +512,6 @@ class AppointmentController extends Controller
     public function updateAsRead(Request $request)
     {
         Appointment::whereIn('id', $request)->update(['unread' => false]);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, Auth::user()));
 
         return ['success' => true, 'message' => 'success_message.unread_update'];
     }

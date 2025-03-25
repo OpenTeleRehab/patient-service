@@ -4,12 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class Activity extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     const ACTIVITY_TYPE_EXERCISE = 'exercise';
     const ACTIVITY_TYPE_MATERIAL = 'material';
@@ -38,20 +36,6 @@ class Activity extends Model
         'completed_reps',
         'additional_information'
     ];
-
-    /**
-     * Get the options for activity logging.
-     *
-     * @return \Spatie\Activitylog\LogOptions
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logAll()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->logExcept(['id']);
-    }
 
     /**
      * Indicates if the model should be timestamped.

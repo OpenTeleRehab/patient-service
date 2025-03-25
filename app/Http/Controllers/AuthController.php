@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\AddLogToAdminServiceEvent;
 use App\Events\LoginEvent;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -12,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Models\Activity;
 
 class AuthController extends Controller
 {
@@ -37,9 +35,6 @@ class AuthController extends Controller
         }
 
         $user->update($data);
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return $this->savePinCode($user, $request->pin);
     }
@@ -95,10 +90,6 @@ class AuthController extends Controller
                 // Broadcast login event.
                 event(new LoginEvent($request));
 
-                // Activity log
-                $lastLoggedActivity = Activity::all()->last();
-                event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
                 $data = [
                     'profile' => new UserResource($user),
                     'token' => $user->createToken(config('auth.guards.api.tokenName'))->accessToken,
@@ -129,10 +120,6 @@ class AuthController extends Controller
             ->withProperties(['user_id' => $user->id])
             ->useLog('patient_service')
             ->log('logout');
-
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true];
     }
@@ -169,10 +156,6 @@ class AuthController extends Controller
             'password' => Hash::make($pinCode),
         ]);
 
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
         // Always make sure old access token is cleared.
         $user->tokens()->delete();
 
@@ -197,10 +180,6 @@ class AuthController extends Controller
             'term_and_condition_id' => $request->get('term_and_condition_id'),
         ]);
 
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
 
@@ -215,10 +194,6 @@ class AuthController extends Controller
         $user->update([
             'privacy_and_policy_id' => $request->get('privacy_and_policy_id'),
         ]);
-
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['token' => $request->bearerToken()]];
     }
@@ -235,10 +210,6 @@ class AuthController extends Controller
             'kid_theme' => $request->get('kid_theme'),
         ]);
 
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
-
         return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
     }
 
@@ -253,10 +224,6 @@ class AuthController extends Controller
         $user->update([
             'firebase_token' => $request->get('firebase_token'),
         ]);
-
-        // Activity log
-        $lastLoggedActivity = Activity::all()->last();
-        event(new AddLogToAdminServiceEvent($lastLoggedActivity, $user));
 
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
     }
