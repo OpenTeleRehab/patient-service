@@ -555,8 +555,11 @@ class PatientController extends Controller
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
-                'location' => $data['location'],
             ];
+
+            if (isset($data['location'])) {
+                $dataUpdate['location'] = $data['location'];
+            }
 
             if (isset($data['phone'])) {
                 $phoneExist = User::where('phone', $data['phone'])

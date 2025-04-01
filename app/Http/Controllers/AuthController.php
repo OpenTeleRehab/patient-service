@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
 
 class AuthController extends Controller
 {
@@ -79,11 +80,26 @@ class AuthController extends Controller
                 /** @var User $user */
                 $user = Auth::user();
 
-                activity()
-                   ->withProperties(['user_id' => $user->id])
-                   ->useLog('patient_service')
-                   ->log('login');
-
+                if ($user->email !== env('KEYCLOAK_BACKEND_USERNAME') && $user->phone) {
+                    ActivityLog::create([
+                        'log_name' => 'patient_service',
+                        'properties' => [
+                            'attributes' => ['identity' => $user->identity],
+                        ],
+                        'event' => 'login',
+                        'subject_id' => $user->id,
+                        'subject_type' => $user::class,
+                        'causer_id' => $user->id,
+                        'causer_type' => User::class,
+                        'description' => 'login',
+                        'full_name' => $user->identity,
+                        'clinic_id' => $user->clinic_id,
+                        'country_id' => $user->country_id,
+                        'group' => User::GROUP_PATIENT,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
                 // Clear login attempts.
                 RateLimiter::clear($this->throttleKey());
 

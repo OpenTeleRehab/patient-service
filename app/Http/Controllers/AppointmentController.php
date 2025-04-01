@@ -374,13 +374,13 @@ class AppointmentController extends Controller
     public function updateStatus(Request $request, Appointment $appointment)
     {
         $appointment->update([
-            'therapist_status' => $request->get('status')
+            'therapist_status' => $request->get('therapist_status')
         ]);
 
         try {
             $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
 
-            $statusTranslation = $translations['appointment.invitation.' . $request->get('status')];
+            $statusTranslation = $translations['appointment.invitation.' . $request->get('therapist_status')];
             $patientName = $appointment->patient->first_name . ' ' . $appointment->patient->last_name;
 
             Appointment::notification($appointment, $translations['appointment.updated_appointment_with'] . ' ' . $patientName . ' ' . $statusTranslation);
@@ -426,6 +426,8 @@ class AppointmentController extends Controller
      *
      * @param \App\Models\Appointment $appointment
      *
+     *  @param \Illuminate\Http\Request $request
+     * 
      * @return array
      * @throws \Exception
      */

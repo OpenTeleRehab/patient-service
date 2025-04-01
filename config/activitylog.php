@@ -5,7 +5,7 @@ return [
     /*
      * If set to false, no activities will be saved to the database.
      */
-    'enabled' => false,
+    'enabled' => env('ACTIVITY_LOGGER_ENABLED', true),
 
     /*
      * When the clean-command is executed, all recording activities older than
@@ -41,12 +41,12 @@ return [
      * This is the name of the table that will be created by the migration and
      * used by the Activity model shipped with this package.
      */
-    'table_name' => null,
+    'table_name' => 'activity_log',
 
     /*
      * This is the database connection that will be used by the migration and
      * the Activity model shipped with this package. In case it's not set
      * Laravel database.default will be used instead.
      */
-    'database_connection' => null,
+    'database_connection' => env('ACTIVITY_LOGGER_DB_CONNECTION'),
 ];

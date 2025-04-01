@@ -9,15 +9,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Activitylog\Models\Activity as ActivityLog;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, LogsActivity;
 
     const ADMIN_GROUP_GLOBAL_ADMIN = 'global_admin';
     const ADMIN_GROUP_COUNTRY_ADMIN = 'country_admin';
     const ADMIN_GROUP_CLINIC_ADMIN = 'clinic_admin';
+    const GROUP_THERAPIST = 'therapist';
+    const GROUP_PATIENT = 'patient';
     const FINISHED_TREATMENT_PLAN = 1;
     const PLANNED_TREATMENT_PLAN = 2;
     const SECONDARY_TERAPIST = 2;
@@ -101,6 +108,80 @@ class User extends Authenticatable
         'secondary_therapists' => 'array',
         'last_reminder' => 'datetime',
     ];
+
+    /**
+    * Get the options for activity logging.
+    *
+    * @return \Spatie\Activitylog\LogOptions
+    */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['id', 'created_at', 'updated_at']);
+    }
+
+   /**
+    * Modify the activity properties before it is saved.
+    *
+    * @param \Spatie\Activitylog\Models\Activity $activity
+    * @return void
+    */
+    public function tapActivity(ActivityLog $activity, string $eventName)
+    {
+        $therapist = null;
+        $therapistId = $this->therapist_id;
+        $request = request();
+        $authUser = Auth::user();
+
+        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+        $response = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+            'id' => $therapistId,
+        ]);
+        if (!empty($response) && $response->successful()) {
+            $therapist = json_decode($response);
+        }
+        if (!empty($response) && $response->successful()) {
+            $therapist = json_decode($response);
+        }
+
+        if ($eventName === 'updated') {
+            $activity->causer_id = $request['user_id'] ? $request['user_id'] : ($authUser?->id === $this->id ? $this->id : $therapistId);
+            $activity->full_name = $request['user_name'] ? $request['user_name'] : ($authUser?->id === $this->id ? $this->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null));
+            $activity->group =  $request['group'] ? $request['group'] : ($authUser?->id === $this->id ? User::GROUP_PATIENT : User::GROUP_THERAPIST);
+            $activity->properties = [
+                'old' => ['identity' => $this->identity],
+                'attributes' => ['identity' => $this->identity],
+            ];
+            $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
+            $activity->country_id = $therapist ? $therapist->country_id : null;
+        } else if ($eventName === 'deleted') {
+            $activity->causer_id = $request['user_id'] ? $request['user_id'] : ($authUser?->id === $this->id ? $this->id : $therapistId);
+            $activity->full_name = $request['user_name'] ? $request['user_name'] : ($authUser?->id === $this->id ? $this->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null));
+            $activity->group =  $request['group'] ? $request['group'] : ($authUser?->id === $this->id ? User::GROUP_PATIENT : User::GROUP_THERAPIST);
+            $activity->properties = [
+                'old' => ['identity' => $this->identity],
+            ];
+            $activity->clinic_id = $request->has('clinic_id') 
+            ? (is_null($request->input('clinic_id')) ? null : $request->input('clinic_id')) 
+            : ($therapist ? $therapist->clinic_id : null);
+
+            $activity->country_id = $request->has('country_id') 
+                ? (is_null($request->input('country_id')) ? null : $request->input('country_id')) 
+                : ($therapist ? $therapist->country_id : null);
+        }else {
+            $activity->causer_id = $therapist ? $therapist->id : null;
+            $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null;
+            $activity->group = $therapist ? User::GROUP_THERAPIST : null;
+            $activity->properties = [
+                'attributes' => ['identity' => $this->identity],
+            ];
+            $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
+            $activity->country_id = $therapist ? $therapist->country_id : null;
+        }
+    }
 
     /**
      * Bootstrap the model and its traits.

@@ -205,7 +205,8 @@ class TreatmentPlanController extends Controller
             return $overLimit;
         }
 
-        TreatmentPlan::where('id', $id)->update([
+        $treatmentPlan = TreatmentPlan::find($id);
+        $treatmentPlan->update([
             'name' => $request->get('name'),
             'description' => $description,
             'start_date' => $startDate,
@@ -247,12 +248,18 @@ class TreatmentPlanController extends Controller
         // Remove deleted goals.
         Goal::where('treatment_plan_id', $treatmentPlanId)
             ->whereNotIn('id', $goalIds)
-            ->delete();
+            ->get()
+            ->each(function ($goal) {
+                $goal->delete();
+            });;
 
         Activity::where('treatment_plan_id', $treatmentPlanId)
             ->where('type', Activity::ACTIVITY_TYPE_GOAL)
             ->whereNotIn('id', $goalIds)
-            ->delete();
+            ->get()
+            ->each(function ($activity) {
+                $activity->delete();
+            });
     }
 
     /**
@@ -400,7 +407,10 @@ class TreatmentPlanController extends Controller
         Activity::where('treatment_plan_id', $treatmentPlanId)
             ->where('type', '<>', Activity::ACTIVITY_TYPE_GOAL)
             ->whereNotIn('id', $activityIds)
-            ->delete();
+            ->get()
+            ->each(function ($activity) {
+                $activity->delete();
+            });
     }
 
     /**
@@ -413,7 +423,8 @@ class TreatmentPlanController extends Controller
         $user = Auth::user();
         $activities = json_decode($request[0], true);
         foreach ($activities as $activity) {
-            Activity::where('id', $activity['id'])->update([
+            $activityObj = Activity::find($activity['id']);
+            $activityObj->update([
                 'completed' => true,
                 'pain_level' => $activity['pain_level'] ?? null,
                 'completed_sets' => $activity['sets'] ?? null,
@@ -560,7 +571,8 @@ class TreatmentPlanController extends Controller
             }
             $timezone = $questionnaireAnswer['timezone'];
 
-            Activity::where('id',$questionnaireAnswer['id'])->update([
+            $activityObj = Activity::find($questionnaireAnswer['id']);
+            $activityObj->update([
                 'completed' => true,
                 'submitted_date' => now(),
             ]);
@@ -597,7 +609,6 @@ class TreatmentPlanController extends Controller
      */
     public function completeGoal(Request $request)
     {
-        $user = Auth::user();
         $goals = json_decode($request[0], true);
         foreach ($goals as $goal) {
             Activity::firstOrCreate([
