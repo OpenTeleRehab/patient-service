@@ -47,6 +47,11 @@ return [
             'hash' => false,
             'tokenName' => 'HI Access Token',
         ],
+
+        'api_user' => [
+            'driver' => 'sanctum',
+            'provider' => 'api_users',
+        ],
     ],
 
     /*
@@ -72,10 +77,10 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+         'api_users' => [
+             'driver' => 'eloquent',
+             'model' => App\Models\ApiUser::class,
+         ],
     ],
 
     /*

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ApiUserAuthController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegistrationController;
@@ -134,4 +135,10 @@ Route::name('admin.')->group(function () {
 
 Route::name('therapist.')->group(function () {
     Route::get('therapist/by-ids', [ForwarderController::class, 'index']);
+});
+
+// API User Authentication Routes
+Route::post('/api-user/login', [ApiUserAuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/api-user/logout', [ApiUserAuthController::class, 'logout']);
 });
