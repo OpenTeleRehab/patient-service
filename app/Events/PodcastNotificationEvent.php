@@ -40,6 +40,11 @@ class PodcastNotificationEvent
     public $body;
 
     /**
+     * @var boolean
+     */
+    public $isLocal;
+
+    /**
      * Create a new event instance.
      *
      * @param string $token
@@ -47,16 +52,18 @@ class PodcastNotificationEvent
      * @param string $rid
      * @param string $title
      * @param string $body
+     * @param boolean $isLocal
      *
      * @return void
      */
-    public function __construct($token, $id, $rid, $title, $body)
+    public function __construct($token, $id, $rid, $title, $body, $isLocal = false)
     {
         $this->token = $token;
         $this->id = $id;
         $this->rid = $rid;
         $this->title = $title;
         $this->body = $body;
+        $this->isLocal = $isLocal;
     }
 
     /**

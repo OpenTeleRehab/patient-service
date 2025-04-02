@@ -137,9 +137,9 @@ class Appointment extends Model
     {
         if ($appointment->patient) {
             $token = $appointment->patient->firebase_token;
-            $body = Carbon::parse($appointment->start_date)->format('d/m/Y h:i A') . ' - ' . Carbon::parse($appointment->end_date)->format('d/m/Y h:i A');
+            $body = $appointment->start_date . '|' . $appointment->end_date;
 
-            event(new PodcastNotificationEvent($token, null, null, $heading, $body));
+            event(new PodcastNotificationEvent($token, null, null, $heading, $body, true));
         }
         return true;
     }
