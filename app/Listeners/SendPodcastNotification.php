@@ -16,7 +16,12 @@ class SendPodcastNotification
      */
     public function handle(PodcastNotificationEvent $event)
     {
-        if (str_contains(Message::JITSI_CALL_AUDIO_STARTED, $event->body) || str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body) || str_contains(Message::JITSI_CALL_AUDIO_MISSED, $event->body) || str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body)) {
+        if (str_contains(Message::JITSI_CALL_AUDIO_STARTED, $event->body) ||
+            str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body) ||
+            str_contains(Message::JITSI_CALL_AUDIO_MISSED, $event->body) ||
+            str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body) ||
+            $event->isLocal
+        ) {
             $message = [
                 'token' => $event->token,
                 'data' => [
@@ -24,6 +29,7 @@ class SendPodcastNotification
                     'rid' => $event->rid,
                     'title' => $event->title,
                     'body' => $event->body,
+                    'isLocal' => $event->isLocal ? '1' : null,
                     'channelId' => 'fcm_call_channel',
                 ],
                 'apns' => [
