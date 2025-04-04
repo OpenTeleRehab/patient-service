@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ApiUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class ApiUserAuthController extends Controller
 {
