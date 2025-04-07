@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ApiUserAuthController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExternalApiController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\SettingController;
@@ -134,4 +136,11 @@ Route::name('admin.')->group(function () {
 
 Route::name('therapist.')->group(function () {
     Route::get('therapist/by-ids', [ForwarderController::class, 'index']);
+});
+
+Route::post('/external/login', [ApiUserAuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/external/logout', [ApiUserAuthController::class, 'logout']);
+    Route::get('/external/patients', [ExternalApiController::class, 'getPatients']);
+    Route::get('/external/patient/{id}', [ExternalApiController::class, 'getPatient']);
 });
