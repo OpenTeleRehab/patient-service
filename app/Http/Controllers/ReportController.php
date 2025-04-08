@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\QuestionnaireResultExport;
+use App\Jobs\GenerateExport;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-    public function exportQuestionnaireResult(Request $request)
+    public function export(Request $request)
     {
-        $filePath = QuestionnaireResultExport::export($request);
-        $absolutePath = storage_path($filePath);
-        return response()->download($absolutePath)->deleteFileAfterSend(true);
+        GenerateExport::dispatch($request->all());
+        return 'ok';
+    }
+
+    public function download(Request $request)
+    {
+        return response()->download($request->get('path'))->deleteFileAfterSend();
     }
 }

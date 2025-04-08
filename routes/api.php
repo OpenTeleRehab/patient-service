@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiUserAuthController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExternalApiController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\SettingController;
@@ -113,9 +114,12 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     });
 
     // Report
-    Route::get('questionnaire-result/export', [ReportController::class, 'exportQuestionnaireResult']);
+    Route::get('export', [ReportController::class, 'export']);
+
     // Call history
     Route::apiResource('call-history', CallHistoryController::class);
+
+    Route::get('download-file', [FileController::class, 'download']);
 });
 
 // Public
