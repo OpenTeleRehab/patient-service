@@ -36,10 +36,22 @@ class QuestionnaireResultExport
             mkdir($absolutePath, 0777, true);
         }
         $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
-        $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-therapist', [
-            'therapist_id' => $payload['therapist_id'],
-            'lang' => $payload['lang'],
-        ]);
+        if (isset($payload['clinic_admin_id'])) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-clinic-admin', [
+                'clinic_admin_id' => $payload['clinic_admin_id'],
+                'lang' => $payload['lang'],
+            ]);
+        } else if (isset($payload['country_admin_id'])) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-country-admin', [
+                'country_admin_id' => $payload['country_admin_id'],
+                'lang' => $payload['lang'],
+            ]);
+        } else {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-therapist', [
+                'therapist_id' => $payload['therapist_id'],
+                'lang' => $payload['lang'],
+            ]);
+        }
         $questionnaires = $response->json('data');
         $spreadsheet = new Spreadsheet();
         $spreadsheet->removeSheetByIndex(0);
@@ -52,8 +64,9 @@ class QuestionnaireResultExport
                 $questions = $questionnaire['questions'];
                 $activities = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('activity_id', $questionnaire['id'])->where('completed', 1)->get();
             }
+
             $sheet = $spreadsheet->createSheet();
-            $sheet->setTitle(trim($questionnaire['title'] ?? '') ?: 'Unknown');
+            $sheet->setTitle(trim(mb_substr($questionnaire['title'] ?? '', 0, 29)) ?: 'Unknown');
             $sheet->mergeCells('A1:A2');
             $sheet->mergeCells('B1:B2');
             $sheet->mergeCells('C1:C2');
@@ -120,7 +133,7 @@ class QuestionnaireResultExport
                 foreach ($questions as $question) {
                     $patientAnswer = null;
                     foreach ($questionnaireAnswers as $questionnaireAnswer) {
-                        if ($questionnaireAnswer->question_id === $question->id) {
+                        if ($questionnaireAnswer->question_id === $question['id']) {
                             $patientAnswer = $questionnaireAnswer->answer;
                             break;
                         }
@@ -132,18 +145,18 @@ class QuestionnaireResultExport
                         $values = [];
                         $thresholds = [];
 
-                        if ($question->type === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
-                            $foundAnswers = array_filter($question->answers, fn($questionAnswer) => in_array($questionAnswer->id, $answer));
+                        if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
+                            $foundAnswers = array_filter($question['answers'], fn($questionAnswer) => in_array($questionAnswer['id'], $answer));
                             $answerDescriptions = array_column($foundAnswers, 'description');
                             $values = array_column($foundAnswers, 'value');
                             $thresholds = array_column($foundAnswers, 'threshold');
-                        } else if ($question->type === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_MULTIPLE) {
-                            $foundAnswer = current(array_filter($question->answers, fn($questionAnswer) => $questionAnswer->id === $answer));
+                        } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_MULTIPLE) {
+                            $foundAnswer = current(array_filter($question['answers'], fn($questionAnswer) => $questionAnswer['id'] === $answer));
                             $answerDescriptions[] = $foundAnswer->description;
                             $values[] = $foundAnswer->value ?? '';
                             $thresholds[] = $foundAnswer->threshold ?? '';
-                        } else if ($question->type === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_OPEN_NUMBER) {
-                            $foundAnswer = current(array_filter($question->answers, fn($questionAnswer) => $questionAnswer->question_id === $question->id));
+                        } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_OPEN_NUMBER) {
+                            $foundAnswer = current(array_filter($question['answers'], fn($questionAnswer) => $questionAnswer['question_id'] === $question->id));
                             $answerDescriptions[] = $answer;
                             $values[] = $foundAnswer ? $foundAnswer->value : '';
                             $thresholds[] = $foundAnswer ? $foundAnswer->threshold : '';
@@ -152,7 +165,7 @@ class QuestionnaireResultExport
                         }
 
                         // For checkbox questions, we need to create a new row for each selected answer as it can be more than one answer
-                        if ($question->type === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
+                        if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
                             foreach ($answerDescriptions as $index => $description) {
                                 $startCol = Coordinate::stringFromColumnIndex($colIndex);
                                 $sheet->setCellValue($startCol . $row, $description ?? '');

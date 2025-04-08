@@ -80,9 +80,13 @@ class GenerateExport implements ShouldQueue
             'file_path' => $filePath,
         ];
 
+        $access_token = Forwarder::getAccessToken($source);
         if ($source === Forwarder::THERAPIST_SERVICE) {
-            $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
-            Http::withToken($access_token)->put(env('THERAPIST_SERVICE_URL') . '/download-trackers', $data);
+            $url = env('THERAPIST_SERVICE_URL') . '/download-trackers';
+        } else {
+            $url = env('ADMIN_SERVICE_URL') . '/download-trackers';
         }
+
+        $response = Http::withToken($access_token)->put($url, $data);
     }
 }
