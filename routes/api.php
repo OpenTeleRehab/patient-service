@@ -70,6 +70,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::apiResource('patient', PatientController::class);
 
     // Activities
+    Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities']);
     Route::get('patient-activities/list/by-ids', [ActivityController::class, 'getByIds']);
     Route::post('patient-activities/delete/by-ids', [ActivityController::class, 'deleteByIds']);
 

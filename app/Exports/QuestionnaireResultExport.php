@@ -62,7 +62,21 @@ class QuestionnaireResultExport
 
             if (!empty($questionnaire['questions'])) {
                 $questions = $questionnaire['questions'];
-                $activities = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)->where('activity_id', $questionnaire['id'])->where('completed', 1)->get();
+                $query = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+                    ->where('activity_id', $questionnaire['id'])->where('completed', 1);
+                
+                if (isset($payload['clinic_id'])) {
+                    $query->whereHas('treatmentPlan.user', function ($query) use ($payload) {
+                        $query->where('clinic_id', $payload['clinic_id']);
+                    });
+                }
+                if (isset($payload['therapist_id'])) {
+                    $query->whereHas('treatmentPlan.user', function ($query) use ($payload) {
+                        $query->where('therapist_id', $payload['therapist_id']);
+                    });
+                }
+
+                $activities = $query->get();
             }
 
             $sheet = $spreadsheet->createSheet();
