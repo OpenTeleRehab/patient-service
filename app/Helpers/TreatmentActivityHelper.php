@@ -122,6 +122,7 @@ class TreatmentActivityHelper
                 'week' => $activity->week,
                 'day' => $activity->day,
                 'additional_information' => $activity->additional_information,
+                'score' => $activity->answers->sum('score'),
             ], $activityObj);
 
             if ($includedGoals) {

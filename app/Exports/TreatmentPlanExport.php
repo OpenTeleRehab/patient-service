@@ -24,15 +24,22 @@ class TreatmentPlanExport
     private $request;
 
     /**
+     * @var bool
+     */
+    private $isPatient;
+
+    /**
      * TreatmentPlanExport constructor.
      *
      * @param \App\Models\TreatmentPlan $treatmentPlan
      * @param \Illuminate\Http\Request $request
+     * @param bool $isPatient
      */
-    public function __construct(TreatmentPlan $treatmentPlan, Request $request)
+    public function __construct(TreatmentPlan $treatmentPlan, Request $request, bool $isPatient = false)
     {
         $this->treatmentPlan = $treatmentPlan;
         $this->request = $request;
+        $this->isPatient = $isPatient;
     }
 
     /**
@@ -47,12 +54,12 @@ class TreatmentPlanExport
         ]);
 
         $activityData = TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true);
-
         return view('exports.treatment_plan', [
             'diseaseName' => $diseaseName,
             'treatmentPlan' => $this->treatmentPlan,
             'activities' => $activityData['activities'],
             'translations' => TranslationHelper::getTranslations(),
+            'isPatient' => $this->isPatient,
         ]);
     }
 
