@@ -87,6 +87,6 @@ class GenerateExport implements ShouldQueue
             $url = env('ADMIN_SERVICE_URL') . '/download-trackers';
         }
 
-        $response = Http::withToken($access_token)->put($url, $data);
+        Http::withToken($access_token)->put($url, $data);
     }
 }

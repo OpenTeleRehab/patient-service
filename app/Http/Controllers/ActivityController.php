@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ActivityResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
@@ -9,6 +10,76 @@ use Illuminate\Support\Facades\Http;
 
 class ActivityController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/activities/list/by-filters",
+     *     tags={"Activity"},
+     *     summary="Activities list by filters",
+     *     operationId="activitiesListByFilters",
+     *     @OA\Parameter(
+     *         name="activity_id",
+     *         in="query",
+     *         description="Activity id",
+     *         required=false,
+     *          @OA\Schema(
+     *              type="integer"
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="type",
+     *         required=false,
+     *          @OA\Schema(
+     *              type="string",
+     *              enum={"exercise", "material", "questionnaire"}
+     *          ),
+     *     ),
+     *     @OA\Parameter(
+     *         name="completed",
+     *         in="query",
+     *         description="completed",
+     *         required=false,
+     *          @OA\Schema(
+     *              type="boolean"
+     *          ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getActivities(Request $request)
+    {
+        $query = Activity::query();
+
+        if ($request->has('type')) {
+            $query->where('type', $request->get('type'));
+        }
+        if ($request->has('activity_id')) {
+            $query->where('activity_id', $request->get('activity_id'));
+        }
+        if ($request->has('completed')) {
+            $query->where('completed', $request->boolean('completed'));
+        }
+        $activities = $query->with(['treatmentPlan', 'treatmentPlan.user'])->with('answers')->get();
+
+        return ['success' => true, 'data' => $activities];
+    }
+
     /**
      * @OA\Get(
      *     path="/api/activities/list/by-ids",
