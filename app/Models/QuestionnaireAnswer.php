@@ -12,6 +12,7 @@ class QuestionnaireAnswer extends Model
     const QUESTIONNAIRE_TYPE_CHECKBOX = 'checkbox';
     const QUESTIONNAIRE_TYPE_MULTIPLE = 'multiple';
     const QUESTIONNAIRE_TYPE_OPEN_NUMBER = 'open-number';
+    const QUESTIONNAIRE_TYPE_OPEN_TEXT = 'open-text';
 
     /**
      * The attributes that are mass assignable.

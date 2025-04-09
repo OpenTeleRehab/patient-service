@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ActivityResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
