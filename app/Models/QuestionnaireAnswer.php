@@ -23,6 +23,7 @@ class QuestionnaireAnswer extends Model
         'activity_id',
         'question_id',
         'answer',
+        'score',
     ];
 
     /**

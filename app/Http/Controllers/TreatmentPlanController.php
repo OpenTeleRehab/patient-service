@@ -14,6 +14,7 @@ use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -562,20 +563,56 @@ class TreatmentPlanController extends Controller
         $user = Auth::user();
         $questionnaireAnswers = json_decode($request[0], true);
         foreach ($questionnaireAnswers as $questionnaireAnswer) {
-            foreach ($questionnaireAnswer['answers'] as $key => $answer) {
-                QuestionnaireAnswer::create([
-                    'activity_id' => $questionnaireAnswer['id'],
-                    'question_id' => $key,
-                    'answer' => serialize($answer),
+            $activityObj = Activity::find($questionnaireAnswer['id']);
+            $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-id', [
+                'id' => $activityObj->activity_id,
+            ]);
+            $questionnaire = $response->json('data');
+
+            if ($questionnaire) {
+                $questions = $questionnaire['questions'];
+                foreach ($questionnaireAnswer['answers'] as $key => $answer) {
+                    $question = Arr::first($questions, function ($item) use ($key) {
+                        return $item['id'] === $key;
+                    });
+
+                    if ($question) {
+                        $score = null;
+                        if ($question['mark_as_countable']) {
+                            $questionAnswers = $question['answers'];
+                            if ($questionAnswers) {
+                                if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
+                                    $selectedAnswers = array_filter($questionAnswers, function($questionAnswer) use ($answer) { return in_array($questionAnswer['id'], $answer); });
+                                    $values = array_column($selectedAnswers, 'value');
+                                    $score = array_sum($values);
+                                } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_MULTIPLE) {
+                                    $selectedAnswer = Arr::first($questionAnswers, function ($item) use ($answer) {
+                                        return $item['id'] === $answer;
+                                    });
+                                    if ($selectedAnswer) {
+                                        $score = $selectedAnswer['value'];
+                                    }
+                                } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_OPEN_NUMBER) {
+                                    $score = $questionAnswers[0]['value'];
+                                }
+                            }
+                        }
+                        QuestionnaireAnswer::create([
+                            'activity_id' => $questionnaireAnswer['id'],
+                            'question_id' => $key,
+                            'answer' => serialize($answer),
+                            'score' => $score,
+                        ]);
+                    }
+                }
+                $timezone = $questionnaireAnswer['timezone'];
+
+                $activityObj->update([
+                    'completed' => true,
+                    'submitted_date' => now(),
                 ]);
             }
-            $timezone = $questionnaireAnswer['timezone'];
-
-            $activityObj = Activity::find($questionnaireAnswer['id']);
-            $activityObj->update([
-                'completed' => true,
-                'submitted_date' => now(),
-            ]);
         }
 
         $nowLocal = Carbon::now($timezone);
@@ -640,7 +677,7 @@ class TreatmentPlanController extends Controller
             ->whereDate('end_date', '>=', Carbon::now())
             ->firstOrFail();
 
-        $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request);
+        $treatmentPlanExport = new TreatmentPlanExport($treatmentPlan, $request, true);
         return $treatmentPlanExport->outPut();
     }
 

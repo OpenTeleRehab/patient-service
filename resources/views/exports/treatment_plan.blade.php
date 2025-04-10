@@ -25,6 +25,12 @@
     .mb-1 {
         margin: 10px;
     }
+    .text-warning {
+        color:rgb(255, 145, 0);
+    }
+    .text-danger {
+        color: #ff0000;
+    }
 </style>
 
 <img width="190" src="http://localhost/images/logo-horizontal.svg">
@@ -193,8 +199,17 @@
                                     <img width="390" src="{{ 'http://admin_service/api/file/' . $question['file']['id'] }}">
                                 @endif
                                 <p>{{ $question['title'] }}</p>
-
                                 @if($question['type'] === 'open-text' || $question['type'] === 'open-number')
+                                    @if($question['answers'])
+                                        @foreach($question['answers'] as $answer)
+                                            @if($question['type'] === 'open-number' && $answer['value'] && !$isPatient)
+                                                <div class="text-warning">{{$translations['question.answer_value']}}: {{$answer['value']}}</div>
+                                            @endif
+                                            @if($question['type'] === 'open-number' && $answer['threshold'] && !$isPatient)
+                                                <div class="text-danger">{{$translations['question.answer_threshold']}}: {{$answer['threshold']}}</div>
+                                            @endif
+                                        @endforeach
+                                    @endif
                                     <input size="500" value="{{ $questionAnswer ? $questionAnswer['answer'] : '' }}">
                                 @elseif($question['answers'])
                                     @foreach($question['answers'] as $answer)
@@ -204,12 +219,21 @@
                                             @else
                                                 <input type="radio" {{ $questionAnswer && $questionAnswer['answer'] === $answer['id'] ? 'checked=checked' : '' }}>
                                             @endif
-                                            <label>{{ $answer['description'] }}</label>
+
+                                            <label>
+                                                {{ $answer['description'] }}
+                                            </label>
+                                            @if($answer['value'] && !$isPatient)
+                                                <span class="text-warning">{{$translations['question.answer_value']}}: {{$answer['value']}}</span>
+                                            @endif
                                         </div>
                                     @endforeach
                                 @endif
                             </div>
                         @endforeach
+                        @if (!$isPatient)
+                            <h4>{{ $translations['questionnaire.total_score'] }}: {{ $activity['score'] }}</h4>
+                        @endif
                     @endif
 
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_GOAL)
