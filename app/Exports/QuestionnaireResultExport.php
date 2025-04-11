@@ -97,7 +97,10 @@ class QuestionnaireResultExport
             }
 
             $sheet = $spreadsheet->createSheet();
-            $sheet->setTitle(trim(mb_substr($questionnaire['title'] ?? '', 0, 29)) ?: 'Unknown');
+            $title = trim(mb_substr($questionnaire['title'] ?? '', 0, 29)) ?: 'Unknown';
+            // Remove invalid characters from the title
+            $title = preg_replace('/[?]/', '', $title);
+            $sheet->setTitle($title);
             $sheet->mergeCells('A1:A2');
             $sheet->mergeCells('B1:B2');
             $sheet->mergeCells('C1:C2');
