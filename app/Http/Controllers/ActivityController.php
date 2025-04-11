@@ -65,6 +65,12 @@ class ActivityController extends Controller
     {
         $query = Activity::query();
 
+        $query->whereHas('treatmentPlan', function ($q) {
+            $q->whereHas('user', function ($q) {
+                $q->whereNull('deleted_at');
+            });
+        });
+
         if ($request->has('type')) {
             $query->where('type', $request->get('type'));
         }

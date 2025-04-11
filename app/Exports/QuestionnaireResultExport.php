@@ -77,18 +77,21 @@ class QuestionnaireResultExport
             if (!empty($questionnaire['questions'])) {
                 $questions = $questionnaire['questions'];
                 $query = Activity::where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
-                    ->where('activity_id', $questionnaire['id'])->where('completed', 1);
-                
-                if (isset($payload['clinic_id'])) {
-                    $query->whereHas('treatmentPlan.user', function ($query) use ($payload) {
-                        $query->where('clinic_id', $payload['clinic_id']);
+                ->where('activity_id', $questionnaire['id'])
+                ->where('completed', 1)
+                ->whereHas('treatmentPlan', function ($q) use ($payload) {
+                    $q->whereHas('user', function ($query) use ($payload) {
+                        $query->whereNull('deleted_at');
+
+                        if (isset($payload['clinic_id'])) {
+                            $query->where('clinic_id', $payload['clinic_id']);
+                        }
+
+                        if (isset($payload['therapist_id'])) {
+                            $query->where('therapist_id', $payload['therapist_id']);
+                        }
                     });
-                }
-                if (isset($payload['therapist_id'])) {
-                    $query->whereHas('treatmentPlan.user', function ($query) use ($payload) {
-                        $query->where('therapist_id', $payload['therapist_id']);
-                    });
-                }
+                });
 
                 $activities = $query->get();
             }
@@ -193,11 +196,11 @@ class QuestionnaireResultExport
                 $status = $patient->enabled === 1 ? $translations['common.active'] : $translations['common.inactive'];
                 $location = $translations['common.' . $patient->location];
                 $gender = $translations['common.' . $patient->gender];
-                $country = $countries[$patient->country_id] ?? null;
+                $country = self::getCountry($patient->country_id, $countries)['name'];
                 $disease = $diseases[$treatmentPlan->disease_id] ?? null;
 
                 $sheet->setCellValue('A' . $row, $patient?->identity);
-                $sheet->setCellValue('B' . $row, $country['name'] ?? '');
+                $sheet->setCellValue('B' . $row, $country);
                 $sheet->setCellValue('C' . $row, $gender);
                 $sheet->setCellValue('D' . $row, $dob);
                 $sheet->setCellValue('E' . $row, $age);
@@ -288,5 +291,17 @@ class QuestionnaireResultExport
 
         $writer->save($filePath);
         return $basePath . $fileName;
+    }
+
+    /**
+     * Get the country by ID.
+     *
+     * @param int $countryId
+     * @param array $countries
+     * @return array|null
+     */
+    private static function getCountry($countryId, $countries)
+    {
+        return collect($countries)->firstWhere('id', $countryId) ?? null;
     }
 }
