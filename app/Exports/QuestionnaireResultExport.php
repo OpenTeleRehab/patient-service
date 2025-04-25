@@ -190,6 +190,7 @@ class QuestionnaireResultExport
 
             // Render data
             $row = 3;
+            $startRow = 3;
             foreach ($activities as $activity) {
                 $treatmentPlan = $activity->treatmentPlan;
                 $patient = $treatmentPlan->user;
@@ -217,6 +218,7 @@ class QuestionnaireResultExport
                 $sheet->setCellValue('M' . $row, $questionnaire['title']);
 
                 $colIndex = 14;
+                $answerStartRow = $row;
                 foreach ($questions as $question) {
                     $patientAnswer = null;
                     foreach ($questionnaireAnswers as $questionnaireAnswer) {
@@ -251,22 +253,23 @@ class QuestionnaireResultExport
 
                         // For checkbox questions, we need to create a new row for each selected answer as it can be more than one answer
                         if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
+                            $answerRow = $answerStartRow;
                             foreach ($answerDescriptions as $index => $description) {
                                 $startCol = Coordinate::stringFromColumnIndex($colIndex);
-                                $sheet->setCellValue($startCol . $row, $description ?? '');
-                                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 1) . $row, $values[$index] ?? '');
-                                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 2) . $row, $thresholds[$index] ?? '');
-                                $sheet->getRowDimension($row)->setRowHeight(20);
-                                if (count($answerDescriptions) > 1) {
-                                    $row++;
-                                }
+                                $sheet->setCellValue($startCol . $answerRow, $description ?? '');
+                                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 1) . $answerRow, $values[$index] ?? '');
+                                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 2) . $answerRow, $thresholds[$index] ?? '');
+                                $sheet->getRowDimension($answerRow)->setRowHeight(20);
+                                $answerRow++;
                             }
+                            // Set $row to the max row reached
+                            $row = max($row, $answerRow);
                         } else {
                             $startCol = Coordinate::stringFromColumnIndex($colIndex);
-                            $sheet->setCellValue($startCol . $row, $answerDescriptions[0] ?? '');
-                            $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 1) . $row, $values[0] ?? '');
-                            $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 2) . $row, $thresholds[0] ?? '');
-                            $sheet->getRowDimension($row)->setRowHeight(20);
+                            $sheet->setCellValue($startCol . $answerStartRow, $answerDescriptions[0] ?? '');
+                            $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 1) . $answerStartRow, $values[0] ?? '');
+                            $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 2) . $answerStartRow, $thresholds[0] ?? '');
+                            $sheet->getRowDimension($answerStartRow)->setRowHeight(20);
                         }
                     }
 
@@ -278,13 +281,12 @@ class QuestionnaireResultExport
                     }
                 }
                 $sheet->getRowDimension($row)->setRowHeight(20);
-                $row++;
             }
 
             if (isset($endCol)) {
                 // Apply Borders and aling center to All Data Rows
-                $sheet->getStyle('A3:' . $endCol . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->getStyle('A3:' . $endCol . ($row - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('A3:' . $endCol . ($row === $startRow ? $row : $row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle('A3:' . $endCol . ($row === $startRow ? $row : $row - 1))->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
             }
         }
 
