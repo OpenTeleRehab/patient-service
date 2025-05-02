@@ -2,11 +2,9 @@
 
 namespace App\Providers;
 
-use App\Events\AddLogToAdminServiceEvent;
 use App\Events\LoginEvent;
 use App\Events\PodcastCalculatorEvent;
 use App\Events\PodcastNotificationEvent;
-use App\Listeners\AddLogToAdminServiceListener;
 use App\Listeners\Calculator;
 use App\Listeners\InitBadge;
 use App\Listeners\SendPodcastNotification;
@@ -34,9 +32,6 @@ class EventServiceProvider extends ServiceProvider
         PodcastNotificationEvent::class => [
             SendPodcastNotification::class
         ],
-        AddLogToAdminServiceEvent::class => [
-            AddLogToAdminServiceListener::class
-        ]
     ];
 
     /**
