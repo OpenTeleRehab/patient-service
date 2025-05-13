@@ -21,7 +21,7 @@ class CallHistoryController extends Controller
     {
         // Define the start and end of "yesterday" as we sync on 12:00 midnight
         $startOfYesterday = Carbon::yesterday()->startOfDay()->toRfc3339String(); // Start of yesterday
-        $endOfYesterday = Carbon::yesterday()->endOfDay()->toRfc3339String(); 
+        $endOfYesterday = Carbon::yesterday()->endOfDay()->toRfc3339String();
         $twilioAccountSid = env('TWILIO_ACCOUNT_SID');
         $twilioAuthToken = env('TWILIO_AUTH_TOKEN');
 
@@ -40,7 +40,7 @@ class CallHistoryController extends Controller
                 'dateCreatedBefore' => $endOfYesterday,
             ]);
             self::storeData($rooms, $request, $twilio);
-            
+
         }
 
         return ['success' => true, 'message' => 'success_message.call_history_add'];
@@ -64,9 +64,10 @@ class CallHistoryController extends Controller
                             [
                                 'patient_id' => $patient?->id,
                                 'date' => $room->dateCreated,
+                                'duration' => $room->duration,
                             ]);
                         }
-                        
+
                     } else if ($request->get('host_country_ids') && !in_array($identity[1], $request->get('host_country_ids'))) { // This for golbal paitent host
                         $patient = User::where('identity', $identity[0])->first();
                         if ($patient) {
@@ -77,6 +78,7 @@ class CallHistoryController extends Controller
                             [
                                 'patient_id' => $patient?->id,
                                 'date' => $room->dateCreated,
+                                'duration' => $room->duration,
                             ]);
                         }
                     }
