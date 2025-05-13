@@ -19,6 +19,7 @@ class CallHistory extends Model
     protected $fillable = [
         'patient_id',
         'date',
+        'duration',
     ];
 
     /**
