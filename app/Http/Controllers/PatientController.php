@@ -172,6 +172,20 @@ class PatientController extends Controller
                             })->whereHas('appointments', function (Builder $query) use ($nexAppointment) {
                                 $query->whereDate('start_date', '=', date_format($nexAppointment, config('settings.defaultTimestampFormat')));
                             });
+                        } elseif ($filterObj->columnName === 'transfer') {
+                            $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                                ->get(env('THERAPIST_SERVICE_URL') . '/transfer/retrieve', [
+                                    'user_id' => $therapist_id,
+                                    'status' => $filterObj->value,
+                                ]);
+                            if ($response->successful()) {
+                                $transferPatients = $response->json();
+                                $data = $transferPatients['data'] ?? [];
+                                $patientIds = array_column($data, 'patient_id');
+                                if (!empty($patientIds)) {
+                                    $query->whereIn('id', $patientIds);
+                                }
+                            }
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                         }
