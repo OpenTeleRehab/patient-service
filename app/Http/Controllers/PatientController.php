@@ -182,9 +182,7 @@ class PatientController extends Controller
                                 $transferPatients = $response->json();
                                 $data = $transferPatients['data'] ?? [];
                                 $patientIds = array_column($data, 'patient_id');
-                                if (!empty($patientIds)) {
-                                    $query->whereIn('id', $patientIds);
-                                }
+                                $query->whereIn('id', $patientIds);
                             }
                         } else {
                             $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
