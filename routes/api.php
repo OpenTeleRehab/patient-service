@@ -63,7 +63,7 @@ Route::group(['middleware' => 'auth:api', 'user'], function () {
     Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
     Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
     Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
-    Route::post('patient/deleteAccount/{user}', [PatientController::class, 'deleteAccount']);
+    Route::post('patient/deleteAccount/{id}', [PatientController::class, 'deleteAccount']);
     Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById']);
     Route::post('patient/activateDeactivateAccount/{user}', [PatientController::class, 'activateDeactivateAccount']);
     Route::delete('patient/profile/delete', [PatientController::class, 'delete']);

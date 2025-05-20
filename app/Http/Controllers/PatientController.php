@@ -872,26 +872,45 @@ class PatientController extends Controller
      * )
      *
      * @param \Illuminate\Http\Request $request
-     * @param \App\Models\User $user
+     * @param $id
      *
      * @return array
      * @throws \Exception
      */
-    public function deleteAccount(Request $request, User $user)
+    public function deleteAccount(Request $request, $id)
     {
+        $user = User::withTrashed()->findOrFail($id);
         $hardDelete = $request->boolean('hard_delete');
 
         // Remove all active requests of patient transfer
-        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
                 'patient_id' => $user->id,
         ]);
+
+        if ($response->failed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'fail_message.patient_transfer_delete',
+                'status' => $response->status(),
+                'error' => $response->json() ?? $response->body(),
+            ], $response->status());
+        }
 
         // Delete phone in phone service.
         $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
             'sub_domain' => env('APP_NAME'),
             'phone' => $user->phone,
         ]);
+
+        if ($response->failed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'fail_message.patient_phone_delete',
+                'status' => $response->status(),
+                'error' => $response->json() ?? $response->body(),
+            ], $response->status());
+        }
 
         if (!empty($response['data']) && $response->successful()) {
             $phone = $response->json()['data'];
