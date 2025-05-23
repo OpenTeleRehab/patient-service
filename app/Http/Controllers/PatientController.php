@@ -177,11 +177,12 @@ class PatientController extends Controller
                                 ->get(env('THERAPIST_SERVICE_URL') . '/transfer/retrieve', [
                                     'user_id' => $therapist_id,
                                     'status' => $filterObj->value,
+                                    'therapist_type' => 'lead',
                                 ]);
                             if ($response->successful()) {
                                 $transferPatients = $response->json();
                                 $data = $transferPatients['data'] ?? [];
-                                $patientIds = array_column($data, 'patient_id');
+                                $patientIds = array_unique(array_column($data, 'patient_id'));
                                 $query->whereIn('id', $patientIds);
                             }
                         } else {
