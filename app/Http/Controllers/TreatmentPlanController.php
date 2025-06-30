@@ -775,6 +775,18 @@ class TreatmentPlanController extends Controller
 
     /**
      * @param Request $request
+     * @return mixed
+     */
+    public function getUsedHealthCondition(Request $request)
+    {
+        $healthConditionId = $request->get('health_condition_id');
+        $treatmentPlans = TreatmentPlan::where('health_condition_id', $healthConditionId)->count();
+
+        return $treatmentPlans > 0 ? true : false;
+    }
+
+    /**
+     * @param Request $request
      * @return \Illuminate\Support\Collection
      */
     public function getTreatmentPlanForGlobalData(Request $request)
