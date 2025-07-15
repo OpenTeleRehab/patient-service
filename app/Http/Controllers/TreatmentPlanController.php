@@ -298,8 +298,10 @@ class TreatmentPlanController extends Controller
                         'created_by' => isset($existedExercise) ? $existedExercise['created_by'] : $createdBy,
                     ];
 
-                    $customExercise = current(array_filter($customExercises, function ($c) use ($exercise) {
-                        return $c['id'] === $exercise;
+                    $customExercise = current(array_filter($customExercises, function ($c) use ($exercise, $existedExercise) {
+                        return !empty($existedExercise->id)
+                            ? $c['id'] === $existedExercise->id && $c['activity_id'] === $exercise
+                            : $c['id'] === $exercise;
                     }));
 
                     if ($customExercise) {
