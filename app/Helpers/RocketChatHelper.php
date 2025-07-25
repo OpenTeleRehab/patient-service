@@ -5,6 +5,9 @@ namespace App\Helpers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Models\Forwarder;
+use App\Helpers\CryptHelper;
 
 define('ROCKET_CHAT_LOGIN_URL', env('ROCKET_CHAT_URL') . '/api/v1/login');
 define('ROCKET_CHAT_LOGOUT_URL', env('ROCKET_CHAT_URL') . '/api/v1/logout');
@@ -102,16 +105,24 @@ class RocketChatHelper
             'userId' => $userId,
             'data' => $data
         ];
-        $response = Http::withHeaders([
-            'X-Auth-Token' => getenv('ROCKET_CHAT_ADMIN_AUTH_TOKEN'),
-            'X-User-Id' => getenv('ROCKET_CHAT_ADMIN_USER_ID'),
-            'X-2fa-Code' => hash('sha256', getenv('ROCKET_CHAT_ADMIN_PASSWORD')),
-            'X-2fa-Method' => 'password'
-        ])->asJson()->post(ROCKET_CHAT_UPDATE_USER_URL, $payload);
+        try {
+            $response = Http::withHeaders([
+                'X-Auth-Token' => getenv('ROCKET_CHAT_ADMIN_AUTH_TOKEN'),
+                'X-User-Id' => getenv('ROCKET_CHAT_ADMIN_USER_ID'),
+                'X-2fa-Code' => hash('sha256', getenv('ROCKET_CHAT_ADMIN_PASSWORD')),
+                'X-2fa-Method' => 'password'
+            ])->asJson()->post(ROCKET_CHAT_UPDATE_USER_URL, $payload);
 
-        if ($response->successful()) {
-            $result = $response->json();
-            return $result['success'];
+            if ($response->successful()) {
+                $result = $response->json();
+                return $result['success'];
+            }
+
+            Log::error('RocketChat update failed: ' . $response->body());
+            return false;
+        } catch (\Exception $e) {
+            Log::error('RocketChat exception: ' . $e->getMessage());
+            return false;
         }
 
         $response->throw();
@@ -170,21 +181,26 @@ class RocketChatHelper
 
     /**
      * @see https://docs.rocket.chat/api/rest-api/methods/im/messages
-     * @param string $therapist The therapist identity
-     * @param string $patient   The patient identity
+     * @param int $therapist_id The therapist ID
+     * @param string $patient_identity   The patient identity
      *
      * @return mixed|null
      * @throws \Illuminate\Http\Client\RequestException
      */
-    public static function createChatRoom($therapist, $patient)
+    public static function createChatRoom($therapist_id, $patient_identity)
     {
-        $therapistAuth = self::login($therapist, $therapist . 'PWD');
+        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                            ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+                                'id' => $therapist_id,
+                            ]);
+        $therapist = $response->json();
+        $therapistAuth = self::login($therapist['identity'], CryptHelper::decrypt($therapist['chat_password']));
         $authToken = $therapistAuth['authToken'];
         $userId = $therapistAuth['userId'];
         $response = Http::withHeaders([
             'X-Auth-Token' => $authToken,
             'X-User-Id' => $userId,
-        ])->asJson()->post(ROCKET_CHAT_CREATE_ROOM_URL, ['usernames' => $patient]);
+        ])->asJson()->post(ROCKET_CHAT_CREATE_ROOM_URL, ['username' => $patient_identity]);
 
         // Always logout to clear local login token on completion.
         self::logout($userId, $authToken);
@@ -206,7 +222,7 @@ class RocketChatHelper
      */
     public static function getMessages($user, $chat_room)
     {
-        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $userAuth = self::login($user->identity, CryptHelper::decrypt($user->chat_password));
         $authToken = $userAuth['authToken'];
         $userId = $userAuth['userId'];
 
@@ -235,7 +251,7 @@ class RocketChatHelper
      */
     public static function getUnreadMessages($user, $chat_room)
     {
-        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $userAuth = self::login($user->identity, CryptHelper::decrypt($user->chat_password));
         $authToken = $userAuth['authToken'];
         $userId = $userAuth['userId'];
 
@@ -264,7 +280,7 @@ class RocketChatHelper
      */
     public static function getRoom($user, $room_id)
     {
-        $userAuth = self::login($user->identity, $user->identity . 'PWD');
+        $userAuth = self::login($user->identity, CryptHelper::decrypt($user->chat_password));
         $authToken = $userAuth['authToken'];
         $userId = $userAuth['userId'];
 

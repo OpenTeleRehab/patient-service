@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\LoginEvent;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\ProfileResource;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -107,7 +107,7 @@ class AuthController extends Controller
                 event(new LoginEvent($request));
 
                 $data = [
-                    'profile' => new UserResource($user),
+                    'profile' => new ProfileResource($user),
                     'token' => $user->createToken(config('auth.guards.api.tokenName'))->accessToken,
                 ];
 
@@ -177,7 +177,7 @@ class AuthController extends Controller
 
         $token = $user->createToken(config('auth.guards.api.tokenName'))->accessToken;
         $data = [
-            'profile' => new UserResource($user),
+            'profile' => new ProfileResource($user),
             'token' => $token,
         ];
 
@@ -226,7 +226,7 @@ class AuthController extends Controller
             'kid_theme' => $request->get('kid_theme'),
         ]);
 
-        return ['success' => true, 'data' => ['profile' => new UserResource($user)]];
+        return ['success' => true, 'data' => ['profile' => new ProfileResource($user)]];
     }
 
     /**

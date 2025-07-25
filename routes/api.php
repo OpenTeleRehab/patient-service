@@ -70,6 +70,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient', [PatientController::class, 'index'])->middleware('role:internal');
     Route::post('patient', [PatientController::class, 'store'])->middleware('role:internal');
     Route::put('patient/{id}', [PatientController::class, 'update'])->middleware('role:internal,mobile');
+    Route::get('patient/list-for-chatroom', [PatientController::class, 'listForChatroom'])->middleware('role:internal');
 
     // Activities
     Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
