@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('patient/get-call-access-token', [PatientController::class, 'getCallAccessToken']);
 
-Route::group(['middleware' => 'auth:api', 'user'], function () {
+Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], function () {
     Route::get('auth/logout', [AuthController::class, 'logout']);
     Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
     Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
