@@ -33,94 +33,99 @@ use Illuminate\Support\Facades\Route;
 Route::get('patient/get-call-access-token', [PatientController::class, 'getCallAccessToken']);
 
 Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], function () {
-    Route::get('auth/logout', [AuthController::class, 'logout']);
-    Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode']);
-    Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode']);
-    Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition']);
-    Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy']);
-    Route::post('auth/enable-kid-theme', [AuthController::class, 'enableKidTheme']);
-    Route::post('auth/create-firebase-token', [AuthController::class, 'createFirebaseToken']);
+    Route::get('auth/logout', [AuthController::class, 'logout'])->middleware('role:mobile');
+    Route::get('auth/compare-pin', [AuthController::class, 'comparePinCode'])->middleware('role:mobile');
+    Route::post('auth/change-pin', [AuthController::class, 'changeNewPinCode'])->middleware('role:mobile');
+    Route::post('auth/accept-term-condition', [AuthController::class, 'acceptTermCondition'])->middleware('role:mobile');
+    Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy'])->middleware('role:mobile');
+    Route::post('auth/enable-kid-theme', [AuthController::class, 'enableKidTheme'])->middleware('role:mobile');
+    Route::post('auth/create-firebase-token', [AuthController::class, 'createFirebaseToken'])->middleware('role:mobile');
 
-    Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataForGlobalAdmin']);
-    Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']);
-    Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']);
+    Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataForGlobalAdmin']); // deprecated
+    Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']); // deprecated
+    Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']); // deprecated
 
     // Notifications
-    Route::get('/push-notification', [NotificationController::class, 'pushNotification']);
+    Route::get('/push-notification', [NotificationController::class, 'pushNotification'])->middleware('role:internal');
 
     // Patients
-    Route::get('patient/id/{id}', [PatientController::class, 'getById']);
-    Route::get('patient/list/by-ids', [PatientController::class, 'getByIds']);
-    Route::get('patient/list/global', [PatientController::class, 'getPatientsForGlobalData']);
-    Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId']);
-    Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds']);
-    Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove']);
+    Route::get('patient/id/{id}', [PatientController::class, 'getById'])->middleware('role:internal');
+    Route::get('patient/list/by-ids', [PatientController::class, 'getByIds'])->middleware('role:internal');
+    Route::get('patient/list/global', [PatientController::class, 'getPatientsForGlobalData'])->middleware('role:internal');
+    Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId'])->middleware('role:internal');
+    Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds'])->middleware('role:internal');
+    Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove'])->middleware('role:internal');
     Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']); // Deprecated from phone service
-    Route::get('patient/transfer', [PatientController::class, 'transfer']);
-    Route::get('patient/profile/export', [PatientController::class, 'export']);
-    Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone']);
-    Route::get('patient/list/get-raw-data', [PatientController::class, 'getPatientRawData']);
-    Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId']);
-    Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId']);
-    Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist']);
-    Route::post('patient/deleteAccount/{id}', [PatientController::class, 'deleteAccount']);
-    Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById']);
-    Route::post('patient/activateDeactivateAccount/{user}', [PatientController::class, 'activateDeactivateAccount']);
-    Route::delete('patient/profile/delete', [PatientController::class, 'delete']);
-    Route::apiResource('patient', PatientController::class);
+    Route::get('patient/transfer', [PatientController::class, 'transfer']); // not used
+    Route::get('patient/profile/export', [PatientController::class, 'export'])->middleware('role:mobile');
+    Route::get('patient/count/by-phone-number', [PatientController::class, 'getPatientByPhone'])->middleware('role:internal');
+    Route::get('patient/list/get-raw-data', [PatientController::class, 'getPatientRawData'])->middleware('role:internal');
+    Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId'])->middleware('role:internal');
+    Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId'])->middleware('role:internal');
+    Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist'])->middleware('role:internal');
+    Route::post('patient/deleteAccount/{id}', [PatientController::class, 'deleteAccount'])->middleware('role:internal');
+    Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById'])->middleware('role:internal');
+    Route::post('patient/activateDeactivateAccount/{user}', [PatientController::class, 'activateDeactivateAccount'])->middleware('role:internal');
+    Route::delete('patient/profile/delete', [PatientController::class, 'delete'])->middleware('role:mobile');
+    Route::get('patient', [PatientController::class, 'index'])->middleware('role:internal');
+    Route::post('patient', [PatientController::class, 'store'])->middleware('role:internal');
+    Route::put('patient/{id}', [PatientController::class, 'update'])->middleware('role:internal,mobile');
 
     // Activities
-    Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities']);
-    Route::get('patient-activities/list/by-ids', [ActivityController::class, 'getByIds']);
-    Route::post('patient-activities/delete/by-ids', [ActivityController::class, 'deleteByIds']);
+    Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
+    Route::get('patient-activities/list/by-ids', [ActivityController::class, 'getByIds'])->middleware('role:internal');
+    Route::post('patient-activities/delete/by-ids', [ActivityController::class, 'deleteByIds']); // not used
 
     // Treatment Plans
-    Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity']);
-    Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary']);
-    Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities']);
-    Route::post('treatment-plan/complete_questionnaire', [TreatmentPlanController::class, 'completeQuestionnaire']);
-    Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal']);
-    Route::get('treatment-plan/export/{treatmentPlan}', [TreatmentPlanController::class, 'export']);
-    Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease']);
-    Route::get('treatment-plan/list/global', [TreatmentPlanController::class, 'getTreatmentPlanForGlobalData']);
+    Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity'])->middleware('role:mobile');
+    Route::get('treatment-plan/get-summary', [TreatmentPlanController::class, 'getSummary'])->middleware('role:mobile');
+    Route::get('treatment-plan/get-treatment-plan', [TreatmentPlanController::class, 'getActivities'])->middleware('role:mobile');
+    Route::post('treatment-plan/complete_questionnaire', [TreatmentPlanController::class, 'completeQuestionnaire'])->middleware('role:mobile');
+    Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal'])->middleware('role:mobile');
+    Route::get('treatment-plan/export/{treatmentPlan}', [TreatmentPlanController::class, 'export'])->middleware('role:internal');
+    Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease'])->middleware('role:internal');
+    Route::get('treatment-plan/list/global', [TreatmentPlanController::class, 'getTreatmentPlanForGlobalData'])->middleware('role:internal');
 
-    Route::get('patient-treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities']);
-    Route::apiResource('patient-treatment-plan', TreatmentPlanController::class);
+    Route::get('patient-treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities'])->middleware('role:internal');
+    Route::apiResource('patient-treatment-plan', TreatmentPlanController::class)->middleware('role:internal');
 
     // Appointments
-    Route::get('appointment/get-patient-appointments', [AppointmentController::class, 'getPatientAppointments']);
-    Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment']);
-    Route::post('appointment/update-patient-status/{appointment}', [AppointmentController::class, 'updatePatientStatus']);
-    Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus']);
-    Route::put('appointment/update-as-read', [AppointmentController::class, 'updateAsRead']);
-    Route::apiResource('appointment', AppointmentController::class);
+    Route::get('appointment/get-patient-appointments', [AppointmentController::class, 'getPatientAppointments'])->middleware('role:mobile');
+    Route::post('appointment/request-appointment', [AppointmentController::class, 'requestAppointment'])->middleware('role:mobile');
+    Route::post('appointment/update-patient-status/{appointment}', [AppointmentController::class, 'updatePatientStatus'])->middleware('role:mobile');
+    Route::post('appointment/updateStatus/{appointment}', [AppointmentController::class, 'updateStatus'])->middleware('role:internal');
+    Route::put('appointment/update-as-read', [AppointmentController::class, 'updateAsRead'])->middleware('role:internal');
+    Route::get('appointment', [AppointmentController::class, 'index'])->middleware('role:internal');
+    Route::post('appointment', [AppointmentController::class, 'store'])->middleware('role:internal');
+    Route::put('appointment/{appointment}', [AppointmentController::class, 'update'])->middleware('role:internal,mobile');
+    Route::delete('appointment/{appointment}', [AppointmentController::class, 'destroy'])->middleware('role:internal,mobile');
 
-    Route::get('treatment-plan/on-going/export', [TreatmentPlanController::class, 'exportOnGoing']);
-    Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements']);
+    Route::get('treatment-plan/on-going/export', [TreatmentPlanController::class, 'exportOnGoing'])->middleware('role:mobile');
+    Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements'])->middleware('role:mobile');
 
     // Assistive technology
-    Route::apiResource('patient-assistive-technologies', AssistiveTechnologyController::class);
-    Route::get('assistive-technologies/get-at-patient', [AssistiveTechnologyController::class, 'getAssistiveTechnologyProvidedPatients']);
-    Route::get('assistive-technologies/get-used-at', [AssistiveTechnologyController::class, 'getUsedAssistiveTechnology']);
+    Route::apiResource('patient-assistive-technologies', AssistiveTechnologyController::class)->middleware('role:internal');
+    Route::get('assistive-technologies/get-at-patient', [AssistiveTechnologyController::class, 'getAssistiveTechnologyProvidedPatients'])->middleware('role:internal');
+    Route::get('assistive-technologies/get-used-at', [AssistiveTechnologyController::class, 'getUsedAssistiveTechnology'])->middleware('role:internal');
 
     // Admin Service
     Route::name('admin.')->group(function () {
-        Route::get('profession', [ForwarderController::class, 'index']);
+        Route::get('profession', [ForwarderController::class, 'index'])->middleware('role:mobile');
     });
 
     // Global Admin Service
     Route::name('global_admin.')->group(function () {
-        Route::post('survey/skip', [ForwarderController::class, 'store']);
-        Route::post('survey/submit', [ForwarderController::class, 'store']);
+        Route::post('survey/skip', [ForwarderController::class, 'store'])->middleware('role:mobile');
+        Route::post('survey/submit', [ForwarderController::class, 'store'])->middleware('role:mobile');
     });
 
     // Report
-    Route::get('export', [ReportController::class, 'export']);
+    Route::get('export', [ReportController::class, 'export'])->middleware('role:internal');
 
     // Call history
-    Route::apiResource('call-history', CallHistoryController::class);
+    Route::apiResource('call-history', CallHistoryController::class)->middleware('role:internal');
 
-    Route::get('download-file', [FileController::class, 'download']);
+    Route::get('download-file', [FileController::class, 'download'])->middleware('role:internal');
 });
 
 // Public
