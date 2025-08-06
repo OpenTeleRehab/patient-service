@@ -7,6 +7,7 @@ use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\TreatmentPlanResource;
+use App\Http\Resources\TreatmentPlanListResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\Goal;
@@ -58,62 +59,64 @@ class TreatmentPlanController extends Controller
     {
         $data = $request->all();
         $info = [];
-        if ($request->has('id')) {
-            $treatmentPlans = TreatmentPlan::where('id', $request->get('id'))->get();
-        } else {
-            $query = TreatmentPlan::query();
+        $query = TreatmentPlan::query();
 
-            if (isset($data['patient_id'])) {
-                $query = TreatmentPlan::where('patient_id', $data['patient_id']);
-            }
-
-            if (isset($data['search_value'])) {
-                $query->where(function ($query) use ($data) {
-                    $query->where('name', 'like', '%' . $data['search_value'] . '%');
-                });
-            }
-
-            if (isset($data['filters'])) {
-                $filters = $request->get('filters');
-                $query->where(function ($query) use ($filters) {
-                    foreach ($filters as $filter) {
-                        $filterObj = json_decode($filter);
-                        if ($filterObj->columnName === 'treatment_status') {
-                            $status = $filterObj->value;
-                            switch ($status) {
-                                case TreatmentPlan::FILTER_STATUS_PLANNED:
-                                    $query->whereDate('start_date', '>', Carbon::now());
-                                    break;
-                                case TreatmentPlan::FILTER_STATUS_FINISHED:
-                                    $query->whereDate('end_date', '<', Carbon::now());
-                                    break;
-                                case TreatmentPlan::FILTER_STATUS_ON_GOING:
-                                    $query->whereDate('start_date', '<=', Carbon::now());
-                                    $query->whereDate('end_date', '>=', Carbon::now());
-                            }
-                        } elseif ($filterObj->columnName === 'start_date' || $filterObj->columnName === 'end_date') {
-                            $dates = explode(' - ', $filterObj->value);
-                            $startDate = date_create_from_format('d/m/Y', $dates[0]);
-                            $endDate = date_create_from_format('d/m/Y', $dates[1]);
-                            $startDate->format('Y-m-d');
-                            $endDate->format('Y-m-d');
-                            $query->whereDate($filterObj->columnName, '>=', $startDate)
-                                ->whereDate($filterObj->columnName, '<=', $endDate);
-                        } else {
-                            $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
-                        }
-                    }
-                });
-            }
-
-            $treatmentPlans = $query->paginate($data['page_size']);
-            $info = [
-                'current_page' => $treatmentPlans->currentPage(),
-                'total_count' => $treatmentPlans->total(),
-            ];
+        if (isset($data['patient_id'])) {
+            $query = TreatmentPlan::where('patient_id', $data['patient_id']);
         }
 
-        return ['success' => true, 'data' => TreatmentPlanResource::collection($treatmentPlans), 'info' => $info];
+        if (isset($data['search_value'])) {
+            $query->where(function ($query) use ($data) {
+                $query->where('name', 'like', '%' . $data['search_value'] . '%');
+            });
+        }
+
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    if ($filterObj->columnName === 'treatment_status') {
+                        $status = $filterObj->value;
+                        switch ($status) {
+                            case TreatmentPlan::FILTER_STATUS_PLANNED:
+                                $query->whereDate('start_date', '>', Carbon::now());
+                                break;
+                            case TreatmentPlan::FILTER_STATUS_FINISHED:
+                                $query->whereDate('end_date', '<', Carbon::now());
+                                break;
+                            case TreatmentPlan::FILTER_STATUS_ON_GOING:
+                                $query->whereDate('start_date', '<=', Carbon::now());
+                                $query->whereDate('end_date', '>=', Carbon::now());
+                        }
+                    } elseif ($filterObj->columnName === 'start_date' || $filterObj->columnName === 'end_date') {
+                        $dates = explode(' - ', $filterObj->value);
+                        $startDate = date_create_from_format('d/m/Y', $dates[0]);
+                        $endDate = date_create_from_format('d/m/Y', $dates[1]);
+                        $startDate->format('Y-m-d');
+                        $endDate->format('Y-m-d');
+                        $query->whereDate($filterObj->columnName, '>=', $startDate)
+                            ->whereDate($filterObj->columnName, '<=', $endDate);
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $treatmentPlans = $query->paginate($data['page_size']);
+        $info = [
+            'current_page' => $treatmentPlans->currentPage(),
+            'total_count' => $treatmentPlans->total(),
+        ];
+
+        return ['success' => true, 'data' => TreatmentPlanListResource::collection($treatmentPlans), 'info' => $info];
+    }
+
+    public function show($id)
+    {
+        $treatmentPlans = TreatmentPlan::where('id', $id)->get();
+        return ['success' => true, 'data' => new TreatmentPlanResource($treatmentPlans)];
     }
 
     /**

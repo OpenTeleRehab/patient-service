@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Helpers\RocketChatHelper;
+use App\Helpers\CryptHelper;
 use App\Models\User;
+use App\Models\Forwarder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -40,7 +42,8 @@ class AlterPatientIdentity extends Command
      */
     public function handle()
     {
-        $response = Http::get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
+        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE))->get(env('GADMIN_SERVICE_URL') . '/get-organization', ['sub_domain' => env('APP_NAME')]);
+
         if ($response->successful()) {
             $organization = $response->json();
             $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
@@ -55,7 +58,7 @@ class AlterPatientIdentity extends Command
                 $data = [
                     'email' => $identity . '@hi.org',
                     'username' => $identity,
-                    'password' => $identity . 'PWD',
+                    'password' => bin2hex(random_bytes(16)),
                 ];
                 if ($user->chat_user_id) {
                     $result = RocketChatHelper::updateUser($user->chat_user_id, $data);
@@ -63,7 +66,7 @@ class AlterPatientIdentity extends Command
                         // Update user identity and chat password.
                         User::where('id', $user->id)->update([
                             'identity' => $identity,
-                            'chat_password' => hash('sha256', $data['password'])
+                            'chat_password' => CryptHelper::encrypt($data['password'])
                         ]);
                     }
                 }

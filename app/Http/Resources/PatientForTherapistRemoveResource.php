@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 use App\Helpers\TreatmentActivityHelper;
 use App\Models\TreatmentPlan;
-use App\Helpers\RocketChatHelper;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;

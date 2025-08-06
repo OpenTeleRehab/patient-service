@@ -3,8 +3,9 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Helpers\CryptHelper;
 
-class UserResource extends JsonResource
+class ProfileResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,6 +15,7 @@ class UserResource extends JsonResource
      */
     public function toArray($request)
     {
+        $password = CryptHelper::hash($this->chat_password);
         return [
             'id' => $this->id,
             'identity' => $this->identity,
@@ -31,7 +33,7 @@ class UserResource extends JsonResource
             'language_id' => $this->language_id,
             'term_and_condition_id' => $this->term_and_condition_id,
             'chat_user_id' => $this->chat_user_id,
-            'chat_password' => $this->chat_password,
+            'chat_password' => $password,
             'chat_rooms' => $this->chat_rooms,
             'secondary_therapists' => $this->secondary_therapists,
             'privacy_and_policy_id' => $this->privacy_and_policy_id,
