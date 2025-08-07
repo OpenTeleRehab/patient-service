@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 define('CRYPT_SECRET', base64_decode(env('CRYPT_SECRET')));
+define('CRYPT_CIPHER', env('CRYPT_CIPHER'));
 
 /**
  * Class CryptHelper
@@ -12,17 +13,17 @@ class CryptHelper
 {
     public static function encrypt($plaintext)
     {
-        $iv = random_bytes(16); // 16 bytes for AES-256-CBC
-        $encrypted = openssl_encrypt($plaintext, 'aes-256-cbc', CRYPT_SECRET, 0, $iv);
+        $iv = random_bytes(16);
+        $encrypted = openssl_encrypt($plaintext, CRYPT_CIPHER, CRYPT_SECRET, OPENSSL_RAW_DATA, $iv);
         return base64_encode($iv . $encrypted);
     }
 
     public static function decrypt($cipherText)
     {
         $raw = base64_decode($cipherText);
-        $iv = substr($raw, 0, 16); // 16 bytes for AES-256-CBC
+        $iv = substr($raw, 0, 16);
         $encrypted = substr($raw, 16);
-        return openssl_decrypt($encrypted, 'aes-256-cbc', CRYPT_SECRET, 0, $iv);
+        return openssl_decrypt($encrypted, CRYPT_CIPHER, CRYPT_SECRET, OPENSSL_RAW_DATA, $iv);
     }
 
     public static function hash($cipherText)
