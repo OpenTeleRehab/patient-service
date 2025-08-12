@@ -20,7 +20,7 @@ class VerifyDataAccess
    */
     public function handle(Request $request, Closure $next): Response
     {
-        $countryHeader = strtoupper($request->header('country')); // normalize
+        $countryHeader = $request->header('Country');
         $countryId     = $request->get('country_id') ?? $request->get('country');
         $clinicId      = $request->get('clinic_id') ?? $request->get('clinic');
         $therapistId   = $request->get('therapist_id') ?? $request->get('therapist');
