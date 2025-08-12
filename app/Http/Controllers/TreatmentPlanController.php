@@ -65,7 +65,7 @@ class TreatmentPlanController extends Controller
             $query = TreatmentPlan::where('patient_id', $data['patient_id']);
         }
 
-        if (isset($data['search_value'])) {
+        if (isset($data['search_value']) && $data['search_value'] !== '') {
             $query->where(function ($query) use ($data) {
                 $query->where('name', 'like', '%' . $data['search_value'] . '%');
             });
