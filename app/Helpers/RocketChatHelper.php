@@ -105,6 +105,7 @@ class RocketChatHelper
             'userId' => $userId,
             'data' => $data
         ];
+
         try {
             $response = Http::withHeaders([
                 'X-Auth-Token' => getenv('ROCKET_CHAT_ADMIN_AUTH_TOKEN'),
@@ -113,19 +114,13 @@ class RocketChatHelper
                 'X-2fa-Method' => 'password'
             ])->asJson()->post(ROCKET_CHAT_UPDATE_USER_URL, $payload);
 
-            if ($response->successful()) {
-                $result = $response->json();
-                return $result['success'];
-            }
+            $response->throw();
 
-            Log::error('RocketChat update failed: ' . $response->body());
-            return false;
+            return $response->json()['success'] ?? false;
         } catch (\Exception $e) {
-            Log::error('RocketChat exception: ' . $e->getMessage());
-            return false;
+            Log::error('RocketChat update failed: ' . $e->getMessage());
+            throw $e;
         }
-
-        $response->throw();
     }
 
     /**
