@@ -114,16 +114,20 @@ class RocketChatHelper
                 'X-2fa-Method' => 'password'
             ])->asJson()->post(ROCKET_CHAT_UPDATE_USER_URL, $payload);
 
-            if ($response->successful()) {
-                $result = $response->json();
-                return $result['success'];
+            $json = $response->json();
+
+            if (!$response->successful()) {
+                if (!empty($json['errorType']) && $json['errorType'] === 'error-invalid-user') {
+                    Log::info("RocketChat userId '{$userId}' not found. Skipping update.");
+                    return false;
+                }
+                $response->throw();
             }
 
-            Log::error('RocketChat update failed: ' . $response->body());
-            return false;
+            return $json['success'] ?? false;
         } catch (\Exception $e) {
-            Log::error('RocketChat exception: ' . $e->getMessage());
-            return false;
+            Log::error("RocketChat exception for userId '{$userId}': " . $e->getMessage());
+            throw $e;
         }
     }
 
