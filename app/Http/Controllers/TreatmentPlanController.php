@@ -110,7 +110,7 @@ class TreatmentPlanController extends Controller
             'total_count' => $treatmentPlans->total(),
         ];
 
-        return ['success' => true, 'data' => TreatmentPlanListResource::collection($treatmentPlans), 'info' => $info];
+        return ['success' => true, 'data' => TreatmentPlanResource::collection($treatmentPlans), 'info' => $info];
     }
 
     public function show($id)
