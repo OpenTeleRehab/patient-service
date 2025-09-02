@@ -1445,8 +1445,7 @@ class PatientController extends Controller
     public function getPatientRawData(Request $request)
     {
         $data = $request->all();
-        $query = User::where('email', '!=', env('KEYCLOAK_BACKEND_USERNAME'))
-            ->orWhereNull('email');
+        $query = User::withTrashed()->whereNotNull('identity');
 
         if (isset($data['country'])) {
             $query->where('country_id', $data['country']);
