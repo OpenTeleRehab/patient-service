@@ -1512,7 +1512,11 @@ class PatientController extends Controller
             });
         }
 
-        $patients = $query->get();
+        $patients = $query->with([
+            'treatmentPlans',
+            'assistiveTechnologies',
+        ])->withCount('callHistories')->get();
+
         return [
             'success' => true,
             'data' => PatientRawDataResource::collection($patients),

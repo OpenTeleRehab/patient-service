@@ -2,9 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\TreatmentPlan;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Carbon\Carbon;
 
 class PatientRawDataResource extends JsonResource
 {
@@ -29,7 +27,7 @@ class PatientRawDataResource extends JsonResource
             'secondary_therapists' => $this->secondary_therapists ? : [],
             'treatmentPlans' => PatientRawDataTreatmentPlanResource::collection($this->treatmentPlans),
             'assistiveTechnologies' => AssistiveTechnologyResource::collection($this->assistiveTechnologies),
-            'call' => $this->callHistories()->count(),
+            'call' => $this->call_histories_count,
         ];
 
         return $responseData;

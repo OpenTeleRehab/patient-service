@@ -16,112 +16,83 @@ class PatientRawDataTreatmentPlanResource extends JsonResource
      */
     public function toArray($request)
     {
-        $lastDayOfTreatment = $this->activities()
-        ->where('week', $this->total_of_weeks)
-        ->where('treatment_plan_id', $this->id)
-        ->max('day');
+        // Get all activities once and organize them efficiently
+        $activities = $this->activities;
 
-        $initialAverageAdherence = $this->activities()
-        ->where('type', 'exercise')
-        ->where('day', 1)
-        ->where('week', 1)
-        ->avg('completed');
+        // Calculate last day of treatment once
+        $lastDayOfTreatment = $activities
+            ->where('week', $this->total_of_weeks)
+            ->where('treatment_plan_id', $this->id)
+            ->max('day');
 
-        $initialAveragePainLevel = $this->activities()
-        ->where('type', 'exercise')
-        ->where('day', 1)
-        ->where('week', 1)
-        ->avg('pain_level');
+        // Pre-filter activities by type to avoid repeated filtering
+        $exerciseActivities = $activities->where('type', 'exercise');
+        $goalActivities = $activities->where('type', 'goal');
+        $questionnaireActivities = $activities->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE);
 
-        $finalAverageAdherence = $this->activities()
-        ->where('type', 'exercise')
-        ->where('day', $lastDayOfTreatment)
-        ->where('week', $this->total_of_weeks)
-        ->avg('completed');
+        // Get goal IDs once
+        $dailyGoalIds = $this->goals->where('frequency', Goal::FREQUENCY_DAILY)->pluck('id');
+        $weeklyGoalIds = $this->goals->where('frequency', Goal::FREQUENCY_WEEKLY)->pluck('id');
 
-        $finalAveragePainLevel = $this->activities()
-        ->where('type', 'exercise')
-        ->where('day', $lastDayOfTreatment)
-        ->where('week', $this->total_of_weeks)
-        ->avg('pain_level');
-        
-        $dailyGoalIds = $this->goals()->where('frequency', Goal::FREQUENCY_DAILY)->pluck('id')->toArray();
-        $weeklyGoalIds = $this->goals()->where('frequency', Goal::FREQUENCY_WEEKLY)->pluck('id')->toArray();
+        // Pre-filter goal activities by type
+        $dailyGoalActivities = $goalActivities->whereIn('activity_id', $dailyGoalIds);
+        $weeklyGoalActivities = $goalActivities->whereIn('activity_id', $weeklyGoalIds);
 
-        $initialAverageDailyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id', $dailyGoalIds)
-        ->where('day', 1)
-        ->where('week', 1)
-        ->avg('satisfaction');
+        // Calculate initial values (week 1, day 1)
+        $initialExercises = $exerciseActivities->where('day', 1)->where('week', 1);
+        $initialDailyGoals = $dailyGoalActivities->where('day', 1)->where('week', 1);
+        $initialWeeklyGoals = $weeklyGoalActivities->where('week', 1);
 
-        $finalAverageDailyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id', $dailyGoalIds)
-        ->where('day', $lastDayOfTreatment)
-        ->where('week', $this->total_of_weeks)
-        ->avg('satisfaction');
+        // Calculate final values (last week, last day)
+        $finalExercises = $exerciseActivities
+            ->where('day', $lastDayOfTreatment)
+            ->where('week', $this->total_of_weeks);
+        $finalDailyGoals = $dailyGoalActivities
+            ->where('day', $lastDayOfTreatment)
+            ->where('week', $this->total_of_weeks);
+        $finalWeeklyGoals = $weeklyGoalActivities->where('week', $this->total_of_weeks);
 
-        $initialAverageWeeklyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id', $weeklyGoalIds)
-        ->where('week', 1)
-        ->avg('satisfaction');
-
-        $finalAverageWeeklyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id', $weeklyGoalIds)
-        ->where('week', $this->total_of_weeks)
-        ->avg('satisfaction');
-
-        $averageWeeklyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id', $weeklyGoalIds)
-        ->avg('satisfaction');
-
-        $averageDailyGoal = $this->activities()
-        ->where('type', 'goal')
-        ->whereIn('activity_id',$dailyGoalIds)
-        ->avg('satisfaction');
-
-        $questionnaires = $this->activities()
-            ->where('type', Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
+        // Process questionnaires efficiently
+        $questionnaires = $questionnaireActivities
             ->where('completed', 1)
-            ->orderBy('week')
-            ->orderBy('day')
-            ->get();
-
-        $questionnaires = $questionnaires->map(function ($questionnaire) {
-            return [
-                'id' => $questionnaire->activity_id,
-                'week' => $questionnaire->week,
-                'day' => $questionnaire->day,
-                'answer' => QuestionnaireAnswerResource::collection($questionnaire->answers),
-            ];
-        });
+            ->sortBy(['week', 'day'])
+            ->map(function ($questionnaire) {
+                return [
+                    'id' => $questionnaire->activity_id,
+                    'week' => $questionnaire->week,
+                    'day' => $questionnaire->day,
+                    'answer' => QuestionnaireAnswerResource::collection($questionnaire->answers),
+                ];
+            });
 
         return [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
             'patient_id' => $this->patient_id,
-            'start_date' => $this->start_date ? $this->start_date->format(config('settings.date_format')) : '',
-            'end_date' => $this->end_date ? $this->end_date->format(config('settings.date_format')) : '',
+            'start_date' => $this->start_date?->format(config('settings.date_format')) ?? '',
+            'end_date' => $this->end_date?->format(config('settings.date_format')) ?? '',
             'status' => $this->status,
-            'averageWeeklyGoal' => $averageWeeklyGoal,
-            'averageDailyGoal' => $averageDailyGoal,
             'total_of_weeks' => $this->total_of_weeks,
             'created_by' => $this->created_by,
             'disease_id' => $this->disease_id,
             'questionnaires' => $questionnaires,
-            'initialAverageAdherence' => $initialAverageAdherence,
-            'initialAveragePainLevel' => $initialAveragePainLevel,
-            'finalAverageAdherence' => $finalAverageAdherence,
-            'finalAveragePainLevel' => $finalAveragePainLevel,
-            'initialAverageDailyGoal' => $initialAverageDailyGoal,
-            'initialAverageWeeklyGoal' => $initialAverageWeeklyGoal,
-            'finalAverageDailyGoal' => $finalAverageDailyGoal,
-            'finalAverageWeeklyGoal' => $finalAverageWeeklyGoal,
+
+            // Average calculations using pre-filtered collections
+            'averageWeeklyGoal' => $weeklyGoalActivities->avg('satisfaction'),
+            'averageDailyGoal' => $dailyGoalActivities->avg('satisfaction'),
+
+            // Initial values
+            'initialAverageAdherence' => $initialExercises->avg('completed'),
+            'initialAveragePainLevel' => $initialExercises->avg('pain_level'),
+            'initialAverageDailyGoal' => $initialDailyGoals->avg('satisfaction'),
+            'initialAverageWeeklyGoal' => $initialWeeklyGoals->avg('satisfaction'),
+
+            // Final values
+            'finalAverageAdherence' => $finalExercises->avg('completed'),
+            'finalAveragePainLevel' => $finalExercises->avg('pain_level'),
+            'finalAverageDailyGoal' => $finalDailyGoals->avg('satisfaction'),
+            'finalAverageWeeklyGoal' => $finalWeeklyGoals->avg('satisfaction'),
         ];
     }
 }
