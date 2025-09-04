@@ -58,8 +58,11 @@ class TreatmentPlanController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $info = [];
         $query = TreatmentPlan::query();
+
+        if (isset($data['id'])) {
+            $query = TreatmentPlan::where('id', $data['id']);
+        }
 
         if (isset($data['patient_id'])) {
             $query = TreatmentPlan::where('patient_id', $data['patient_id']);
