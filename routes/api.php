@@ -88,7 +88,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::post('treatment-plan/complete_goal', [TreatmentPlanController::class, 'completeGoal'])->middleware('role:mobile');
     Route::get('treatment-plan/export/{treatmentPlan}', [TreatmentPlanController::class, 'export'])->middleware('role:internal');
     Route::get('treatment-plan/get-used-disease', [TreatmentPlanController::class, 'getUsedDisease'])->middleware('role:internal');
-    Route::get('treatment-plan/get-used-health-condition', [TreatmentPlanController::class, 'getUsedHealthCondition']);
+    Route::get('treatment-plan/get-used-health-condition', [TreatmentPlanController::class, 'getUsedHealthCondition'])->middleware('role:internal');
     Route::get('treatment-plan/list/global', [TreatmentPlanController::class, 'getTreatmentPlanForGlobalData'])->middleware('role:internal');
 
     Route::get('patient-treatment-plan/get-treatment-plan-detail', [TreatmentPlanController::class, 'getActivities'])->middleware('role:internal');
