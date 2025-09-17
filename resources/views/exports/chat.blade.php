@@ -42,7 +42,9 @@
                     @switch($message)
                         @case($message['msg'] === \App\Models\Message::JITSI_CALL_AUDIO_ENDED || $message['msg'] === \App\Models\Message::JITSI_CALL_VIDEO_ENDED)
                             {{ $translations[$message['msg']] ?? $message['msg'] }}
-                            {{ \App\Models\Message::getCallDuration($message['ts'], $message['editedAt']) }}
+                            @if (isset($message['ts']) && isset($message['editedAt']))
+                                {{ \App\Models\Message::getCallDuration($message['ts'], $message['editedAt']) }}
+                            @endif
                             @break
 
                         @case($message['msg'] === \App\Models\Message::JITSI_CALL_AUDIO_MISSED || $message['msg'] === \App\Models\Message::JITSI_CALL_VIDEO_MISSED)

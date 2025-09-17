@@ -36,6 +36,6 @@ class Message extends Model
         $start = Carbon::parse($start);
         $end = Carbon::parse($end);
 
-        return gmdate('H:i:s', $end->diffInSeconds($start));
+        return gmdate('H:i:s', abs($start->diffInSeconds($end)));
     }
 }
