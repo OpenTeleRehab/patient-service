@@ -59,15 +59,26 @@ class TreatmentPlanController extends Controller
     {
         $data = $request->all();
 
-        if (empty($data['therapist_id'])) {
-            return ['success' => false, 'Invalid parameters: therapist_id is required'];
+        $query = TreatmentPlan::query();
+
+        $patientQuery = User::query();
+        if (isset($data['country_id'])) {
+            $patientQuery->where('country_id', $data['country_id']);
         }
-
-        $patientIds = User::where('therapist_id', $data['therapist_id'])
-            ->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']))
-            ->pluck('id');
-
-        $query = TreatmentPlan::whereIn('patient_id', $patientIds);
+        if (isset($data['clinic_id'])) {
+            $patientQuery->where('clinic_id', $data['clinic_id']);
+        }
+        if (isset($data['therapist_id'])) {
+            $therapistId = intval($data['therapist_id']);
+            $patientQuery->where(function ($q) use ($therapistId) {
+                $q->where('therapist_id', $therapistId)
+                ->orWhereJsonContains('secondary_therapists', $therapistId);
+            });
+        }
+        $patientIds = $patientQuery->exists() ? $patientQuery->pluck('id') : null;
+        if ($patientIds) {
+            $query = TreatmentPlan::whereIn('patient_id', $patientIds);
+        }
 
         if (isset($data['id'])) {
             $query = TreatmentPlan::where('id', $data['id']);

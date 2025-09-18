@@ -32,17 +32,31 @@ class VerifyDataAccess
 
         // Early exit: skip validation if minimal params or backend client
         if ($user && $user->email === env('KEYCLOAK_BACKEND_CLIENT')) {
-            if ($therapistId && $patientId) {
-                $hasAccess = User::where('id', $patientId)
-                                ->where(function ($q) use ($therapistId) {
-                                    $q->where('therapist_id', $therapistId)
-                                    ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
-                                })
-                                ->exists();
-                if (!$hasAccess) {
+            if ($patientId) {
+                $query = User::withTrashed()->where('id', (int)$patientId);
+
+                // Add filters only if values exist
+                if ($countryId) {
+                    $query->where('country_id', (int)$countryId);
+                }
+
+                if ($clinicId) {
+                    $query->where('clinic_id', (int)$clinicId);
+                }
+
+                if ($therapistId) {
+                    $query->where(function ($q) use ($therapistId) {
+                        $q->where('therapist_id', (int)$therapistId)
+                        ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                    });
+                }
+
+                // If no matching user found, deny access
+                if (!$query->exists()) {
                     return $deny();
                 }
             }
+
             return $next($request);
         }
 
