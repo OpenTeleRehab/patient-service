@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Forwarder;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
@@ -27,34 +28,54 @@ class VerifyDataAccess
         $patientId     = $request->get('patient_id');
 
         $user = auth()->user();
-        $accessDenied = false;
+        $deny = fn() => response()->json(['message' => 'Access denied'], 403);
 
         // Early exit: skip validation if minimal params or backend client
-        if (
-            (!isset($countryHeader) && !isset($countryId) && !isset($clinicId) && !isset($therapistId)) ||
-            ($user && $user->email === env('KEYCLOAK_BACKEND_CLIENT'))
-        ) {
+        if ($user && $user->email === env('KEYCLOAK_BACKEND_CLIENT')) {
+            if ($therapistId && $patientId) {
+                $hasAccess = User::where('id', $patientId)
+                                ->where(function ($q) use ($therapistId) {
+                                    $q->where('therapist_id', $therapistId)
+                                    ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                                })
+                                ->exists();
+                if (!$hasAccess) {
+                    return $deny();
+                }
+            }
             return $next($request);
         }
 
         // Verify if the auth user belongs to their assigned country
         if ($user && $countryId && (int)$user->country_id !== (int)$countryId) {
-            $accessDenied = true;
+            return $deny();
         }
 
         // Verify if the auth user belongs to their assigned clinic
         if ($user && $clinicId && (int)$user->clinic_id !== (int)$clinicId) {
-            $accessDenied = true;
+            return $deny();
         }
 
         // Verify if the auth user therapist is the same as the requested therapist id
-        if ($user && $therapistId && (int)$user->therapist_id !== (int)$therapistId) {
-            $accessDenied = true;
+        if ($user && $therapistId) {
+            if ((int)$user->therapist_id !== (int)$therapistId) {
+                return $deny();
+            } elseif ($patientId) {
+                $hasAccess = User::where('id', $patientId)
+                                ->where(function ($q) use ($therapistId) {
+                                    $q->where('therapist_id', $therapistId)
+                                    ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                                })
+                                ->exists();
+                if (!$hasAccess) {
+                    return $deny();
+                }
+            }
         }
 
         // Verify if the auth user is the same as the requested patient id
         if ($user && $patientId && (int)$user->id !== (int)$patientId) {
-            $accessDenied = true;
+            return $deny();
         }
 
         // Country header check
@@ -74,12 +95,8 @@ class VerifyDataAccess
             }
 
             if ($user && (int)$user->country_id !== (int)$country['id']) {
-                $accessDenied = true;
+                return $deny();
             }
-        }
-
-        if ($accessDenied) {
-            return response()->json(['message' => 'Access denied'], 403);
         }
 
         return $next($request);

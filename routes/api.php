@@ -2,21 +2,20 @@
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ApiUserAuthController;
-use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\AssistiveTechnologyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CallHistoryController;
+use App\Http\Controllers\ChartController;
 use App\Http\Controllers\ExternalApiController;
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\ForwarderController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
-use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\ChartController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\ForwarderController;
-use App\Http\Controllers\AssistiveTechnologyController;
-use App\Http\Controllers\CallHistoryController;
-use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*

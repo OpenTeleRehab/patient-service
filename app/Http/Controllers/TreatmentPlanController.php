@@ -7,12 +7,12 @@ use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\TreatmentPlanResource;
-use App\Http\Resources\TreatmentPlanListResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\Goal;
 use App\Models\QuestionnaireAnswer;
 use App\Models\TreatmentPlan;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -58,7 +58,16 @@ class TreatmentPlanController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $query = TreatmentPlan::query();
+
+        if (empty($data['therapist_id'])) {
+            return ['success' => false, 'Invalid parameters: therapist_id is required'];
+        }
+
+        $patientIds = User::where('therapist_id', $data['therapist_id'])
+            ->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']))
+            ->pluck('id');
+
+        $query = TreatmentPlan::whereIn('patient_id', $patientIds);
 
         if (isset($data['id'])) {
             $query = TreatmentPlan::where('id', $data['id']);
@@ -101,7 +110,7 @@ class TreatmentPlanController extends Controller
                         $query->whereDate($filterObj->columnName, '>=', $startDate)
                             ->whereDate($filterObj->columnName, '<=', $endDate);
                     } else {
-                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                        $query->where($filterObj->columnName, 'like', '%' . $filterObj->value . '%');
                     }
                 }
             });
@@ -143,7 +152,7 @@ class TreatmentPlanController extends Controller
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
                     ->orWhereBetween('end_date', [$startDate, $endDate])
-                    ->orWhere('start_date', '<' , $startDate)->where('end_date', '>', $startDate);
+                    ->orWhere('start_date', '<', $startDate)->where('end_date', '>', $startDate);
             })->get();
 
         if (count($overlapRecords)) {
@@ -530,11 +539,11 @@ class TreatmentPlanController extends Controller
     }
 
     /**
-     * @deprecated It is wrong with goal activity count, use getActivities() instead of, then count in FE
-     *
      * @param \Illuminate\Http\Request $request
      *
      * @return array
+     * @deprecated It is wrong with goal activity count, use getActivities() instead of, then count in FE
+     *
      */
     public function getSummary(Request $request)
     {
@@ -548,7 +557,7 @@ class TreatmentPlanController extends Controller
         $diff = $date->diff($startDate);
         $days = $diff->days;
         $day = $days % 7 + 1;
-        $week = floor($days / 7) + 1 ;
+        $week = floor($days / 7) + 1;
         $activities = Activity::where('week', $week)
             ->where('day', $day)
             ->where('treatment_plan_id', $treatmentPlan->id)
@@ -591,7 +600,9 @@ class TreatmentPlanController extends Controller
                             $questionAnswers = $question['answers'];
                             if ($questionAnswers) {
                                 if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
-                                    $selectedAnswers = array_filter($questionAnswers, function($questionAnswer) use ($answer) { return in_array($questionAnswer['id'], $answer); });
+                                    $selectedAnswers = array_filter($questionAnswers, function ($questionAnswer) use ($answer) {
+                                        return in_array($questionAnswer['id'], $answer);
+                                    });
                                     $values = array_column($selectedAnswers, 'value');
                                     $score = array_sum($values);
                                 } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_MULTIPLE) {
