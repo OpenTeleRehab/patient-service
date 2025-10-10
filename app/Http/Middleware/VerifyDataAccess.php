@@ -61,17 +61,17 @@ class VerifyDataAccess
         }
 
         // Verify if the auth user belongs to their assigned country
-        if ($user && $countryId && (int)$user->country_id !== (int)$countryId) {
+        if ($user && isset($countryId) && (int)$user->country_id !== (int)$countryId) {
             return $deny();
         }
 
         // Verify if the auth user belongs to their assigned clinic
-        if ($user && $clinicId && (int)$user->clinic_id !== (int)$clinicId) {
+        if ($user && isset($clinicId) && (int)$user->clinic_id !== (int)$clinicId) {
             return $deny();
         }
 
         // Verify if the auth user therapist is the same as the requested therapist id
-        if ($user && $therapistId) {
+        if ($user && isset($therapistId)) {
             if ((int)$user->therapist_id !== (int)$therapistId) {
                 return $deny();
             } elseif ($patientId) {
@@ -88,7 +88,7 @@ class VerifyDataAccess
         }
 
         // Verify if the auth user is the same as the requested patient id
-        if ($user && $patientId && (int)$user->id !== (int)$patientId) {
+        if ($user && isset($patientId) && (int)$user->id !== (int)$patientId) {
             return $deny();
         }
 
