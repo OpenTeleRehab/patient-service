@@ -16,6 +16,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
+use App\Http\Controllers\TherapistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -75,6 +76,10 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
     Route::get('patient-activities/list/by-ids', [ActivityController::class, 'getByIds'])->middleware('role:internal');
     Route::post('patient-activities/delete/by-ids', [ActivityController::class, 'deleteByIds']); // not used
+
+    // Therapist
+    Route::get('therapist/by-ids', [TherapistController::class, 'getOwnTherapists'])->middleware('role:mobile'); // @deprecated
+    Route::get('therapists', [TherapistController::class, 'getOwnTherapists'])->middleware('role:mobile');
 
     // Treatment Plans
     Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity'])->middleware('role:mobile');
@@ -142,10 +147,6 @@ Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, '
 
 Route::name('admin.')->group(function () {
     Route::get('country/list/by-clinic', [ForwarderController::class, 'index']);
-});
-
-Route::name('therapist.')->group(function () {
-    Route::get('therapist/by-ids', [ForwarderController::class, 'index']);
 });
 
 Route::post('/external/login', [ApiUserAuthController::class, 'login']);
