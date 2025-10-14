@@ -78,7 +78,6 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::post('patient-activities/delete/by-ids', [ActivityController::class, 'deleteByIds']); // not used
 
     // Therapist
-    Route::get('therapist/by-ids', [TherapistController::class, 'getOwnTherapists'])->middleware('role:mobile'); // @deprecated
     Route::get('therapists', [TherapistController::class, 'getOwnTherapists'])->middleware('role:mobile');
 
     // Treatment Plans
@@ -144,6 +143,8 @@ Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/add-new-pin', [AuthController::class, 'addNewPinCode']);
 
 Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, 'getBadgeIcon']);
+
+Route::get('therapist/by-ids', [TherapistController::class, 'getByIds']); // @deprecated
 
 Route::name('admin.')->group(function () {
     Route::get('country/list/by-clinic', [ForwarderController::class, 'index']);
