@@ -143,7 +143,7 @@ class TreatmentPlanController extends Controller
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
                     ->orWhereBetween('end_date', [$startDate, $endDate])
-                    ->orWhere('start_date', '<' , $startDate)->where('end_date', '>', $startDate);
+                    ->orWhere('start_date', '<', $startDate)->where('end_date', '>', $startDate);
             })->get();
 
         if (count($overlapRecords)) {
@@ -305,9 +305,7 @@ class TreatmentPlanController extends Controller
                     ];
 
                     $customExercise = current(array_filter($customExercises, function ($c) use ($exercise, $existedExercise) {
-                        return $existedExercise?->id
-                            ? $c['id'] === $existedExercise->id && $c['activity_id'] === $exercise
-                            : $c['id'] === $exercise;
+                        return $c['id'] === $exercise;
                     }));
 
                     if ($customExercise) {
@@ -548,7 +546,7 @@ class TreatmentPlanController extends Controller
         $diff = $date->diff($startDate);
         $days = $diff->days;
         $day = $days % 7 + 1;
-        $week = floor($days / 7) + 1 ;
+        $week = floor($days / 7) + 1;
         $activities = Activity::where('week', $week)
             ->where('day', $day)
             ->where('treatment_plan_id', $treatmentPlan->id)
@@ -591,7 +589,9 @@ class TreatmentPlanController extends Controller
                             $questionAnswers = $question['answers'];
                             if ($questionAnswers) {
                                 if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_CHECKBOX) {
-                                    $selectedAnswers = array_filter($questionAnswers, function($questionAnswer) use ($answer) { return in_array($questionAnswer['id'], $answer); });
+                                    $selectedAnswers = array_filter($questionAnswers, function ($questionAnswer) use ($answer) {
+                                        return in_array($questionAnswer['id'], $answer);
+                                    });
                                     $values = array_column($selectedAnswers, 'value');
                                     $score = array_sum($values);
                                 } else if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_MULTIPLE) {
