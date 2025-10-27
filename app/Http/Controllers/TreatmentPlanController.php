@@ -325,9 +325,7 @@ class TreatmentPlanController extends Controller
                     ];
 
                     $customExercise = current(array_filter($customExercises, function ($c) use ($exercise, $existedExercise) {
-                        return $existedExercise?->id
-                            ? $c['id'] === $existedExercise->id && $c['activity_id'] === $exercise
-                            : $c['id'] === $exercise;
+                        return $c['id'] === $exercise;
                     }));
 
                     if ($customExercise) {
