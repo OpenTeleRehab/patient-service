@@ -60,12 +60,19 @@ class QuestionnaireResultExport
         $json = $countriesResponse->json();
         $countries = $json['data'];
 
-        // Get International classification diseas
-        $diseasesResponse =  Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/disease', [
+        // Get health condition groups
+        $healthConditionGroupResponse =  Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/health-condition-group', [
             'lang' => $payload['lang'],
         ]);
-        $json = $diseasesResponse->json();
-        $diseases = $json['data'];
+        $jsonHealthConditionGroup = $healthConditionGroupResponse->json();
+        $healthConditionGroups = $jsonHealthConditionGroup['data'];
+
+        // Get health conditions
+        $healthConditionResponse =  Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/health-condition', [
+            'lang' => $payload['lang'],
+        ]);
+        $jsonHealthCondition = $healthConditionResponse->json();
+        $healthConditions = $jsonHealthCondition['data'];
 
         $spreadsheet = new Spreadsheet();
         $spreadsheet->removeSheetByIndex(0);
@@ -114,6 +121,7 @@ class QuestionnaireResultExport
             $sheet->mergeCells('K1:K2');
             $sheet->mergeCells('L1:L2');
             $sheet->mergeCells('M1:M2');
+            $sheet->mergeCells('N1:N2');
 
             $sheet->setCellValue('A1', $translations['report.questionnaire_result.patient_id']);
             $sheet->setCellValue('B1', $translations['common.country']);
@@ -122,12 +130,13 @@ class QuestionnaireResultExport
             $sheet->setCellValue('E1', $translations['common.age']);
             $sheet->setCellValue('F1', $translations['common.status']);
             $sheet->setCellValue('G1', $translations['common.location']);
-            $sheet->setCellValue('H1', $translations['report.questionnaire_result.icd_classification']);
-            $sheet->setCellValue('I1', $translations['report.questionnaire_result.diagnostic']);
-            $sheet->setCellValue('J1', $translations['common.start_date']);
-            $sheet->setCellValue('K1', $translations['common.end_date']);
-            $sheet->setCellValue('L1', $translations['common.submitted_date']);
-            $sheet->setCellValue('M1', $translations['report.questionnaire_result.questionnaire_name']);
+            $sheet->setCellValue('H1', $translations['report.questionnaire_result.health_condition_group']);
+            $sheet->setCellValue('I1', $translations['report.questionnaire_result.health_condition']);
+            $sheet->setCellValue('J1', $translations['report.questionnaire_result.diagnostic']);
+            $sheet->setCellValue('K1', $translations['common.start_date']);
+            $sheet->setCellValue('L1', $translations['common.end_date']);
+            $sheet->setCellValue('M1', $translations['common.submitted_date']);
+            $sheet->setCellValue('N1', $translations['report.questionnaire_result.questionnaire_name']);
             $sheet->getColumnDimension('A')->setWidth(20);
             $sheet->getColumnDimension('B')->setWidth(20);
             $sheet->getColumnDimension('C')->setWidth(20);
@@ -141,6 +150,7 @@ class QuestionnaireResultExport
             $sheet->getColumnDimension('K')->setWidth(20);
             $sheet->getColumnDimension('L')->setWidth(20);
             $sheet->getColumnDimension('M')->setWidth(20);
+            $sheet->getColumnDimension('N')->setWidth(20);
 
             $colIndex = 14;
             foreach ($questions as $question) {
@@ -158,7 +168,7 @@ class QuestionnaireResultExport
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 1) . '2', $translations['report.questionnaire_result.value']);
                     $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIndex + 1))->setWidth(20);
                 }
-                
+
                 if ($question['type'] === QuestionnaireAnswer::QUESTIONNAIRE_TYPE_OPEN_NUMBER) {
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex + 2) . '2', $translations['report.questionnaire_result.threshold']);
                     $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($colIndex + 2))->setWidth(20);
@@ -191,7 +201,14 @@ class QuestionnaireResultExport
                 $location = $translations['common.' . $patient->location];
                 $gender = $translations['common.' . $patient->gender];
                 $country = self::getCountry($patient->country_id, $countries)['name'];
-                $disease = $diseases[$treatmentPlan->disease_id] ?? null;
+                $healthCondition = null;
+                if ($treatmentPlan->health_condition_id) {
+                    $healthCondition = $healthConditions[$treatmentPlan->health_condition_id] ?? null;
+                }
+                $healthConditionGroup = null;
+                if ($healthCondition) {
+                    $healthConditionGroup = $healthConditionGroups[$healthCondition->parennt_id] ?? null;
+                }
                 $data = [
                     $patient?->identity,
                     $country,
@@ -200,7 +217,8 @@ class QuestionnaireResultExport
                     $age,
                     $status,
                     $location,
-                    $disease['name'] ?? '',
+                    $healthCondition['name'] ?? '',
+                    $healthConditionGroup['name'] ?? '',
                     $treatmentPlan?->name,
                     $treatmentPlan?->start_date->format('Y-m-d'),
                     $treatmentPlan?->end_date->format('Y-m-d'),

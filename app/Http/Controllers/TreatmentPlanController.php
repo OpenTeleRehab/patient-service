@@ -153,7 +153,7 @@ class TreatmentPlanController extends Controller
         $description = $request->get('description');
         $patientId = $request->get('patient_id');
         $therapistId = $request->get('therapist_id');
-        $disease_id = $request->get('disease_id');
+        $healthConditionId = $request->get('health_condition_id');
 
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
@@ -185,7 +185,7 @@ class TreatmentPlanController extends Controller
             'status' => TreatmentPlan::STATUS_PLANNED,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
             'created_by' => $therapistId,
-            'disease_id' => $disease_id,
+            'health_condition_id' => $healthConditionId,
         ]);
 
         if (!$treatmentPlan) {
@@ -211,7 +211,7 @@ class TreatmentPlanController extends Controller
         $therapistId = $request->get('therapist_id');
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
-        $disease_id = $request->get('disease_id');
+        $healthConditionId = $request->get('health_condition_id');
 
         // Check if there is any overlap schedule.
         $overlapRecords = TreatmentPlan::where('patient_id', $patientId)
@@ -239,7 +239,7 @@ class TreatmentPlanController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
-            'disease_id' => $disease_id,
+            'health_condition_id' => $healthConditionId,
         ]);
 
         $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
@@ -769,6 +769,18 @@ class TreatmentPlanController extends Controller
     {
         $diseaseId = $request->get('disease_id');
         $treatmentPlans = TreatmentPlan::where('disease_id', $diseaseId)->count();
+
+        return $treatmentPlans > 0 ? true : false;
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function getUsedHealthCondition(Request $request)
+    {
+        $healthConditionId = $request->get('health_condition_id');
+        $treatmentPlans = TreatmentPlan::where('health_condition_id', $healthConditionId)->count();
 
         return $treatmentPlans > 0 ? true : false;
     }

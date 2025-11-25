@@ -37,6 +37,8 @@
 
 <h1>{{ $treatmentPlan->name }}</h1>
 <h2>{{ $diseaseName }}</h2>
+<h2>{{ $healthConditionGroupName }}</h2>
+<h3>{{ $healthConditionName }}</h3>
 <pre>{!! $treatmentPlan->description !!}</pre>
 
 @php

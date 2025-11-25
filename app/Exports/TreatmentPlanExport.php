@@ -53,9 +53,23 @@ class TreatmentPlanExport
             'disease_id' => $this->treatmentPlan->disease_id,
         ]);
 
+        $healthConditionGroupName = '';
+        $healthConditionName = '';
+
+        $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/health-condition/' .
+            $this->treatmentPlan->health_condition_id);
+        if ($response->successful()) {
+            if (isset($response->json()['data']['parent'])) {
+                $healthConditionGroupName = $response->json()['data']['parent']['title'];
+                $healthConditionName = $response->json()['data']['title'];
+            }
+        }
+
         $activityData = TreatmentActivityHelper::getActivities($this->treatmentPlan, $this->request, true);
         return view('exports.treatment_plan', [
             'diseaseName' => $diseaseName,
+            'healthConditionGroupName' => $healthConditionGroupName,
+            'healthConditionName' => $healthConditionName,
             'treatmentPlan' => $this->treatmentPlan,
             'activities' => $activityData['activities'],
             'translations' => TranslationHelper::getTranslations(),

@@ -36,7 +36,7 @@ class TreatmentPlan extends Model
         'status',
         'total_of_weeks',
         'created_by',
-        'disease_id',
+        'health_condition_id'
     ];
 
     /**
@@ -82,7 +82,7 @@ class TreatmentPlan extends Model
             $therapist = json_decode($response);
         }
         $activity->causer_id = $therapist ? $therapist->id : null;
-        $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null; 
+        $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null;
         $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
         $activity->country_id = $therapist ? $therapist->country_id : null;
         $activity->group = $therapist ? User::GROUP_THERAPIST : null;
