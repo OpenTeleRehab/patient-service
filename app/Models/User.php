@@ -86,6 +86,8 @@ class User extends Authenticatable
         'firebase_token',
         'last_reminder',
         'location',
+        'region_id',
+        'province_id'
     ];
 
     /**
@@ -164,12 +166,12 @@ class User extends Authenticatable
             $activity->properties = [
                 'old' => ['identity' => $this->identity],
             ];
-            $activity->clinic_id = $request->has('clinic_id') 
-            ? (is_null($request->input('clinic_id')) ? null : $request->input('clinic_id')) 
+            $activity->clinic_id = $request->has('clinic_id')
+            ? (is_null($request->input('clinic_id')) ? null : $request->input('clinic_id'))
             : ($therapist ? $therapist->clinic_id : null);
 
-            $activity->country_id = $request->has('country_id') 
-                ? (is_null($request->input('country_id')) ? null : $request->input('country_id')) 
+            $activity->country_id = $request->has('country_id')
+                ? (is_null($request->input('country_id')) ? null : $request->input('country_id'))
                 : ($therapist ? $therapist->country_id : null);
         }else {
             $activity->causer_id = $therapist ? $therapist->id : null;
@@ -243,7 +245,7 @@ class User extends Authenticatable
         return $this->hasMany(AssistiveTechnology::class, 'patient_id', 'id');
     }
 
-    
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
