@@ -9,16 +9,17 @@ use App\Models\Forwarder;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class VerifyDataAccess
 {
-  /**
-   * Handle an incoming request.
-   *
-   * @param  \Illuminate\Http\Request  $request
-   * @param  \Closure  $next
-   * @return \Symfony\Component\HttpFoundation\Response
-   */
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $countryHeader = $request->header('Country');
@@ -26,8 +27,22 @@ class VerifyDataAccess
         $clinicId      = $request->get('clinic_id') ?? $request->get('clinic');
         $therapistId   = $request->get('therapist_id') ?? $request->get('therapist');
         $patientId     = $request->get('patient_id');
+        $user = Auth::user();
 
-        $user = auth()->user();
+        if ($user->email == env('KEYCLOAK_BACKEND_CLIENT')) {
+            if ($request->hasHeader('int-country-id')) {
+                $user->country_id = (int) $request->header('int-country-id');
+            }
+
+            if ($request->hasHeader('int-region-id')) {
+                $user->region_id = (int) $request->header('int-region-id');
+            }
+
+            if ($request->hasHeader('int-province-id')) {
+                $user->province_id = (int) $request->header('int-province-id');
+            }
+        }
+
         $deny = fn() => response()->json(['message' => 'Access denied'], 403);
 
         // Early exit: skip validation if minimal params or backend client
@@ -47,7 +62,7 @@ class VerifyDataAccess
                 if ($therapistId) {
                     $query->where(function ($q) use ($therapistId) {
                         $q->where('therapist_id', (int)$therapistId)
-                        ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                            ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
                     });
                 }
 
@@ -76,11 +91,11 @@ class VerifyDataAccess
                 return $deny();
             } elseif ($patientId) {
                 $hasAccess = User::where('id', $patientId)
-                                ->where(function ($q) use ($therapistId) {
-                                    $q->where('therapist_id', $therapistId)
-                                    ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
-                                })
-                                ->exists();
+                    ->where(function ($q) use ($therapistId) {
+                        $q->where('therapist_id', $therapistId)
+                            ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                    })
+                    ->exists();
                 if (!$hasAccess) {
                     return $deny();
                 }

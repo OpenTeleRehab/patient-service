@@ -351,6 +351,24 @@ class PatientController extends Controller
      *              @OA\Items( type="integer")
      *         )
      *     ),
+     *     @OA\Parameter(
+     *         name="region_id",
+     *         in="query",
+     *         description="Region id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="province_id",
+     *         in="query",
+     *         description="Province id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
      *     @OA\Response(
      *         response="200",
      *         description="successful operation"
@@ -373,6 +391,7 @@ class PatientController extends Controller
     {
         DB::beginTransaction();
         $data = $request->all();
+        $authUser = Auth::user();
         $dateOfBirth = null;
         if ($data['date_of_birth']) {
             $dateOfBirth = date_create_from_format('d/m/Y', $data['date_of_birth']);
@@ -398,6 +417,8 @@ class PatientController extends Controller
             'secondary_therapists' => [],
             'enabled' => true,
             'location' => $data['location'],
+            'region_id' => $authUser?->region_id,
+            'province_id' => $authUser?->province_id,
         ]);
 
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
