@@ -41,6 +41,10 @@ class VerifyDataAccess
             if (!empty($request->header('int-province-id'))) {
                 $user->province_id = (int) $request->header('int-province-id');
             }
+
+            if (!empty($request->header('int-therapist-user-id'))) {
+                $user->therapist_user_id = (int) $request->header('int-therapist-user-id');
+            }
         }
 
         $deny = fn() => response()->json(['message' => 'Access denied'], 403);

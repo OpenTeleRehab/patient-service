@@ -123,7 +123,11 @@ class AssistiveTechnologyController extends Controller
         $appointmentTo = $request->get('appointmentTo');
         $user = Auth::user();
 
-        $assistive = AssistiveTechnology::find($id);
+        $assistive = AssistiveTechnology::findOrFail($id);
+
+        if ($user->therapist_user_id !== $assistive->therapist_id) {
+            return ['success' => false, 'message' => 'error_message.appointment_owner'];
+        }
 
         if ($assistive->appointment_id) {
             // Check if overlap with any appointment.
@@ -165,7 +169,14 @@ class AssistiveTechnologyController extends Controller
      */
     public function destroy($id)
     {
-        AssistiveTechnology::find($id)->delete();
+        $user = Auth::user();
+        $assistive = AssistiveTechnology::findOrFail($id);
+
+        if ($user->therapist_user_id !== $assistive->therapist_id) {
+            return ['success' => false, 'message' => 'error_message.appointment_owner'];
+        }
+
+        $assistive->delete();
 
         return ['success' => true, 'message' => 'success_message.assistive_technology_delete'];
     }
