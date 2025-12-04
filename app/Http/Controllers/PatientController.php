@@ -75,12 +75,19 @@ class PatientController extends Controller
     {
         $data = $request->all();
         $info = [];
+        $user = Auth::user();
 
         $query = User::query();
 
         if (isset($data['therapist_id'])) {
             $query->where(function ($query) use ($data) {
                 $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
+            });
+        }
+
+        if ($user->user_type === User::GROUP_PHC_WORKER) {
+            $query->where(function ($query) use ($user) {
+                $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
             });
         }
 
@@ -113,7 +120,8 @@ class PatientController extends Controller
         if (isset($data['filters'])) {
             $filters = $request->get('filters');
             $therapist_id = $data['therapist_id'] ?? '';
-            $query->where(function ($query) use ($filters, $therapist_id) {
+            $phcWorkerId = $user->user_type === User::GROUP_PHC_WORKER ? $user->therapist_user_id : '';
+            $query->where(function ($query) use ($filters, $therapist_id, $phcWorkerId) {
                 foreach ($filters as $filter) {
                     $filterObj = json_decode($filter);
                     if ($filterObj->columnName === 'date_of_birth') {
@@ -123,6 +131,8 @@ class PatientController extends Controller
                         $query->where('clinic_id', $filterObj->value);
                     } elseif ($filterObj->columnName === 'country' && $filterObj->value !== '') {
                         $query->where('country_id', $filterObj->value);
+                    } elseif ($filterObj->columnName === 'phc_service' && $filterObj->value !== '') {
+                        $query->where('phc_service_id', $filterObj->value);
                     } elseif ($filterObj->columnName === 'treatment_status') {
                         if ($filterObj->value == User::FINISHED_TREATMENT_PLAN) {
                             $query->whereHas('treatmentPlans', function (Builder $query) {
@@ -160,6 +170,12 @@ class PatientController extends Controller
                         } else {
                             $query->where(function ($query) use ($therapist_id) {
                                 $query->where('secondary_therapists',  'like', '%[]%');
+                            });
+                        }
+                    } elseif ($filterObj->columnName === 'supplementary_phc_worker') {
+                        if ($filterObj->value == User::SUPPLEMENTARY_PHC_WORKER) {
+                            $query->where(function ($query) use ($phcWorkerId) {
+                                $query->whereJsonContains('supplementary_phc_workers', intval($phcWorkerId));
                             });
                         }
                     } elseif ($filterObj->columnName === 'next_appointment' && $filterObj->value !== '') {
@@ -207,10 +223,17 @@ class PatientController extends Controller
     {
         $data = $request->all();
         $query = User::query();
+        $user = Auth::user();
 
         if (isset($data['therapist_id'])) {
             $query->where(function ($query) use ($data) {
                 $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
+            });
+        }
+
+        if ($user->user_type === User::GROUP_PHC_WORKER) {
+            $query->where(function ($query) use ($user) {
+                $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
             });
         }
 
@@ -232,15 +255,6 @@ class PatientController extends Controller
      *     tags={"Patient"},
      *     summary="Create patient",
      *     operationId="createPatient",
-     *     @OA\Parameter(
-     *         name="therapist_id",
-     *         in="query",
-     *         description="Therapist id",
-     *         required=false,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
      *     @OA\Parameter(
      *         name="therapist_identity",
      *         in="query",
@@ -296,24 +310,6 @@ class PatientController extends Controller
      *         )
      *     ),
      *     @OA\Parameter(
-     *         name="country_id",
-     *         in="query",
-     *         description="Country id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="clinic_id",
-     *         in="query",
-     *         description="Clinic id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Parameter(
      *         name="clinic_identity",
      *         in="query",
      *         description="Clinic identity",
@@ -351,24 +347,6 @@ class PatientController extends Controller
      *              @OA\Items( type="integer")
      *         )
      *     ),
-     *     @OA\Parameter(
-     *         name="region_id",
-     *         in="query",
-     *         description="Region id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="province_id",
-     *         in="query",
-     *         description="Province id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
      *     @OA\Response(
      *         response="200",
      *         description="successful operation"
@@ -404,14 +382,14 @@ class PatientController extends Controller
         }
 
         $user = User::create([
-            'therapist_id' => $data['therapist_id'],
+            'therapist_id' => $authUser->user_type === User::GROUP_THERAPIST ? $authUser->therapist_user_id : null,
             'phone' => $data['phone'],
             'dial_code' => $data['dial_code'],
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
-            'country_id' => $data['country_id'],
+            'country_id' => $authUser->country_id,
             'gender' => $data['gender'],
-            'clinic_id' => $data['clinic_id'],
+            'clinic_id' => $authUser->clinic_id ?: null,
             'date_of_birth' => $dateOfBirth,
             'note' => $data['note'],
             'secondary_therapists' => [],
@@ -419,11 +397,14 @@ class PatientController extends Controller
             'location' => $data['location'],
             'region_id' => $authUser?->region_id,
             'province_id' => $authUser?->province_id,
+            'phc_service_id' => $authUser->phc_service_id ?: null,
+            'phc_worker_id' => $authUser->user_type === User::GROUP_PHC_WORKER ? $authUser->therapist_user_id : null,
+            'supplementary_phc_workers' => [],
         ]);
 
         Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
-                'therapist_ids' => $request->get('secondary_therapists', []),
+                'therapist_ids' => $request->get('secondary_therapists') ?: $request->get('supplementary_phc_workers') ?: [],
                 'patient_first_name' => $user->first_name,
                 'patient_last_name' => $user->last_name,
             ]);
@@ -446,30 +427,33 @@ class PatientController extends Controller
             'therapist_api_url' => ApiHelper::createApiUrl($data['stage'], 'therapist', $organization['sub_domain_name'], $organization['type']),
             'chat_api_url' => ApiHelper::createApiUrl($data['stage'], 'chat', $organization['sub_domain_name'], $organization['type']),
             'chat_websocket_url' => ApiHelper::createApiUrl($data['stage'], 'websocket', $organization['sub_domain_name'], $organization['type']),
-            'clinic_id' => $data['clinic_id'],
+            'clinic_id' => $authUser?->phc_service_id ?: $authUser?->clinic_id,
+            'service_type' => $authUser->user_type === User::GROUP_PHC_WORKER ? User::PHC_SERVICE : User::REHAB_SERVICE,
             'sub_domain' => $organization['sub_domain_name'],
         ]);
 
         // Create unique identity.
         $clinicIdentity = $data['clinic_identity'];
+        $phcServiceIdentity = $data['phc_service_identity'];
         $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
-        $identity = 'P' . $orgIdentity . $clinicIdentity .
+        $identity = 'P' . $orgIdentity . ($clinicIdentity ?: $phcServiceIdentity) .
             str_pad($user->id, 5, '0', STR_PAD_LEFT);
 
         // Create chat user.
         $updateData = $this->createChatUser($identity, $data['last_name'] . ' ' . $data['first_name']);
 
         // Create chat room.
-        $chatRoomId = RocketChatHelper::createChatRoom($data['therapist_id'], $identity);
-        TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $data['therapist_id']);
+        $chatRoomId = RocketChatHelper::createChatRoom($authUser->therapist_user_id, $identity);
+        TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $authUser->therapist_user_id);
 
         // Invite secondary therapist.
-        foreach ($request->get('secondary_therapists', []) as $therapistId) {
+        foreach (($request->get('secondary_therapists') ?: $request->get('supplementary_phc_workers') ?: []) as $therapistId) {
             Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
                 ->post(env('THERAPIST_SERVICE_URL') . '/transfer', [
                     'patient_id' => $user->id,
-                    'clinic_id' => $user->clinic_id,
-                    'from_therapist_id' => $user->therapist_id,
+                    'clinic_id' => $user->clinic_id ?: null,
+                    'phc_service_id' => $user->phc_service_id ?: null,
+                    'from_therapist_id' => $user->therapist_id ?: $user->phc_worker_id,
                     'to_therapist_id' => $therapistId,
                     'therapist_type' => 'supplementary',
                     'status' => 'invited',
@@ -672,6 +656,33 @@ class PatientController extends Controller
                         ]);
                 } else {
                     $dataUpdate['secondary_therapists'] = $data['secondary_therapists'];
+                }
+            }
+
+            if (isset($data['supplementary_phc_workers'])) {
+                $newPhcWorkerIds= array_diff($data['supplementary_phc_workers'], $user->supplementary_phc_workers);
+
+                if ($newPhcWorkerIds) {
+                    foreach ($newPhcWorkerIds as $phcWorkerId) {
+                        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                            ->post(env('THERAPIST_SERVICE_URL') . '/transfer', [
+                                'patient_id' => $user->id,
+                                'phc_service_id' => $user->phc_service_id,
+                                'from_therapist_id' => $user->phc_worker_id,
+                                'to_therapist_id' => $phcWorkerId,
+                                'therapist_type' => 'supplementary',
+                                'status' => 'invited',
+                            ]);
+                    }
+
+                    Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                        ->post(env('THERAPIST_SERVICE_URL') . '/therapist/new-patient-notification', [
+                            'therapist_ids' => $newPhcWorkerIds,
+                            'patient_first_name' => $user->first_name,
+                            'patient_last_name' => $user->last_name,
+                        ]);
+                } else {
+                    $dataUpdate['supplementary_phc_workers'] = $data['supplementary_phc_workers'];
                 }
             }
 
@@ -1042,7 +1053,11 @@ class PatientController extends Controller
         $chatRooms = $user->chat_rooms;
 
         if ($request->get('therapist_type') === 'supplementary') {
-            $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists, [$therapistId]));
+            if ($user->phc_worker_id) {
+                $updateData['supplementary_phc_workers'] = array_unique(array_merge($user->supplementary_phc_workers, [$therapistId]));
+            } else {
+                $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists, [$therapistId]));
+            }
 
             $chatRoomId = RocketChatHelper::createChatRoom($therapistId, $user->identity);
             TherapistServiceHelper::AddNewChatRoom(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE), $chatRoomId, $therapistId);
@@ -1056,7 +1071,7 @@ class PatientController extends Controller
             }
 
             // Remove secondary therapists if transfered therapist.
-            $secondaryTherapists = $user->secondary_therapists;
+            $secondaryTherapists = $user->phc_worker_id ? $user->supplementary_phc_workers : $user->secondary_therapists;
             if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
                 unset($secondaryTherapists[$key]);
             }
@@ -1098,8 +1113,13 @@ class PatientController extends Controller
 
             // Update user chatrooms.
             $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
-            $updateData['therapist_id'] = $therapistId;
-            $updateData['secondary_therapists'] = $secondaryTherapists;
+            if ($user->phc_worker_id) {
+                $updateData['phc_worker_id'] = $therapistId;
+                $updateData['supplementary_phc_workers'] = $secondaryTherapists;
+            } else {
+                $updateData['therapist_id'] = $therapistId;
+                $updateData['secondary_therapists'] = $secondaryTherapists;
+            }
         }
 
         $user->update($updateData);

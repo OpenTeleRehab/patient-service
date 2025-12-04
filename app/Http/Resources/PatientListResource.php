@@ -35,6 +35,9 @@ class PatientListResource extends JsonResource
             'identity' => $this->identity,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
+            'region_id' => $this->region_id,
+            'province_id' => $this->province_id,
+            'phc_service_id' => $this->phc_service_id,
             'date_of_birth' => $this->date_of_birth,
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
@@ -48,7 +51,9 @@ class PatientListResource extends JsonResource
                 'last_name' => $this->last_name,
                 'gender' => $this->gender,
                 'therapist_id' => $this->therapist_id,
+                'phc_worker_id' => $this->phc_worker_id,
                 'secondary_therapists' => $this->secondary_therapists ? : [],
+                'supplementary_phc_workers' => $this->supplementary_phc_workers ? : [],
                 'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
             ]);
         }
