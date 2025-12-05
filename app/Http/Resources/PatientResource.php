@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 
 class PatientResource extends JsonResource
 {
@@ -35,6 +36,9 @@ class PatientResource extends JsonResource
             'identity' => $this->identity,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
+            'region_id' => $this->region_id,
+            'province_id' => $this->province_id,
+            'phc_service_id' => $this->phc_service_id,
             'date_of_birth' => $this->date_of_birth,
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
@@ -53,8 +57,10 @@ class PatientResource extends JsonResource
                 'chat_rooms' => $this->chat_rooms ?: [],
                 'therapist_id' => $this->therapist_id,
                 'secondary_therapists' => $this->secondary_therapists ? : [],
+                'supplementary_phc_workers' => $this->supplementary_phc_workers ? : [],
                 'note' => $this->note,
                 'is_secondary_therapist' => $this->isSecondaryTherapist($this->secondary_therapists, $request),
+                'is_supplementary_phc_worker' => $this->isSupplementaryPhcWorker($this->supplementary_phc_workers),
                 'completed_percent' => $this->completed_percent,
                 'total_pain_threshold' => $this->total_pain_threshold,
                 'next_appointment' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->first(),
@@ -79,5 +85,19 @@ class PatientResource extends JsonResource
         }
 
         return $isSecondaryTherapist;
+    }
+
+    /**
+     * @param $supplementary_phc_workers
+     * @return bool
+     */
+    private function isSupplementaryPhcWorker($supplementary_phc_workers)
+    {
+        $isSupplementaryPhcWorker = false;
+        if (!empty($supplementary_phc_workers) && in_array(Auth::user()->phc_worker_id, $supplementary_phc_workers)) {
+            $isSupplementaryPhcWorker = true;
+        }
+
+        return $isSupplementaryPhcWorker;
     }
 }

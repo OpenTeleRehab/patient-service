@@ -25,9 +25,11 @@ class User extends Authenticatable
     const ADMIN_GROUP_CLINIC_ADMIN = 'clinic_admin';
     const GROUP_THERAPIST = 'therapist';
     const GROUP_PATIENT = 'patient';
+    const GROUP_PHC_WORKER = 'phc_worker';
     const FINISHED_TREATMENT_PLAN = 1;
     const PLANNED_TREATMENT_PLAN = 2;
     const SECONDARY_TERAPIST = 2;
+    const SUPPLEMENTARY_PHC_WORKER = 2;
 
     const BRONZE_DAILY_LOGINS = 4;
     const SILVER_DAILY_LOGINS = 8;
@@ -44,6 +46,8 @@ class User extends Authenticatable
     const GOLD_DAILY_ANSWERS = 8;
     const DIAMOND_DAILY_ANSWERS = 11;
 
+    const REHAB_SERVICE = 'rehab';
+    const PHC_SERVICE = 'phc';
     /**
      * The attributes that are mass assignable.
      *
@@ -87,7 +91,10 @@ class User extends Authenticatable
         'last_reminder',
         'location',
         'region_id',
-        'province_id'
+        'province_id',
+        'phc_service_id',
+        'phc_worker_id',
+        'supplementary_phc_workers',
     ];
 
     /**
@@ -108,6 +115,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'chat_rooms' => 'array',
         'secondary_therapists' => 'array',
+        'supplementary_phc_workers' => 'array',
         'last_reminder' => 'datetime',
     ];
 

@@ -45,6 +45,18 @@ class VerifyDataAccess
             if (!empty($request->header('int-therapist-user-id'))) {
                 $user->therapist_user_id = (int) $request->header('int-therapist-user-id');
             }
+
+            if (!empty($request->header('int-clinic-id'))) {
+                $user->clinic_id = (int) $request->header('int-clinic-id');
+            }
+
+            if (!empty($request->header('int-phc-service-id'))) {
+                $user->phc_service_id = (int) $request->header('int-phc-service-id');
+            }
+
+            if (!empty($request->header('int-user-type'))) {
+                $user->user_type = $request->header('int-user-type');
+            }
         }
 
         $deny = fn() => response()->json(['message' => 'Access denied'], 403);
@@ -58,16 +70,29 @@ class VerifyDataAccess
                 if ($countryId) {
                     $query->where('country_id', (int)$countryId);
                 }
-
-                if ($clinicId) {
+                
+                if ($user->user_type === User::GROUP_THERAPIST && $clinicId) {
                     $query->where('clinic_id', (int)$clinicId);
                 }
 
-                if ($therapistId) {
-                    $query->where(function ($q) use ($therapistId) {
-                        $q->where('therapist_id', (int)$therapistId)
-                            ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
-                    });
+                if ($user->user_type === User::GROUP_PHC_WORKER && $user->phc_service_id) {
+                    $query->where('phc_service_id', (int)$user->phc_service_id);
+                }
+
+                $id = $therapistId ?? $user->therapist_user_id;
+                if ($id) {
+                    if ($user->user_type === User::GROUP_THERAPIST) {
+                        $query->where(function ($q) use ($id) {
+                            $q->where('therapist_id', (int)$id)
+                                ->orWhereJsonContains('secondary_therapists', (int)$id);
+                            });
+
+                    } else if ($user->user_type === User::GROUP_PHC_WORKER) {
+                        $query->where(function ($q) use ($id) {
+                            $q->where('phc_worker_id', (int)$id)
+                                ->orWhereJsonContains('supplementary_phc_workers', (int)$id);
+                            });
+                    }
                 }
 
                 // If no matching user found, deny access
