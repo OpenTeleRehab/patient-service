@@ -37,15 +37,6 @@ class AppointmentController extends Controller
      *             format="date"
      *         )
      *     ),
-     *     @OA\Parameter(
-     *         name="therapist_id",
-     *         in="query",
-     *         description="Therapist id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
      *     @OA\Response(
      *         response="200",
      *         description="successful operation"
@@ -68,20 +59,22 @@ class AppointmentController extends Controller
     {
         $date = date_create_from_format(config('settings.date_format'), $request->get('date'));
         $now = $request->get('now');
+        $authUser = Auth::user();
+        $therapistId = $authUser->therapist_user_id;
 
-        $calendarData = Appointment::where('therapist_id', $request->get('therapist_id'))
+        $calendarData = Appointment::where('therapist_id', $therapistId)
             ->whereYear('start_date', $date->format('Y'))
             ->whereMonth('start_date', $date->format('m'))
             ->where('therapist_status', '!=', Appointment::STATUS_CANCELLED)
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED)
             ->get();
 
-        $appointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+        $appointments = Appointment::where('therapist_id', $therapistId)
             ->whereNotIn('therapist_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_INVITED])
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
 
 
-        $newAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+        $newAppointments = Appointment::where('therapist_id', $therapistId)
             ->where('created_by_therapist', 0)
             ->where('therapist_status', Appointment::STATUS_INVITED)
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
@@ -159,15 +152,6 @@ class AppointmentController extends Controller
      *         )
      *     ),
      *     @OA\Parameter(
-     *         name="therapist_id",
-     *         in="query",
-     *         description="Therapist id",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Parameter(
      *         name="patient_id",
      *         in="query",
      *         description="Patient id",
@@ -198,15 +182,16 @@ class AppointmentController extends Controller
     {
         $startDate = date_create_from_format('Y-m-d H:i:s', $request->get('from'));
         $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('to'));
+        $therapistId = Auth::user()->therapist_user_id;
 
         // Check if overlap with any appointment.
-        $overlap = $this->validateOverlap($startDate, $endDate, $request->get('therapist_id'), $request->get('patient_id'));
+        $overlap = $this->validateOverlap($startDate, $endDate, $therapistId, $request->get('patient_id'));
         if ($overlap) {
             return ['success' => false, 'message' => 'error_message.appointment_overlap'];
         }
 
         Appointment::create([
-            'therapist_id' => $request->get('therapist_id'),
+            'therapist_id' => $therapistId,
             'patient_id' => $request->get('patient_id'),
             'therapist_status' => Appointment::STATUS_ACCEPTED,
             'patient_status' => Appointment::STATUS_INVITED,

@@ -79,9 +79,9 @@ class PatientController extends Controller
 
         $query = User::query();
 
-        if (isset($data['therapist_id'])) {
-            $query->where(function ($query) use ($data) {
-                $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
+        if ($user->user_type === User::GROUP_THERAPIST) {
+            $query->where(function ($query) use ($user) {
+                $query->where('therapist_id', $user->therapist_user_id)->orWhereJsonContains('secondary_therapists', intval($user->therapist_user_id));
             });
         }
 
