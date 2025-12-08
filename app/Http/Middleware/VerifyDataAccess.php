@@ -114,15 +114,19 @@ class VerifyDataAccess
             return $deny();
         }
 
-        // Verify if the auth user therapist is the same as the requested therapist id
+        // Verify if the auth user therapist or phc worker is the same as the requested therapist/phc worker id
         if ($user && isset($therapistId)) {
-            if ((int)$user->therapist_id !== (int)$therapistId) {
+            // For therapist's patient user
+            if ($user->therapist_id && (int)$user->therapist_id !== (int)$therapistId) {
+                return $deny();
+            } elseif ($user->phc_worker_id && (int)$user->phc_worker_id !== (int)$therapistId) { // For phc worker's patient user
                 return $deny();
             } elseif ($patientId) {
                 $hasAccess = User::where('id', $patientId)
                     ->where(function ($q) use ($therapistId) {
-                        $q->where('therapist_id', $therapistId)
-                            ->orWhereJsonContains('secondary_therapists', (int)$therapistId);
+                        $q->where('therapist_id', $therapistId)->orWhere('phc_worker_id', $therapistId)
+                            ->orWhereJsonContains('secondary_therapists', (int)$therapistId)
+                            ->orWhereJsonContains('supplementary_phc_workers', (int)$therapistId);
                     })
                     ->exists();
                 if (!$hasAccess) {
