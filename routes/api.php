@@ -12,11 +12,14 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\ForwarderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\ReferralAssignmentController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\TherapistController;
+use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -132,6 +135,12 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::apiResource('call-history', CallHistoryController::class)->middleware('role:internal');
 
     Route::get('download-file', [FileController::class, 'download'])->middleware('role:internal');
+
+    // Referral
+    Route::apiResource('patient-referrals', ReferralController::class)->middleware('role:internal');
+
+    // Referral assignment
+    Route::apiResource('patient-referral-assignments', ReferralAssignmentController::class)->middleware('role:internal');
 });
 
 // Public
