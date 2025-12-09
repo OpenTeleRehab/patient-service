@@ -29,19 +29,21 @@ class ProfileResource extends JsonResource
             'date_of_birth' => $this->date_of_birth,
             'note' => $this->note,
             'gender' => $this->gender,
-            'therapist_id' => $this->therapist_id ?: $this->phc_worker_id,
+            'therapist_id' => $this->therapist_id,
             'enabled' => $this->enabled,
             'language_id' => $this->language_id,
             'term_and_condition_id' => $this->term_and_condition_id,
             'chat_user_id' => $this->chat_user_id,
             'chat_password' => $password,
             'chat_rooms' => $this->chat_rooms,
-            'secondary_therapists' => $this->secondary_therapists ?: $this->supplementary_phc_workers,
+            'secondary_therapists' => $this->secondary_therapists,
             'privacy_and_policy_id' => $this->privacy_and_policy_id,
             'kid_theme' => $this->kid_theme,
             'firebase_token' => $this->firebase_token,
             'last_reminder' => $this->last_reminder,
             'location' => $this->location,
+            'phc_worker_id' => $this->phc_worker_id,
+            'supplementary_phc_workers' => $this->supplementary_phc_workers,
         ];
     }
 }
