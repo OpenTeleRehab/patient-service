@@ -42,6 +42,31 @@ class TherapistController extends Controller
     }
 
     /**
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Http\Client\ConnectionException
+     */
+    public function getOwnPhcWorkers()
+    {
+        $patient = Auth::user();
+
+        $phcWorkerIds = $patient->supplementary_phc_workers;
+        $phcWorkerIds[] = $patient->phc_worker_id;
+
+        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+
+        $response = Http::withToken($access_token)
+            ->get(env('THERAPIST_SERVICE_URL') . '/patient/phc-worker-by-ids', [
+                'ids' => json_encode($phcWorkerIds),
+            ])
+            ->json();
+
+        return response()->json([
+            'success' => true,
+            ...$response,
+        ]);
+    }
+
+    /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse|void
      * @throws \Illuminate\Http\Client\ConnectionException

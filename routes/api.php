@@ -79,6 +79,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
 
     // Therapist
     Route::get('therapists', [TherapistController::class, 'getOwnTherapists'])->middleware('role:mobile');
+    Route::get('phc-workers', [TherapistController::class, 'getOwnPhcWorkers'])->middleware('role:mobile');
 
     // Treatment Plans
     Route::post('treatment-plan/complete_activity', [TreatmentPlanController::class, 'completeActivity'])->middleware('role:mobile');

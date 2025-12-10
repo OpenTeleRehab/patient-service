@@ -2,56 +2,56 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use App\Models\Forwarder;
 use App\Models\User;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
+use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Symfony\Component\HttpFoundation\Response;
 
 class VerifyDataAccess
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next): Response
     {
         $countryHeader = $request->header('Country');
-        $countryId     = $request->get('country_id') ?? $request->get('country');
-        $clinicId      = $request->get('clinic_id') ?? $request->get('clinic');
-        $therapistId   = $request->get('therapist_id') ?? $request->get('therapist');
-        $patientId     = $request->get('patient_id');
+        $countryId = $request->get('country_id') ?? $request->get('country');
+        $clinicId = $request->get('clinic_id') ?? $request->get('clinic');
+        $therapistId = $request->get('therapist_id') ?? $request->get('therapist');
+        $patientId = $request->get('patient_id');
         $user = Auth::user();
 
         if ($user->email == env('KEYCLOAK_BACKEND_CLIENT')) {
             if (!empty($request->header('int-country-id'))) {
-                $user->country_id = (int) $request->header('int-country-id');
+                $user->country_id = (int)$request->header('int-country-id');
             }
 
             if (!empty($request->header('int-region-id'))) {
-                $user->region_id = (int) $request->header('int-region-id');
+                $user->region_id = (int)$request->header('int-region-id');
             }
 
             if (!empty($request->header('int-province-id'))) {
-                $user->province_id = (int) $request->header('int-province-id');
+                $user->province_id = (int)$request->header('int-province-id');
             }
 
             if (!empty($request->header('int-therapist-user-id'))) {
-                $user->therapist_user_id = (int) $request->header('int-therapist-user-id');
+                $user->therapist_user_id = (int)$request->header('int-therapist-user-id');
             }
 
             if (!empty($request->header('int-clinic-id'))) {
-                $user->clinic_id = (int) $request->header('int-clinic-id');
+                $user->clinic_id = (int)$request->header('int-clinic-id');
             }
 
             if (!empty($request->header('int-phc-service-id'))) {
-                $user->phc_service_id = (int) $request->header('int-phc-service-id');
+                $user->phc_service_id = (int)$request->header('int-phc-service-id');
             }
 
             if (!empty($request->header('int-user-type'))) {
@@ -70,7 +70,7 @@ class VerifyDataAccess
                 if ($countryId) {
                     $query->where('country_id', (int)$countryId);
                 }
-                
+
                 if ($user->user_type === User::GROUP_THERAPIST && $clinicId) {
                     $query->where('clinic_id', (int)$clinicId);
                 }
@@ -85,13 +85,13 @@ class VerifyDataAccess
                         $query->where(function ($q) use ($id) {
                             $q->where('therapist_id', (int)$id)
                                 ->orWhereJsonContains('secondary_therapists', (int)$id);
-                            });
+                        });
 
                     } else if ($user->user_type === User::GROUP_PHC_WORKER) {
                         $query->where(function ($q) use ($id) {
                             $q->where('phc_worker_id', (int)$id)
                                 ->orWhereJsonContains('supplementary_phc_workers', (int)$id);
-                            });
+                        });
                     }
                 }
 
@@ -117,11 +117,15 @@ class VerifyDataAccess
         // Verify if the auth user therapist or phc worker is the same as the requested therapist/phc worker id
         if ($user && isset($therapistId)) {
             // For therapist's patient user
-            if ($user->therapist_id && (int)$user->therapist_id !== (int)$therapistId) {
+            if ($user->therapist_id && !$user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId) {
                 return $deny();
-            } elseif ($user->phc_worker_id && (int)$user->phc_worker_id !== (int)$therapistId) { // For phc worker's patient user
+            } else if ($user->therapist_id && $user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId && (int)$user->phc_worker_id !== (int)$therapistId) {
+                // For therapist & phc worker's share patient user
                 return $deny();
-            } elseif ($patientId) {
+            } else if ($user->phc_worker_id && !$user->therapist_id && (int)$user->phc_worker_id !== (int)$therapistId) {
+                // For phc worker's patient user
+                return $deny();
+            } else if ($patientId) {
                 $hasAccess = User::where('id', $patientId)
                     ->where(function ($q) use ($therapistId) {
                         $q->where('therapist_id', $therapistId)->orWhere('phc_worker_id', $therapistId)
@@ -156,7 +160,7 @@ class VerifyDataAccess
                 return response()->json(['message' => 'Invalid or unrecognized country.'], 404);
             }
 
-            if ($user && (int)$user->country_id !== (int)$country['id']) {
+            if ($user && $user->country_id !== (int)$country['id']) {
                 return $deny();
             }
         }
