@@ -31,6 +31,18 @@ class ApiHelper
                     $apiUrl = 'https://' . $urlString . env('APP_DOMAIN') . '/api/' . $apiName;
                     break;
                 }
+            case 'latest':
+                $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin');
+                if ($apiName == 'websocket') {
+                    $apiUrl = 'wss://' . $urlString . '-' . env('APP_DOMAIN') . '/websocket';
+                    break;
+                } elseif ($apiName == 'chat') {
+                    $apiUrl = 'https://' . $urlString . '-' . env('APP_DOMAIN');
+                    break;
+                } else {
+                    $apiUrl = 'https://' . $urlString . '-' . env('APP_DOMAIN') . '/api/' . $apiName;
+                    break;
+                }
             case 'demo':
                 $urlString = $orgType == 'hi' ? $stage . '-' . ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin') : ($apiName == 'websocket' || $apiName == 'chat' ? 'chat' : 'admin');
                 if ($apiName == 'websocket') {
