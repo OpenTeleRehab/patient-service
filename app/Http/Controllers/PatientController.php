@@ -214,6 +214,7 @@ class PatientController extends Controller
         $users = $query->paginate($data['page_size']);
         $info = [
             'current_page' => $users->currentPage(),
+            'last_page' => $users->lastPage(),
             'total_count' => $users->total(),
         ];
         return ['success' => true, 'data' => PatientListResource::collection($users), 'info' => $info];
