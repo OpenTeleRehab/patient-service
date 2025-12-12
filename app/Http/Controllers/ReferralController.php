@@ -88,4 +88,54 @@ class ReferralController extends Controller
 
         return response()->json(['message' => 'success_message.referral.create'], 201);
     }
+
+    /**
+     * Decline a specific referral.
+     *
+    * @param Request $request The incoming HTTP request containing the decline reason.
+    * @param int $id The ID of the referral to decline.
+    *
+    * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the referral with the given ID does not exist.
+    * @throws \Illuminate\Validation\ValidationException If the 'reason' field fails validation.
+    *
+    * @return \Illuminate\Http\JsonResponse JSON response with a success message.
+     */
+    public function decline(Request $request, $id)
+    {
+        $referral = Referral::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'reason' => 'required|min:3',
+        ]);
+
+        $validatedData['status'] = Referral::STATUS_DECLINED;
+
+        $referral->update($validatedData);
+
+        return response()->json(['message' => 'success_message.referral.decline'], 200);
+    }
+
+    /**
+     * Count referrals by auth user's clinic
+     */
+    public function countReferrals()
+    {
+        $authUser = Auth::user();
+
+        $count = Referral::where('to_clinic_id', $authUser->clinic_id)->where('status', Referral::STATUS_INVITED)->count();
+
+        return response()->json(['data' => $count], 200);
+    }
+
+    /**
+     * Get latest patient's referral by patient id
+     */
+    public function getReferralByPatient($patientId)
+    {
+        $patient = User::findOrFail($patientId);
+
+        $referral = $patient->referrals()->whereIn('status', [Referral::STATUS_ACCEPTED, Referral::STATUS_INVITED])->latest()->first();
+
+        return response()->json(['data' => $referral], 200);
+    }
 }

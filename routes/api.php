@@ -19,7 +19,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\TherapistController;
 use App\Http\Controllers\ReferralController;
-use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,6 +73,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::post('patient', [PatientController::class, 'store'])->middleware('role:internal');
     Route::put('patient/{id}', [PatientController::class, 'update'])->middleware('role:internal,mobile');
     Route::get('patient/list-for-chatroom', [PatientController::class, 'listForChatroom'])->middleware('role:internal');
+    Route::get('patient/{patientId}/referrals', [ReferralController::class, 'getReferralByPatient'])->middleware('role:internal');
 
     // Activities
     Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
@@ -137,9 +137,14 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('download-file', [FileController::class, 'download'])->middleware('role:internal');
 
     // Referral
+    Route::get('patient-referrals/count', [ReferralController::class, 'countReferrals'])->middleware('role:internal');
+    Route::put('patient-referrals/{id}/decline', [ReferralController::class, 'decline'])->middleware('role:internal');
     Route::apiResource('patient-referrals', ReferralController::class)->middleware('role:internal');
 
     // Referral assignment
+    Route::get('patient-referral-assignments/count', [ReferralAssignmentController::class, 'countReferralAssignments'])->middleware('role:internal');
+    Route::put('patient-referral-assignments/{id}/accept', [ReferralAssignmentController::class, 'accept'])->middleware('role:internal');
+    Route::put('patient-referral-assignments/{id}/decline', [ReferralAssignmentController::class, 'decline'])->middleware('role:internal');
     Route::apiResource('patient-referral-assignments', ReferralAssignmentController::class)->middleware('role:internal');
 });
 

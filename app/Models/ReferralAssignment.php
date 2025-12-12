@@ -8,6 +8,7 @@ class ReferralAssignment extends Model
 {
     const STATUS_INVITED = 'invited';
     const STATUS_DECLINED = 'declined';
+    const STATUS_ACCEPTED = 'accepted';
 
     /**
      * The attributes that are mass assignable.
@@ -17,6 +18,7 @@ class ReferralAssignment extends Model
     protected $fillable = [
         'referral_id',
         'therapist_id',
+        'status',
         'reason',
     ];
 
