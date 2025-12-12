@@ -209,6 +209,29 @@ class PatientController extends Controller
                         $dateOfBirthFrom = date_create_from_format('d/m/Y', $filterObj->from);
                         $dateOfBirthTo = date_create_from_format('d/m/Y', $filterObj->to);
                         $query->whereBetween('date_of_birth', [date_format($dateOfBirthFrom, config('settings.defaultTimestampFormat')), date_format($dateOfBirthTo, config('settings.defaultTimestampFormat'))]);
+                    } elseif ($filterObj->columnName === 'health_condition_groups' && $filterObj->value !== '') {
+                        // Fetch ID from AdminService
+                        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))
+                            ->get(env('ADMIN_SERVICE_URL') . '/health-condition-groups/find', [
+                                'title' => $filterObj->value
+                            ]);
+                        if ($response->successful() && count($response->json()['data']) > 0) {
+                            $id = $response->json()['data'][0]['id'];
+                            $query->whereHas('treatmentPlans', function (Builder $q) use ($id) {
+                                $q->where('health_condition_group_id', $id);
+                            });
+                        }
+                    } elseif ($filterObj->columnName === 'health_conditions' && $filterObj->value !== '') {
+                        $response = Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))
+                            ->get(env('ADMIN_SERVICE_URL') . '/health-conditions/find', [
+                                'title' => $filterObj->value
+                            ]);
+                        if ($response->successful() && count($response->json()['data']) > 0) {
+                            $id = $response->json()['data'][0]['id'];
+                            $query->whereHas('treatmentPlans', function (Builder $q) use ($id) {
+                                $q->where('health_condition_id', $id);
+                            });
+                        }
                     } else {
                         $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                     }
