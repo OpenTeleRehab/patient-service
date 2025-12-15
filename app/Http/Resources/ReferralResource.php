@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Referral;
+use App\Models\ReferralAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,7 +20,8 @@ class ReferralResource extends JsonResource
             'date_of_birth' => $this->patient->date_of_birth,
             'lead_and_supplementary_phc' => $this->lead_and_supplementary_phc,
             'referred_by' => $this->referred_by,
-            'status' => $this->referralAssignments->where('status', Referral::STATUS_INVITED)->first()?->status,
+            'status' => $this->referralAssignments()->latest()->first()?->status,
+            'therapist_reason' => $this->referralAssignments()->latest()->first()?->reason,
         ];
     }
 }

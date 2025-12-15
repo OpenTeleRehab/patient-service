@@ -9,6 +9,7 @@ class Referral extends Model
 {
     const STATUS_INVITED = 'invited';
     const STATUS_DECLINED = 'declined';
+    const STATUS_ACCEPTED = 'accepted';
     const LEAD_PHC_WORKER = 'lead';
     const SUPPLEMENTARY_PHC_WORKER = 'supplementary';
 
