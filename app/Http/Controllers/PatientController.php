@@ -74,7 +74,6 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $info = [];
         $user = Auth::user();
 
         $query = User::query();
@@ -86,7 +85,7 @@ class PatientController extends Controller
         }
 
         if ($user->user_type === User::GROUP_PHC_WORKER) {
-            $query->where(function ($query) use ($user) {
+            $query->with('lastReferral')->where(function ($query) use ($user) {
                 $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
             });
         }
