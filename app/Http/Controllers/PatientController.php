@@ -434,7 +434,7 @@ class PatientController extends Controller
         ]);
 
         // Create unique identity.
-        $clinicIdentity = $data['clinic_identity'];
+        $clinicIdentity = $data['clinic_identity'] ?? '';
         $phcServiceIdentity = $data['phc_service_identity'];
         $orgIdentity = str_pad($organization['id'], 4, '0', STR_PAD_LEFT);
         $identity = 'P' . $orgIdentity . ($clinicIdentity ?: $phcServiceIdentity) .
