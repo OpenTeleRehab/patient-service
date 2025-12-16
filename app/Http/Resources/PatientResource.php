@@ -2,102 +2,30 @@
 
 namespace App\Http\Resources;
 
-use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Auth;
 
 class PatientResource extends JsonResource
 {
     /**
+     * The "data" wrapper that should be applied.
+     *
+     * @var string|null
+     */
+    public static $wrap = null;
+
+    /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
+     * @return array<string, mixed>
      */
-    public function toArray($request)
+    public function toArray(Request $request): array
     {
-        $upcomingTreatmentPlan = $this->treatmentPlans()
-            ->whereDate('end_date', '>', Carbon::now())
-            ->orderBy('start_date')
-            ->first();
+        $this->resource->makeHidden(['chat_password', 'lastReferral']);
 
-        $ongoingTreatmentPlan = $this->treatmentPlans()
-            ->whereDate('start_date', '<=', Carbon::now())
-            ->whereDate('end_date', '>=', Carbon::now())
-            ->get();
-
-        $lastTreatmentPlan = $this->treatmentPlans()
-            ->orderBy('end_date', 'desc')
-            ->first();
-
-        $responseData = [
-            'id' => $this->id,
-            'identity' => $this->identity,
-            'clinic_id' => $this->clinic_id,
-            'country_id' => $this->country_id,
-            'region_id' => $this->region_id,
-            'province_id' => $this->province_id,
-            'phc_service_id' => $this->phc_service_id,
-            'date_of_birth' => $this->date_of_birth,
-            'enabled' => $this->enabled,
-            'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
-            'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
-            'lastTreatmentPlan' => $lastTreatmentPlan
+        return [
+            ...parent::toArray($request),
+            'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
         ];
-
-        if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
-            $responseData = array_merge($responseData, [
-                'first_name' => $this->first_name,
-                'last_name' => $this->last_name,
-                'phone' => $this->phone,
-                'dial_code' => $this->dial_code,
-                'gender' => $this->gender,
-                'chat_user_id' => $this->chat_user_id,
-                'chat_rooms' => $this->chat_rooms ?: [],
-                'therapist_id' => $this->therapist_id,
-                'secondary_therapists' => $this->secondary_therapists ? : [],
-                'supplementary_phc_workers' => $this->supplementary_phc_workers ? : [],
-                'note' => $this->note,
-                'is_secondary_therapist' => $this->isSecondaryTherapist($this->secondary_therapists, $request),
-                'is_supplementary_phc_worker' => $this->isSupplementaryPhcWorker($this->supplementary_phc_workers),
-                'completed_percent' => $this->completed_percent,
-                'total_pain_threshold' => $this->total_pain_threshold,
-                'next_appointment' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->first(),
-                'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
-                'location' => $this->location,
-            ]);
-        }
-
-        return $responseData;
-    }
-
-    /**
-     * @param $secondary_therapists
-     * @param $request
-     * @return bool
-     */
-    private function isSecondaryTherapist($secondary_therapists, $request)
-    {
-        $isSecondaryTherapist = false;
-        if (!empty($secondary_therapists) && in_array($request->get('therapist_id'), $secondary_therapists)) {
-            $isSecondaryTherapist = true;
-        }
-
-        return $isSecondaryTherapist;
-    }
-
-    /**
-     * @param $supplementary_phc_workers
-     * @return bool
-     */
-    private function isSupplementaryPhcWorker($supplementary_phc_workers)
-    {
-        $isSupplementaryPhcWorker = false;
-        if (!empty($supplementary_phc_workers) && in_array(Auth::user()->phc_worker_id, $supplementary_phc_workers)) {
-            $isSupplementaryPhcWorker = true;
-        }
-
-        return $isSupplementaryPhcWorker;
     }
 }

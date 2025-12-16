@@ -10,8 +10,9 @@ use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
 use App\Http\Resources\PatientRawDataResource;
-use App\Http\Resources\PatientResource;
+use App\Http\Resources\PatientList2Resource;
 use App\Http\Resources\PatientListResource;
+use App\Http\Resources\PatientResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
@@ -246,7 +247,7 @@ class PatientController extends Controller
             'current_page' => $patients->currentPage(),
             'total_count' => $patients->total(),
         ];
-        return ['success' => true, 'data' => PatientResource::collection($patients), 'info' => $info];
+        return ['success' => true, 'data' => PatientList2Resource::collection($patients), 'info' => $info];
     }
 
     /**
@@ -821,7 +822,7 @@ class PatientController extends Controller
             $query->where('enabled', $data['enabled']);
         }
         $patients = $query->get();
-        return ['success' => true, 'data' => PatientResource::collection($patients)];
+        return ['success' => true, 'data' => PatientList2Resource::collection($patients)];
     }
 
     /**
@@ -1451,11 +1452,13 @@ class PatientController extends Controller
 
     /**
      * @param integer $id
-     * @return User
+     * @return PatientResource
      */
-    public function getById($id)
+    public function getById(int $id)
     {
-        return json_encode(User::find(intval($id)));
+        return new PatientResource(
+            User::with('lastReferral')->findOrFail($id)
+        );
     }
 
     /**
