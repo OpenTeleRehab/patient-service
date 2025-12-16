@@ -126,16 +126,4 @@ class ReferralController extends Controller
 
         return response()->json(['data' => $count], 200);
     }
-
-    /**
-     * Get latest patient's referral by patient id
-     */
-    public function getReferralByPatient($patientId)
-    {
-        $patient = User::findOrFail($patientId);
-
-        $referral = $patient->referrals()->whereIn('status', [Referral::STATUS_ACCEPTED, Referral::STATUS_INVITED])->latest()->first();
-
-        return response()->json(['data' => $referral], 200);
-    }
 }

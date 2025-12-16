@@ -11,7 +11,7 @@ class PatientListResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return array
      */
     public function toArray($request)
@@ -42,7 +42,8 @@ class PatientListResource extends JsonResource
             'enabled' => $this->enabled,
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
-            'lastTreatmentPlan' => $lastTreatmentPlan
+            'lastTreatmentPlan' => $lastTreatmentPlan,
+            'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
         ];
 
         if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
@@ -52,8 +53,8 @@ class PatientListResource extends JsonResource
                 'gender' => $this->gender,
                 'therapist_id' => $this->therapist_id,
                 'phc_worker_id' => $this->phc_worker_id,
-                'secondary_therapists' => $this->secondary_therapists ? : [],
-                'supplementary_phc_workers' => $this->supplementary_phc_workers ? : [],
+                'secondary_therapists' => $this->secondary_therapists ?: [],
+                'supplementary_phc_workers' => $this->supplementary_phc_workers ?: [],
                 'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
             ]);
         }

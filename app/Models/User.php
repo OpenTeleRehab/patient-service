@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity as ActivityLog;
 use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
@@ -275,5 +275,10 @@ class User extends Authenticatable
     public function referrals()
     {
         return $this->hasMany(Referral::class, 'patient_id');
+    }
+
+    public function lastReferral()
+    {
+        return $this->hasOne(Referral::class, 'patient_id')->latest();
     }
 }
