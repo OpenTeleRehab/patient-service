@@ -59,7 +59,7 @@ class Calculator
             }
             $totalCompleted += $activity->completed ? 1 : 0;
             if ($totalDay >= 3) {
-                exit();
+                break;
             }
         }
 
@@ -84,7 +84,7 @@ class Calculator
                 $totalPainThreshold += 1;
             }
             if ($totalDay >= 3) {
-                exit();
+                break;
             }
         }
 
