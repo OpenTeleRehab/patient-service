@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exports\ChatExport;
 use App\Exports\PatientProfileExport;
 use App\Exports\TreatmentPlanExport;
-use App\Helpers\ApiHelper;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
@@ -423,11 +422,11 @@ class PatientController extends Controller
         Http::post(env('PHONE_SERVICE_URL') . '/phone', [
             'phone' => $data['phone'],
             'org_name' => $organization['name'],
-            'patient_api_url' => ApiHelper::createApiUrl($data['stage'], 'patient', $organization['sub_domain_name'], $organization['type']),
-            'admin_api_url' => ApiHelper::createApiUrl($data['stage'], 'admin', $organization['sub_domain_name'], $organization['type']),
-            'therapist_api_url' => ApiHelper::createApiUrl($data['stage'], 'therapist', $organization['sub_domain_name'], $organization['type']),
-            'chat_api_url' => ApiHelper::createApiUrl($data['stage'], 'chat', $organization['sub_domain_name'], $organization['type']),
-            'chat_websocket_url' => ApiHelper::createApiUrl($data['stage'], 'websocket', $organization['sub_domain_name'], $organization['type']),
+            'patient_api_url' => env('PHONE_SERVICE_PATIENT_API_URL'),
+            'admin_api_url' => env('PHONE_SERVICE_ADMIN_API_URL'),
+            'therapist_api_url' => env('PHONE_SERVICE_THERAPIST_API_URL'),
+            'chat_api_url' => env('PHONE_SERVICE_CHAT_API_URL'),
+            'chat_websocket_url' => env('PHONE_SERVICE_CHAT_WEBSOCKET_URL'),
             'clinic_id' => $authUser?->phc_service_id ?: $authUser?->clinic_id,
             'service_type' => $authUser->user_type === User::GROUP_PHC_WORKER ? User::PHC_SERVICE : User::REHAB_SERVICE,
             'sub_domain' => $organization['sub_domain_name'],
