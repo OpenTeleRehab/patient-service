@@ -633,7 +633,7 @@ class PatientController extends Controller
             }
 
             if (isset($data['secondary_therapists'])) {
-                $newTherapistIds= array_diff($data['secondary_therapists'], $user->secondary_therapists);
+                $newTherapistIds = array_diff($data['secondary_therapists'], $user->secondary_therapists);
 
                 if ($newTherapistIds) {
                     foreach ($newTherapistIds as $therapistId) {
@@ -660,7 +660,7 @@ class PatientController extends Controller
             }
 
             if (isset($data['supplementary_phc_workers'])) {
-                $newPhcWorkerIds= array_diff($data['supplementary_phc_workers'], $user->supplementary_phc_workers);
+                $newPhcWorkerIds = array_diff($data['supplementary_phc_workers'], $user->supplementary_phc_workers);
 
                 if ($newPhcWorkerIds) {
                     foreach ($newPhcWorkerIds as $phcWorkerId) {
@@ -695,7 +695,7 @@ class PatientController extends Controller
 
                 if (!empty($response['data']) && $response->successful()) {
                     $phone = $response->json()['data'];
-                    Http::put(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id'] , [
+                    Http::put(env('PHONE_SERVICE_URL') . '/phone/' . $phone['id'], [
                         'phone' => $data['phone'],
                     ]);
                 }
@@ -703,7 +703,6 @@ class PatientController extends Controller
 
             $dataUpdate['chat_rooms'] = $user->chat_rooms;
             $user->update($dataUpdate);
-
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -778,6 +777,49 @@ class PatientController extends Controller
         $therapistIds = $request->get('therapist_ids', []);
         $patients = User::whereIn('therapist_id', $therapistIds)->get();
         return PatientListResource::collection($patients);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/patient/list/by-phc-worker-ids",
+     *     tags={"Patient"},
+     *     summary="Patient list by PHC worker ids",
+     *     operationId="patientListByPhcWorkerIds",
+     *     @OA\Parameter(
+     *         name="phc_worker_ids[]",
+     *         in="query",
+     *         description="PHC worker ids",
+     *         required=true,
+     *         @OA\Schema(
+     *              type="array",
+     *              @OA\Items(type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="successful operation"
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Response(response=401, description="Authentication is required"),
+     *     security={
+     *         {
+     *             "oauth2_security": {}
+     *         }
+     *     },
+     * )
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function getByPhcWorkerIds(Request $request)
+    {
+        $phcWorkerIds = $request->get('phc_worker_ids', []);
+
+        $patients = User::whereIn('phc_worker_id', $phcWorkerIds)->get();
+
+        return response()->json(['data' => PatientListResource::collection($patients)]);
     }
 
     /**
@@ -938,7 +980,7 @@ class PatientController extends Controller
         $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
                 'patient_id' => $user->id,
-        ]);
+            ]);
 
         if ($response->failed()) {
             return response()->json([
@@ -966,7 +1008,7 @@ class PatientController extends Controller
 
         if (!empty($response['data']) && $response->successful()) {
             $phone = $response->json()['data'];
-            Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
+            Http::delete(env('PHONE_SERVICE_URL') . '/phone/' . $phone['id']);
         }
 
         if ($hardDelete) {
@@ -1023,7 +1065,7 @@ class PatientController extends Controller
 
                 if (!empty($response['data']) && $response->successful()) {
                     $phone = $response->json()['data'];
-                    Http::delete(env('PHONE_SERVICE_URL') . '/phone/'. $phone['id']);
+                    Http::delete(env('PHONE_SERVICE_URL') . '/phone/' . $phone['id']);
                 }
 
                 $this->obfuscatedUserData($user);
@@ -1412,7 +1454,7 @@ class PatientController extends Controller
             $twilioApiKey,
             $twilioApiSecret,
             3600,
-            $user['identity']. '_' . $user['country_id'],
+            $user['identity'] . '_' . $user['country_id'],
         );
 
         // Create Video grant.
