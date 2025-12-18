@@ -117,12 +117,12 @@ class VerifyDataAccess
         // Verify if the auth user therapist or phc worker is the same as the requested therapist/phc worker id
         if ($user && isset($therapistId)) {
             // For therapist's patient user
-            if ($user->therapist_id && !$user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId) {
+            if ($user->therapist_id && !$user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId && !in_array((int) $therapistId, $user->secondary_therapists ?? [])) {
                 return $deny();
-            } else if ($user->therapist_id && $user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId && (int)$user->phc_worker_id !== (int)$therapistId) {
+            } else if ($user->therapist_id && $user->phc_worker_id && (int)$user->therapist_id !== (int)$therapistId && (int)$user->phc_worker_id !== (int)$therapistId && !in_array((int) $therapistId, $user->supplementary_phc_workers ?? [])) {
                 // For therapist & phc worker's share patient user
                 return $deny();
-            } else if ($user->phc_worker_id && !$user->therapist_id && (int)$user->phc_worker_id !== (int)$therapistId) {
+            } else if ($user->phc_worker_id && !$user->therapist_id && (int)$user->phc_worker_id !== (int)$therapistId && !in_array((int) $therapistId, $user->supplementary_phc_workers ?? [])) {
                 // For phc worker's patient user
                 return $deny();
             } else if ($patientId) {
