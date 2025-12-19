@@ -216,6 +216,38 @@ class PatientController extends Controller
             'last_page' => $users->lastPage(),
             'total_count' => $users->total(),
         ];
+
+        if (Auth::user()->user_type === User::GROUP_PHC_WORKER) {
+            $therapistResponse = Http::withToken(
+                Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
+            )
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapist-all')
+            ->json('data', []);
+
+            $therapists = collect($therapistResponse)->keyBy('id');
+            $transformed = collect($users->items())->transform(function ($user) use ($therapists) {
+               $therapistNames = [];
+
+                $leadTherapistId = $user->therapist_id;
+                $leadTherapist = $therapists[$leadTherapistId] ?? null;
+
+                if ($leadTherapist) {
+                    $therapistNames[] = $leadTherapist['last_name'] . ' ' . $leadTherapist['first_name'];
+                }
+
+                $supplementaryTherapistIds = (array) ($user->secondary_therapists ?? []);
+
+                $supplementaryTherapistNames = collect($supplementaryTherapistIds)
+                    ->map(fn($id) => $therapists[$id] ?? null)
+                    ->filter()
+                    ->map(fn($therapist) => $therapist['last_name'] . ' ' . $therapist['first_name'])
+                    ->toArray();
+
+                $user->referral_therapists = array_merge($therapistNames, $supplementaryTherapistNames);
+                return $user;
+            });
+            return ['success' => true, 'data' => PatientListResource::collection($transformed), 'info' => $info];
+        }
         return ['success' => true, 'data' => PatientListResource::collection($users), 'info' => $info];
     }
 
@@ -1092,10 +1124,11 @@ class PatientController extends Controller
         $therapistId = $request->get('therapist_id');
         $oldTherapistChatRooms = $request->get('chat_rooms');
         $newTherapistChatRooms = $request->get('new_chat_rooms');
+        $authUserType = $request->get('auth_user_type');
         $chatRooms = $user->chat_rooms;
 
         if ($request->get('therapist_type') === 'supplementary') {
-            if ($user->phc_worker_id) {
+            if ($user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER) {
                 $updateData['supplementary_phc_workers'] = array_unique(array_merge($user->supplementary_phc_workers, [$therapistId]));
             } else {
                 $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists, [$therapistId]));
@@ -1113,7 +1146,7 @@ class PatientController extends Controller
             }
 
             // Remove secondary therapists if transfered therapist.
-            $secondaryTherapists = $user->phc_worker_id ? $user->supplementary_phc_workers : $user->secondary_therapists;
+            $secondaryTherapists = $user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER ? $user->supplementary_phc_workers : $user->secondary_therapists;
             if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
                 unset($secondaryTherapists[$key]);
             }
@@ -1155,7 +1188,7 @@ class PatientController extends Controller
 
             // Update user chatrooms.
             $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
-            if ($user->phc_worker_id) {
+            if ($user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER) {
                 $updateData['phc_worker_id'] = $therapistId;
                 $updateData['supplementary_phc_workers'] = $secondaryTherapists;
             } else {

@@ -44,6 +44,7 @@ class PatientListResource extends JsonResource
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
             'lastTreatmentPlan' => $lastTreatmentPlan,
             'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
+            'referral_therapists' => $this->referral_therapists,
         ];
 
         if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
