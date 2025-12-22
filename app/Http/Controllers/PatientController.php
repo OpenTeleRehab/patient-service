@@ -210,45 +210,53 @@ class PatientController extends Controller
             $query->withTrashed()->orderBy($data['order_by']);
         }
 
-        $users = $query->paginate($data['page_size']);
+        $patients = $query->paginate($data['page_size']);
         $info = [
-            'current_page' => $users->currentPage(),
-            'last_page' => $users->lastPage(),
-            'total_count' => $users->total(),
+            'current_page' => $patients->currentPage(),
+            'last_page' => $patients->lastPage(),
+            'total_count' => $patients->total(),
         ];
 
-        if (Auth::user()->user_type === User::GROUP_PHC_WORKER) {
+        if ($user->user_type === User::GROUP_PHC_WORKER) {
             $therapistResponse = Http::withToken(
                 Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
             )
-            ->get(env('THERAPIST_SERVICE_URL') . '/therapist-all')
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
             ->json('data', []);
 
             $therapists = collect($therapistResponse)->keyBy('id');
-            $transformed = collect($users->items())->transform(function ($user) use ($therapists) {
-               $therapistNames = [];
+            $transformed = collect($patients->items())->transform(function ($patient) use ($therapists) {
+               $leadTherapistData = [];
 
-                $leadTherapistId = $user->therapist_id;
+                $leadTherapistId = $patient->therapist_id;
                 $leadTherapist = $therapists[$leadTherapistId] ?? null;
 
                 if ($leadTherapist) {
-                    $therapistNames[] = $leadTherapist['last_name'] . ' ' . $leadTherapist['first_name'];
+                    $leadTherapistData[] =  [
+                        'first_name' => $leadTherapist['first_name'],
+                        'last_name'  => $leadTherapist['last_name'],
+                        'type'      => 'lead',
+                    ];
                 }
 
-                $supplementaryTherapistIds = (array) ($user->secondary_therapists ?? []);
+                $supplementaryTherapistIds = (array) ($patient->secondary_therapists ?? []);
 
-                $supplementaryTherapistNames = collect($supplementaryTherapistIds)
+                $supplementaryTherapists = collect($supplementaryTherapistIds)
                     ->map(fn($id) => $therapists[$id] ?? null)
                     ->filter()
-                    ->map(fn($therapist) => $therapist['last_name'] . ' ' . $therapist['first_name'])
+                    ->map(fn($therapist) => [
+                        'first_name' => $therapist['first_name'],
+                        'last_name'  => $therapist['last_name'],
+                        'type'      => 'supplementary',
+                    ])
                     ->toArray();
 
-                $user->referral_therapists = array_merge($therapistNames, $supplementaryTherapistNames);
-                return $user;
+                $patient->referral_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
+                return $patient;
             });
             return ['success' => true, 'data' => PatientListResource::collection($transformed), 'info' => $info];
         }
-        return ['success' => true, 'data' => PatientListResource::collection($users), 'info' => $info];
+        return ['success' => true, 'data' => PatientListResource::collection($patients), 'info' => $info];
     }
 
     public function listForChatroom(Request $request)
