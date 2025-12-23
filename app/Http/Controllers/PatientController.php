@@ -12,6 +12,7 @@ use App\Http\Resources\PatientRawDataResource;
 use App\Http\Resources\PatientList2Resource;
 use App\Http\Resources\PatientListResource;
 use App\Http\Resources\PatientResource;
+use App\Http\Resources\UserChatResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
@@ -267,34 +268,22 @@ class PatientController extends Controller
         return ['success' => true, 'data' => PatientListResource::collection($patients), 'info' => $info];
     }
 
-    public function listForChatroom(Request $request)
+    public function listForChatroom()
     {
-        $data = $request->all();
-        $query = User::query();
         $user = Auth::user();
-
-        if (isset($data['therapist_id'])) {
-            $query->where(function ($query) use ($data) {
-                $query->where('therapist_id', $data['therapist_id'])->orWhereJsonContains('secondary_therapists', intval($data['therapist_id']));
-            });
-        }
+        $query = User::where('enabled', true);
 
         if ($user->user_type === User::GROUP_PHC_WORKER) {
             $query->where(function ($query) use ($user) {
-                $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
+                $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', $user->therapist_user_id);
+            });
+        } else {
+            $query->where(function ($query) use ($user) {
+                $query->where('therapist_id', $user->therapist_user_id)->orWhereJsonContains('secondary_therapists', $user->therapist_user_id);
             });
         }
 
-        if (isset($data['enabled'])) {
-            $query->where('enabled', boolval($data['enabled']));
-        }
-
-        $patients = $query->with(['treatmentPlans', 'appointments'])->paginate($data['page_size']);
-        $info = [
-            'current_page' => $patients->currentPage(),
-            'total_count' => $patients->total(),
-        ];
-        return ['success' => true, 'data' => PatientList2Resource::collection($patients), 'info' => $info];
+        return ['success' => true, 'data' => UserChatResource::collection($query->get())];
     }
 
     /**
@@ -868,6 +857,49 @@ class PatientController extends Controller
         $patients = User::whereIn('phc_worker_id', $phcWorkerIds)->get();
 
         return response()->json(['data' => PatientListResource::collection($patients)]);
+    }
+
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getTherapistIdsByPhcWorkerId($id)
+    {
+        $therapistIds = User::where('phc_worker_id', $id)
+            ->whereNotNull('therapist_id')
+            ->select('therapist_id', 'secondary_therapists')
+            ->get()
+            ->flatMap(fn($user) => [$user->therapist_id, ...$user->secondary_therapists])
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => $therapistIds,
+        ]);
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPhcWorkerIdsByTherapistId($id)
+    {
+        $phcWorkerIds = User::where('therapist_id', $id)
+            ->whereNotNull('phc_worker_id')
+            ->select('phc_worker_id', 'supplementary_phc_workers')
+            ->get()
+            ->flatMap(fn($user) => [$user->phc_worker_id, ...$user->supplementary_phc_workers])
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => $phcWorkerIds,
+        ]);
     }
 
     /**

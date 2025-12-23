@@ -57,6 +57,8 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient/list/by-therapist-id', [PatientController::class, 'getByTherapistId'])->middleware('role:internal');
     Route::get('patient/list/by-therapist-ids', [PatientController::class, 'getByTherapistIds'])->middleware('role:internal');
     Route::get('patient/list/by-phc-worker-ids', [PatientController::class, 'getByPhcWorkerIds'])->middleware('role:internal');
+    Route::get('patient/therapist-ids/by-phc-worker-id/{id}', [PatientController::class, 'getTherapistIdsByPhcWorkerId'])->middleware('role:internal');
+    Route::get('patient/phc-worker-ids/by-therapist-id/{id}', [PatientController::class, 'getPhcWorkerIdsByTherapistId'])->middleware('role:internal');
     Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove'])->middleware('role:internal');
     Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']); // Deprecated from phone service
     Route::get('patient/transfer', [PatientController::class, 'transfer']); // not used
