@@ -198,6 +198,14 @@ class PatientController extends Controller
                             $patientIds = array_unique(array_column($data, 'patient_id'));
                             $query->whereIn('id', $patientIds);
                         }
+                    } elseif ($filterObj->columnName === 'referral_status') {
+                        $query->whereHas('lastReferral', function (Builder $query) use ($filterObj) {
+                            $query->where('status', $filterObj->value);
+                        });
+                    } elseif ($filterObj->columnName === 'date_of_birth_range') {
+                        $dateOfBirthFrom = date_create_from_format('d/m/Y', $filterObj->from);
+                        $dateOfBirthTo = date_create_from_format('d/m/Y', $filterObj->to);
+                        $query->whereBetween('date_of_birth', [date_format($dateOfBirthFrom, config('settings.defaultTimestampFormat')), date_format($dateOfBirthTo, config('settings.defaultTimestampFormat'))]);
                     } else {
                         $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
                     }
