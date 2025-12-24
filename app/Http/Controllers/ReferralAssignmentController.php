@@ -113,6 +113,12 @@ class ReferralAssignmentController extends Controller
             $referralAssignment->referral()->update(['status' => Referral::STATUS_ACCEPTED]);
 
             $referralAssignment->update(['status' => ReferralAssignment::STATUS_ACCEPTED]);
+
+            Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                ->post(env('THERAPIST_SERVICE_URL') . '/chat/create-room-for-users', [
+                    'therapist_id' => $authUser->therapist_user_id,
+                    'phc_worker_id' => $referralAssignment->referral->phc_worker_id,
+                ]);
         });
 
         return response()->json(['message' => 'success_message.referral.accepted'], 200);
