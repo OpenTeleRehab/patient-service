@@ -22,6 +22,7 @@ class AssistiveTechnologyController extends Controller
     public function index(Request $request)
     {
         $query = AssistiveTechnology::query();
+        $authUser = Auth::user();
 
         if ($request->has('patient_id')) {
             $query->where('patient_id', $request->get('patient_id'));
@@ -62,12 +63,16 @@ class AssistiveTechnologyController extends Controller
 
         // Retrieve only the therapist records needed for the current paginated results
         $therapistUsersRes = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
-            ->get(env('THERAPIST_SERVICE_URL') . '/users', [
-                'ids' => $therapistIds,
-            ])
-            ->json('data', []);
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
+                'ids' => json_encode($therapistIds),
+                'user_type' => $authUser->user_type,
+            ]);
 
-        $therapistUsers = collect($therapistUsersRes)->keyBy('id');
+        if (!$therapistUsersRes->successful()) {
+            return response()->json(['success' => true, 'message' => $therapistUsersRes->body()]);
+        }
+
+        $therapistUsers = collect($therapistUsersRes->json('data', []))->keyBy('id');
 
         $assistiveTechnologies->transform(function ($ass) use ($therapistUsers) {
             $therapist = $therapistUsers[$ass->therapist_id];
