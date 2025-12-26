@@ -23,6 +23,7 @@ class AssistiveTechnologyResource extends JsonResource
             'follow_up_date' => $this->follow_up_date ? $this->follow_up_date->format(config('settings.date_format')) : '',
             'appointment' => $this->appointment,
             'therapist_id' => $this->therapist_id,
+            'created_by' => $this->created_by,
         ];
     }
 }
