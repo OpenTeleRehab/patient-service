@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AssistiveTechnologyResource;
 use App\Models\Appointment;
 use App\Models\AssistiveTechnology;
+use App\Models\Forwarder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class AssistiveTechnologyController extends Controller
 {
@@ -50,6 +52,29 @@ class AssistiveTechnologyController extends Controller
         }
 
         $assistiveTechnologies = $query->paginate($request->get('page_size'));
+
+        $therapistIds = collect($assistiveTechnologies->items())
+            ->pluck('therapist_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        // Retrieve only the therapist records needed for the current paginated results
+        $therapistUsersRes = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->get(env('THERAPIST_SERVICE_URL') . '/users', [
+                'ids' => $therapistIds,
+            ])
+            ->json('data', []);
+
+        $therapistUsers = collect($therapistUsersRes)->keyBy('id');
+
+        $assistiveTechnologies->transform(function ($ass) use ($therapistUsers) {
+            $therapist = $therapistUsers[$ass->therapist_id];
+            $ass->created_by = $therapist ? ($therapist['first_name'] . ' ' . $therapist['last_name']) : null;
+
+            return $ass;
+        });
 
         return [
             'success' => true,
