@@ -109,7 +109,10 @@ class ReferralAssignmentController extends Controller
         $authUser = Auth::user();
 
         DB::transaction(function () use ($authUser, $referralAssignment) {
-            $referralAssignment->referral->patient->update(['therapist_id' => $authUser->therapist_user_id]);
+            $referralAssignment->referral->patient->update([
+                'therapist_id' => $authUser->therapist_user_id,
+                'clinic_id' => $authUser->clinic_id,
+            ]);
             $referralAssignment->referral()->update(['status' => Referral::STATUS_ACCEPTED]);
 
             $referralAssignment->update(['status' => ReferralAssignment::STATUS_ACCEPTED]);
