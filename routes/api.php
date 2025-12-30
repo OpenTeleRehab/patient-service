@@ -110,6 +110,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::post('appointment', [AppointmentController::class, 'store'])->middleware('role:internal');
     Route::put('appointment/{appointment}', [AppointmentController::class, 'update'])->middleware('role:internal,mobile');
     Route::delete('appointment/{appointment}', [AppointmentController::class, 'destroy'])->middleware('role:internal,mobile');
+    Route::get('appointment/count/overlap', [AppointmentController::class, 'countOverlapAppointment'])->middleware('role:internal');
 
     Route::get('treatment-plan/on-going/export', [TreatmentPlanController::class, 'exportOnGoing'])->middleware('role:mobile');
     Route::get('achievement/get-patient-achievements', [PatientController::class, 'getPatientAchievements'])->middleware('role:mobile');

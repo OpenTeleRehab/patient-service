@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Helpers\TranslationHelper;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\Forwarder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -80,19 +83,19 @@ class AppointmentController extends Controller
             ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
 
         // Count the number of unread patient actions for a therapist and the number of pending appointment requests from patients
-        $upComingAppointments = Appointment::where(function ($query) use ($request, $now) {
-            $query->where('therapist_id', $request->get('therapist_id'))
+        $upComingAppointments = Appointment::where(function ($query) use ($now, $therapistId) {
+            $query->where('therapist_id', $therapistId)
                 ->where('created_by_therapist', 0)
                 ->where('end_date', '>=', $now)
                 ->where('therapist_status', Appointment::STATUS_INVITED)
                 ->where('patient_status', '!=', Appointment::STATUS_CANCELLED);
-        })->orWhere(function ($query) use ($request) {
-            $query->where('therapist_id', $request->get('therapist_id'))
+        })->orWhere(function ($query) use ($therapistId) {
+            $query->where('therapist_id', $therapistId)
                 ->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
                 ->where('unread', true);
         })->count();
 
-        $unreadAppointments = Appointment::where('therapist_id', $request->get('therapist_id'))
+        $unreadAppointments = Appointment::where('therapist_id', $therapistId)
             ->whereIn('patient_status', [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED, Appointment::STATUS_ACCEPTED])
             ->where('unread', true)
             ->get();
@@ -328,27 +331,26 @@ class AppointmentController extends Controller
         $overlap = Appointment::where(function ($query) use ($therapistId, $patientId) {
             $query->where('therapist_id', $therapistId)
                 ->orWhere('patient_id', $patientId);
-        })->where(function ($query) use ($startDate, $endDate) {
-            $query->orWhere(function ($query) use ($startDate, $endDate) {
-                $query->where('start_date', '<=', $startDate)
-                    ->where('end_date', '>', $startDate);
-            })->orWhere(function ($query) use ($startDate, $endDate) {
-                $query->where('start_date', '>', $startDate)
-                    ->where('end_date', '<', $endDate);
-            })->orWhere(function ($query) use ($startDate, $endDate) {
-                $query->where('start_date', '>=', $startDate)
-                    ->where('end_date', '<', $startDate);
-            })->orWhere(function ($query) use ($startDate, $endDate) {
-                $query->where('start_date', '<', $endDate)
-                    ->where('end_date', '>=', $endDate);
-            });
-        });
+        })->where('start_date', '<', $endDate)->where('end_date', '>', $startDate);
 
         if ($appointmentId) {
             $overlap->where('id', '!=', $appointmentId);
         }
 
-        return $overlap->count();
+        // Get count of overlap appointments from therapist service by therapist/phc-worker.
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
+        ])->get(env('THERAPIST_SERVICE_URL') . '/appointments/count/overlap', [
+            'start_date' => Carbon::parse($startDate)->format('Y-m-d H:i:s'),
+            'end_date' => Carbon::parse($endDate)->format('Y-m-d H:i:s'),
+            'therapist_id' => $therapistId,
+        ]);
+
+        if ($response->successful()) {
+            $count = data_get($response->json(), 'data', 0);
+        }
+
+        return $overlap->count() + ($count ?? 0);
     }
 
     /**
@@ -501,5 +503,25 @@ class AppointmentController extends Controller
         Appointment::whereIn('id', $request)->update(['unread' => false]);
 
         return ['success' => true, 'message' => 'success_message.unread_update'];
+    }
+
+
+    /**
+     * Count overlap appointments for therapist or phc worker
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function countOverlapAppointment(Request $request)
+    {
+        $requesterId = $request->get('requester_id');
+        $recipientId = $request->get('recipient_id');
+        $startDate = date_create_from_format('Y-m-d H:i:s', $request->get('start_date'));
+        $endDate = date_create_from_format('Y-m-d H:i:s', $request->get('end_date'));
+
+        $overlap = Appointment::whereIn('therapist_id', [$requesterId, $recipientId])
+            ->where('start_date', '<', $endDate)->where('end_date', '>', $startDate);
+
+        return ['success' => true, 'data' => $overlap->count()];
     }
 }
