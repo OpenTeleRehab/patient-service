@@ -13,6 +13,7 @@ use App\Http\Resources\PatientList2Resource;
 use App\Http\Resources\PatientListResource;
 use App\Http\Resources\PatientResource;
 use App\Http\Resources\UserChatResource;
+use App\Http\Resources\PatientListMobileResource;
 use App\Models\Activity;
 use App\Models\Forwarder;
 use App\Models\TreatmentPlan;
@@ -1686,5 +1687,92 @@ class PatientController extends Controller
             'success' => true,
             'data' => PatientRawDataResource::collection($patients),
         ];
+    }
+
+    /**
+     * Get PHC worker patients for mobile app.
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function getPhcWorkerPatients()
+    {
+        $user = Auth::user();
+
+        $query = User::with('lastReferral')->where(function ($query) use ($user) {
+            $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
+        })->where('enabled', true);
+
+        $patients = $query->get();
+
+        // Get therapists data from therapist service.
+        $therapistResponse = Http::withToken(
+            Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
+        )
+        ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
+        ->json('data', []);
+
+        $therapists = collect($therapistResponse)->keyBy('id');
+        $patients->transform(function ($patient) use ($therapists) {
+            $leadTherapistData = [];
+
+            $leadTherapistId = $patient->therapist_id;
+            $leadTherapist = $therapists[$leadTherapistId] ?? null;
+
+            if ($leadTherapist) {
+                $leadTherapistData[] =  [
+                    'first_name' => $leadTherapist['first_name'],
+                    'last_name'  => $leadTherapist['last_name'],
+                    'type'      => 'lead',
+                ];
+            }
+
+            $supplementaryTherapistIds = (array) ($patient->secondary_therapists ?? []);
+
+            $supplementaryTherapists = collect($supplementaryTherapistIds)
+                ->map(fn($id) => $therapists[$id] ?? null)
+                ->filter()
+                ->map(fn($therapist) => [
+                    'first_name' => $therapist['first_name'],
+                    'last_name'  => $therapist['last_name'],
+                    'type'      => 'supplementary',
+                ])
+                ->toArray();
+
+            $patient->referral_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
+            return $patient;
+        });
+
+        // Get screening questionnaires data from admin service.
+        $screeningQuestionnaireResponse = Http::withToken(
+            Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE)
+        )
+        ->get(env('ADMIN_SERVICE_URL') . '/screening-questionnaires/all')
+        ->json('data', []);
+
+        $screeningQuestionnairesByUser = collect($screeningQuestionnaireResponse)
+        ->flatMap(function ($questionnaire) {
+            return collect($questionnaire['answers'] ?? [])
+                ->map(fn ($answer) => [
+                    'user_id' => $answer['user_id'],
+                    'questionnaire' => $questionnaire,
+                ]);
+        })
+        ->groupBy('user_id')
+        ->map(fn ($items) =>
+            $items->pluck('questionnaire')->unique('id')->values()
+        );
+
+
+        $patients->transform(function ($patient) use ($screeningQuestionnairesByUser) {
+            $patient->interviewed_questionnaires = $screeningQuestionnairesByUser
+                ->get($patient->id, collect())
+                ->pluck('id')
+                ->values();
+
+            return $patient;
+        });
+
+        return ['success' => true, 'data' => PatientListMobileResource::collection($patients)];
     }
 }
