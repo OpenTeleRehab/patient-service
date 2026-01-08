@@ -231,12 +231,12 @@ class PatientController extends Controller
             $therapistResponse = Http::withToken(
                 Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
             )
-            ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
-            ->json('data', []);
+                ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
+                ->json('data', []);
 
             $therapists = collect($therapistResponse)->keyBy('id');
             $transformed = collect($patients->items())->transform(function ($patient) use ($therapists) {
-               $leadTherapistData = [];
+                $leadTherapistData = [];
 
                 $leadTherapistId = $patient->therapist_id;
                 $leadTherapist = $therapists[$leadTherapistId] ?? null;
@@ -865,9 +865,12 @@ class PatientController extends Controller
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getTherapistIdsByPhcWorkerId($id)
+    public function getTherapistIdsByPhcWorkerId(int $id)
     {
-        $therapistIds = User::where('phc_worker_id', $id)
+        $therapistIds = User::where(function ($q) use ($id) {
+            $q->where('phc_worker_id', $id)
+                ->orWhereJsonContains('supplementary_phc_workers', $id);
+        })
             ->whereNotNull('therapist_id')
             ->select('therapist_id', 'secondary_therapists')
             ->get()
@@ -886,9 +889,12 @@ class PatientController extends Controller
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPhcWorkerIdsByTherapistId($id)
+    public function getPhcWorkerIdsByTherapistId(int $id)
     {
-        $phcWorkerIds = User::where('therapist_id', $id)
+        $phcWorkerIds = User::where(function ($q) use ($id) {
+            $q->where('therapist_id', $id)
+                ->orWhereJsonContains('secondary_therapists', $id);
+        })
             ->whereNotNull('phc_worker_id')
             ->select('phc_worker_id', 'supplementary_phc_workers')
             ->get()
