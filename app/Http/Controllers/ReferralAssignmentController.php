@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Resources\ReferralAssignmentResource;
 use App\Models\Referral;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ReferralAssignmentController extends Controller
@@ -160,5 +161,37 @@ class ReferralAssignmentController extends Controller
         $counts = ReferralAssignment::where('therapist_id', $authUser->therapist_user_id)->where('status', ReferralAssignment::STATUS_INVITED)->count();
 
         return response()->json(['data' => $counts], 200);
+    }
+
+    /**
+     * Counter the latest referral for a given patient.
+     *
+     * @param int $patientId
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function counterReferral($patientId)
+    {
+        $patient = User::findOrFail($patientId);
+
+        $referralAssignment = $patient->lastReferral?->referralAssignments()
+            ->where('status', ReferralAssignment::STATUS_ACCEPTED)
+            ->latest()
+            ->first();
+
+        if (!$referralAssignment) {
+            return response()->json(['success' => false, 'message' => 'counter_referral.not_found'], 404);
+        }
+
+        DB::transaction(function () use ($patient) {
+            $patient->update([
+                'therapist_id' => null,
+                'clinic_id' => null,
+            ]);
+
+            $patient->referrals()->delete();
+        });
+
+        return response()->json(['message' => 'success_message.counter_referral'], 200);
     }
 }

@@ -149,6 +149,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient-referral-assignments/count', [ReferralAssignmentController::class, 'countReferralAssignments'])->middleware('role:internal');
     Route::put('patient-referral-assignments/{id}/accept', [ReferralAssignmentController::class, 'accept'])->middleware('role:internal');
     Route::put('patient-referral-assignments/{id}/decline', [ReferralAssignmentController::class, 'decline'])->middleware('role:internal');
+    Route::put('patient-referral-assignments/{patientId}/counter-referral', [ReferralAssignmentController::class, 'counterReferral'])->middleware('role:internal');
     Route::apiResource('patient-referral-assignments', ReferralAssignmentController::class)->middleware('role:internal');
 });
 
