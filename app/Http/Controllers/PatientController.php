@@ -81,7 +81,7 @@ class PatientController extends Controller
         $query = User::query();
 
         if ($user->user_type === User::GROUP_THERAPIST) {
-            $query->where(function ($query) use ($user) {
+            $query->with('lastReferral')->where(function ($query) use ($user) {
                 $query->where('therapist_id', $user->therapist_user_id)->orWhereJsonContains('secondary_therapists', intval($user->therapist_user_id));
             });
         }
@@ -227,46 +227,98 @@ class PatientController extends Controller
             'total_count' => $patients->total(),
         ];
 
-        if ($user->user_type === User::GROUP_PHC_WORKER) {
-            $therapistResponse = Http::withToken(
-                Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
-            )
-                ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
-                ->json('data', []);
+        $patientsCollection = collect($patients->items());
 
-            $therapists = collect($therapistResponse)->keyBy('id');
-            $transformed = collect($patients->items())->transform(function ($patient) use ($therapists) {
-                $leadTherapistData = [];
+        $phcWorkerIds = $patientsCollection->flatMap(fn($p) => [$p->phc_worker_id, ...((array) $p->supplementary_phc_workers)])
+            ->filter()
+            ->unique()
+            ->values();
 
-                $leadTherapistId = $patient->therapist_id;
-                $leadTherapist = $therapists[$leadTherapistId] ?? null;
+        $therapistIds = $patientsCollection->flatMap(fn($p) => [$p->therapist_id, ...((array) $p->secondary_therapists)])
+            ->filter()
+            ->unique()
+            ->values();
 
-                if ($leadTherapist) {
-                    $leadTherapistData[] =  [
-                        'first_name' => $leadTherapist['first_name'],
-                        'last_name'  => $leadTherapist['last_name'],
-                        'type'      => 'lead',
-                    ];
-                }
+        $phcWorkersResponse = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->get(env('THERAPIST_SERVICE_URL') . '/phc-workers/by-ids', [
+                'ids' => json_encode($phcWorkerIds),
+                'user_type' => 'phc_service_admin',
+            ])
+            ->json('data', []);
 
-                $supplementaryTherapistIds = (array) ($patient->secondary_therapists ?? []);
+        $therapistResponse = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
+                'ids' => json_encode($therapistIds),
+                'user_type' => 'clinic_admin',
+            ])
+            ->json('data', []);
 
-                $supplementaryTherapists = collect($supplementaryTherapistIds)
-                    ->map(fn($id) => $therapists[$id] ?? null)
-                    ->filter()
-                    ->map(fn($therapist) => [
-                        'first_name' => $therapist['first_name'],
-                        'last_name'  => $therapist['last_name'],
-                        'type'      => 'supplementary',
-                    ])
-                    ->toArray();
+        $phcWorkers = collect($phcWorkersResponse)->keyBy('id');
+        $therapists = collect($therapistResponse)->keyBy('id');
 
-                $patient->referral_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
-                return $patient;
-            });
-            return ['success' => true, 'data' => PatientListResource::collection($transformed), 'info' => $info];
-        }
-        return ['success' => true, 'data' => PatientListResource::collection($patients), 'info' => $info];
+        $mapped = collect($patientsCollection)->map(function ($patient) use ($phcWorkers, $therapists) {
+            $leadPhcWorker = $phcWorkers[$patient->phc_worker_id] ?? null;
+            $leadTherapist = $therapists[$patient->therapist_id] ?? null;
+            $leadPhcWorkerData = [];
+            $leadTherapistData = [];
+
+            if ($leadPhcWorker) {
+                $leadPhcWorkerData[] =  [
+                    'id' => $leadPhcWorker['id'],
+                    'first_name' => $leadPhcWorker['first_name'],
+                    'last_name'  => $leadPhcWorker['last_name'],
+                    'type'      => 'lead',
+                ];
+            }
+
+            if ($leadTherapist) {
+                $leadTherapistData[] =  [
+                    'id' => $leadTherapist['id'],
+                    'first_name' => $leadTherapist['first_name'],
+                    'last_name'  => $leadTherapist['last_name'],
+                    'type'      => 'lead',
+                ];
+            }
+
+            $supplementaryPhcWorkerIds = (array) ($patient->supplementary_phc_workers ?? []);
+            $supplementaryTherapistIds = (array) ($patient->secondary_therapists ?? []);
+
+            $supplementaryPhcWorkers = collect($supplementaryPhcWorkerIds)
+                ->map(fn($id) => $phcWorkers[$id] ?? null)
+                ->filter()
+                ->map(fn($phcWorker) => [
+                    'id' => $phcWorker['id'],
+                    'first_name' => $phcWorker['first_name'],
+                    'last_name'  => $phcWorker['last_name'],
+                    'type'      => 'supplementary',
+                ])
+                ->toArray();
+
+            $supplementaryTherapists = collect($supplementaryTherapistIds)
+                ->map(fn($id) => $therapists[$id] ?? null)
+                ->filter()
+                ->map(fn($therapist) => [
+                    'id' => $therapist['id'],
+                    'first_name' => $therapist['first_name'],
+                    'last_name'  => $therapist['last_name'],
+                    'type'      => 'supplementary',
+                ])
+                ->toArray();
+
+            $patient->referral_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
+            $patient->lead_and_supplementary_phc_workers = array_merge($leadPhcWorkerData, $supplementaryPhcWorkers);
+            $patient->lead_and_supplementary_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
+
+            if (isset($leadPhcWorkerData[0])) {
+                $patient->referred_by =
+                    ($leadPhcWorkerData[0]['first_name'] ?? '') . ' ' .
+                    ($leadPhcWorkerData[0]['last_name'] ?? '');
+            }
+
+            return $patient;
+        });
+
+        return ['success' => true, 'data' => PatientListResource::collection($mapped), 'info' => $info];
     }
 
     public function listForChatroom()
@@ -1715,8 +1767,8 @@ class PatientController extends Controller
         $therapistResponse = Http::withToken(
             Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE)
         )
-        ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
-        ->json('data', []);
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapists-by-country', ['country_id' => $user->country_id])
+            ->json('data', []);
 
         $therapists = collect($therapistResponse)->keyBy('id');
         $patients->transform(function ($patient) use ($therapists) {
@@ -1753,21 +1805,22 @@ class PatientController extends Controller
         $screeningQuestionnaireResponse = Http::withToken(
             Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE)
         )
-        ->get(env('ADMIN_SERVICE_URL') . '/screening-questionnaires/all')
-        ->json('data', []);
+            ->get(env('ADMIN_SERVICE_URL') . '/screening-questionnaires/all')
+            ->json('data', []);
 
         $screeningQuestionnairesByUser = collect($screeningQuestionnaireResponse)
-        ->flatMap(function ($questionnaire) {
-            return collect($questionnaire['answers'] ?? [])
-                ->map(fn ($answer) => [
-                    'user_id' => $answer['user_id'],
-                    'questionnaire' => $questionnaire,
-                ]);
-        })
-        ->groupBy('user_id')
-        ->map(fn ($items) =>
-            $items->pluck('questionnaire')->unique('id')->values()
-        );
+            ->flatMap(function ($questionnaire) {
+                return collect($questionnaire['answers'] ?? [])
+                    ->map(fn($answer) => [
+                        'user_id' => $answer['user_id'],
+                        'questionnaire' => $questionnaire,
+                    ]);
+            })
+            ->groupBy('user_id')
+            ->map(
+                fn($items) =>
+                $items->pluck('questionnaire')->unique('id')->values()
+            );
 
 
         $patients->transform(function ($patient) use ($screeningQuestionnairesByUser) {

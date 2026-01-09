@@ -43,6 +43,7 @@ class PatientListResource extends JsonResource
             'upcomingTreatmentPlan' => $upcomingTreatmentPlan,
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
             'lastTreatmentPlan' => $lastTreatmentPlan,
+            'referred_by' => $this->referred_by,
             'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
             'referral_therapists' => $this->referral_therapists,
         ];
@@ -56,6 +57,8 @@ class PatientListResource extends JsonResource
                 'phc_worker_id' => $this->phc_worker_id,
                 'secondary_therapists' => $this->secondary_therapists ?: [],
                 'supplementary_phc_workers' => $this->supplementary_phc_workers ?: [],
+                'lead_and_supplementary_phc_workers' => $this->lead_and_supplementary_phc_workers,
+                'lead_and_supplementary_therapists' => $this->lead_and_supplementary_therapists,
                 'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
             ]);
         }
