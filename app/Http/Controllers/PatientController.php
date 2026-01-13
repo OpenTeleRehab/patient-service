@@ -510,7 +510,7 @@ class PatientController extends Controller
         }
 
         DB::commit();
-        return ['success' => true, 'message' => 'success_message.user_add'];
+        return ['success' => true, 'message' => 'success_message.user_add', 'data'=>$user];
     }
 
     /**
@@ -1747,7 +1747,7 @@ class PatientController extends Controller
 
             $patient->referral_therapists = array_merge($leadTherapistData, $supplementaryTherapists);
             return $patient;
-        });
+        });   
 
         // Get screening questionnaires data from admin service.
         $screeningQuestionnaireResponse = Http::withToken(
