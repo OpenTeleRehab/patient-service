@@ -37,6 +37,8 @@ class PatientListMobileResource extends JsonResource
             'last_name' => $this->last_name,
             'gender' => $this->gender,
             'phone' => $this->phone,
+            'location'=> $this->location,
+            'dial_code' => $this->dial_code,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
             'region_id' => $this->region_id,
