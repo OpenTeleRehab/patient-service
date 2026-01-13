@@ -7,6 +7,7 @@ use App\Models\Forwarder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use App\Http\Resources\ReferralResource;
 use App\Models\User;
 
@@ -70,9 +71,18 @@ class ReferralController extends Controller
      */
     public function store(Request $request)
     {
+        $authUser = Auth::user();
         $validatedData = $request->validate([
-            'patient_id' => 'required|exists:users,id',
+            'patient_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) use ($authUser) {
+                    $query->where('phc_worker_id', $authUser->therapist_user_id);
+                }),
+            ],
             'to_clinic_id' => 'required|integer|min:0',
+            'request_reason' => 'required|string'
+        ], [
+            'patient_id.exists' => 'this_patient.not_belong_to.you',
         ]);
 
         $hasPendingReferral = User::findOrFail($validatedData['patient_id'])
@@ -105,7 +115,7 @@ class ReferralController extends Controller
         $referral = Referral::findOrFail($id);
 
         $validatedData = $request->validate([
-            'reason' => 'required|min:3',
+            'reject_reason' => 'required|string',
         ]);
 
         $validatedData['status'] = Referral::STATUS_DECLINED;

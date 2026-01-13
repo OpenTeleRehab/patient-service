@@ -22,6 +22,7 @@ class ReferralResource extends JsonResource
             'lead_and_supplementary_phc' => $this->lead_and_supplementary_phc,
             'referred_by' => $this->referred_by,
             'status' => $this->referralAssignments()->latest()->first()?->status,
+            'request_reason' => $this->request_reason,
             'therapist_reason' => $this->referralAssignments()->latest()->first()?->reason,
         ];
     }

@@ -23,7 +23,8 @@ class Referral extends Model
         'phc_worker_id',
         'to_clinic_id',
         'status',
-        'reason',
+        'request_reason',
+        'reject_reason'
     ];
 
     /**
