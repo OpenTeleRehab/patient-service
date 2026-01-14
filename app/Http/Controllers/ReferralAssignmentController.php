@@ -187,6 +187,7 @@ class ReferralAssignmentController extends Controller
             $patient->update([
                 'therapist_id' => null,
                 'clinic_id' => null,
+                'secondary_therapists' => null,
             ]);
 
             $patient->referrals()->delete();
