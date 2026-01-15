@@ -7,6 +7,7 @@ use App\Http\Controllers\AssistiveTechnologyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CallHistoryController;
 use App\Http\Controllers\ChartController;
+use App\Http\Controllers\DataCleanUpController;
 use App\Http\Controllers\ExternalApiController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\ForwarderController;
@@ -77,6 +78,10 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::put('patient/{id}', [PatientController::class, 'update'])->middleware('role:internal,mobile');
     Route::get('patient/list-for-chatroom', [PatientController::class, 'listForChatroom'])->middleware('role:internal');
     Route::get('patient/list-for-phc-worker', [PatientController::class, 'getPhcWorkerPatients'])->middleware('role:internal');
+
+    // Data clean up across service
+    Route::get('data-clean-up/users/count', [DataCleanUpController::class, 'countUsersByEntity'])->middleware('role:internal');
+    Route::post('data-clean-up/users/delete', [DataCleanUpController::class, 'deleteUsersByEntity'])->middleware('role:internal');
 
     // Activities
     Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
