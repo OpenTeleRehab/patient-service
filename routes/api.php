@@ -61,6 +61,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient/therapist-ids/by-phc-worker-id/{id}', [PatientController::class, 'getTherapistIdsByPhcWorkerId'])->middleware('role:internal');
     Route::get('patient/phc-worker-ids/by-therapist-id/{id}', [PatientController::class, 'getPhcWorkerIdsByTherapistId'])->middleware('role:internal');
     Route::get('patient/list/for-therapist-remove', [PatientController::class, 'getPatientForTherapistRemove'])->middleware('role:internal');
+    Route::get('patient/list/for-phc-worker-remove', [PatientController::class, 'getPatientOfRemovePhcWorker'])->middleware('role:internal');
     Route::get('patient/list/data-for-phone-service', [PatientController::class, 'getPatientDataForPhoneService']); // Deprecated from phone service
     Route::get('patient/transfer', [PatientController::class, 'transfer']); // not used
     Route::get('patient/profile/export', [PatientController::class, 'export'])->middleware('role:mobile');
@@ -68,6 +69,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('patient/list/get-raw-data', [PatientController::class, 'getPatientRawData'])->middleware('role:internal');
     Route::post('patient/delete/by-clinic', [PatientController::class, 'deleteByClinicId'])->middleware('role:internal');
     Route::post('patient/delete/by-therapist', [PatientController::class, 'deleteByTherapistId'])->middleware('role:internal');
+    Route::post('patient/delete/by-phc-worker', [PatientController::class, 'deleteByPhcWorkerId'])->middleware('role:internal');
     Route::post('patient/transfer-to-therapist/{user}', [PatientController::class, 'transferToTherapist'])->middleware('role:internal');
     Route::post('patient/deleteAccount/{id}', [PatientController::class, 'deleteAccount'])->middleware('role:internal');
     Route::post('patient/delete-chat-room/by-id', [PatientController::class, 'deleteChatRoomById'])->middleware('role:internal');
