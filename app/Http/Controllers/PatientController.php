@@ -8,6 +8,7 @@ use App\Exports\TreatmentPlanExport;
 use App\Helpers\RocketChatHelper;
 use App\Helpers\TherapistServiceHelper;
 use App\Http\Resources\PatientForTherapistRemoveResource;
+use App\Http\Resources\PatientOfRemovePhcWorkerResource;
 use App\Http\Resources\PatientRawDataResource;
 use App\Http\Resources\PatientList2Resource;
 use App\Http\Resources\PatientListResource;
@@ -1026,6 +1027,20 @@ class PatientController extends Controller
     }
 
     /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function getPatientOfRemovePhcWorker(Request $request)
+    {
+        $phcWorkerId = $request->get('phc_worker_id');
+
+        $patients = User::where('phc_worker_id', $phcWorkerId)->orWhereJsonContains('supplementary_phc_workers', $phcWorkerId)->get();
+
+        return ['success' => true, 'data' => PatientOfRemovePhcWorkerResource::collection($patients)];
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/patient/activateDeactivateAccount/{user}",
      *     tags={"Patient"},
@@ -1222,6 +1237,43 @@ class PatientController extends Controller
 
     /**
      * @param Request $request
+     * @return array
+     */
+    public function deleteByPhcWorkerId(Request $request)
+    {
+        $phcWorkerId = $request->get('phc_worker_id');
+        $hardDelete = $request->boolean('hard_delete');
+
+        $users = User::where('phc_worker_id', $phcWorkerId)->get();
+
+        if (count($users) > 0) {
+            foreach ($users as $user) {
+                // Delete phone in phone service.
+                $response = Http::get(env('PHONE_SERVICE_URL') . '/get-phone-by-org', [
+                    'sub_domain' => env('APP_NAME'),
+                    'phone' => $user->phone,
+                ]);
+
+                if (!empty($response['data']) && $response->successful()) {
+                    $phone = $response->json()['data'];
+                    Http::delete(env('PHONE_SERVICE_URL') . '/phone/' . $phone['id']);
+                }
+
+                $this->obfuscatedUserData($user);
+
+                if ($hardDelete) {
+                    $user->forceDelete();
+                } else {
+                    $user->delete();
+                }
+            }
+        }
+
+        return ['success' => true, 'message' => 'success_message.deleted_account'];
+    }
+
+    /**
+     * @param Request $request
      * @param User $user
      * @return array
      * @throws \Illuminate\Http\Client\RequestException
@@ -1233,6 +1285,7 @@ class PatientController extends Controller
         $newTherapistChatRooms = $request->get('new_chat_rooms');
         $authUserType = $request->get('auth_user_type');
         $chatRooms = $user->chat_rooms;
+        $isGlobalAdmin = Auth::user()->user_type === User::GROUP_ORGANIZATION_ADMIN || Auth::user()->user_type === User::ADMIN_GROUP_COUNTRY_ADMIN || Auth::user()->user_type === User::GROUP_REGIONAL_ADMIN || Auth::user()->user_type === User::GROUP_PHC_SERVICE_ADMIN;
 
         if ($request->get('therapist_type') === 'supplementary') {
             if ($user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER) {
@@ -1253,7 +1306,7 @@ class PatientController extends Controller
             }
 
             // Remove secondary therapists if transfered therapist.
-            $secondaryTherapists = $user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER ? $user->supplementary_phc_workers : $user->secondary_therapists;
+            $secondaryTherapists = $user->phc_worker_id && ($authUserType === User::GROUP_PHC_WORKER || $isGlobalAdmin) ? $user->supplementary_phc_workers : $user->secondary_therapists;
             if (($key = array_search($therapistId, $secondaryTherapists)) !== false) {
                 unset($secondaryTherapists[$key]);
             }
@@ -1295,7 +1348,7 @@ class PatientController extends Controller
 
             // Update user chatrooms.
             $updateData['chat_rooms'] = array_values(array_unique($newChatRooms));
-            if ($user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER) {
+            if ($user->phc_worker_id && ($authUserType === User::GROUP_PHC_WORKER || $isGlobalAdmin)) {
                 $updateData['phc_worker_id'] = $therapistId;
                 $updateData['supplementary_phc_workers'] = $secondaryTherapists;
             } else {

@@ -26,6 +26,9 @@ class User extends Authenticatable
     const GROUP_THERAPIST = 'therapist';
     const GROUP_PATIENT = 'patient';
     const GROUP_PHC_WORKER = 'phc_worker';
+    const GROUP_ORGANIZATION_ADMIN = 'organization_admin';
+    const GROUP_REGIONAL_ADMIN = 'regional_admin';
+    const GROUP_PHC_SERVICE_ADMIN = 'phc_service_admin';
     const FINISHED_TREATMENT_PLAN = 1;
     const PLANNED_TREATMENT_PLAN = 2;
     const SECONDARY_TERAPIST = 2;
