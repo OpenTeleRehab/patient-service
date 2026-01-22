@@ -1812,7 +1812,7 @@ class PatientController extends Controller
 
         $query = User::with('lastReferral')->where(function ($query) use ($user) {
             $query->where('phc_worker_id', $user->therapist_user_id)->orWhereJsonContains('supplementary_phc_workers', intval($user->therapist_user_id));
-        })->where('enabled', true);
+        });
 
         $patients = $query->get();
 
