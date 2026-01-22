@@ -69,7 +69,7 @@ class AssistiveTechnologyController extends Controller
             ]);
 
         if (!$therapistUsersRes->successful()) {
-            return response()->json(['success' => true, 'message' => $therapistUsersRes->body()]);
+            return response()->json(['success' => false, 'message' => $therapistUsersRes->body()]);
         }
 
         $therapistUsers = collect($therapistUsersRes->json('data', []))->keyBy('id');
