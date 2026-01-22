@@ -54,4 +54,44 @@ class DataCleanUpController extends Controller
 
         return response()->json(['data' => $userCount]);
     }
+
+    /**
+     * Bulk update users belonging to a specific entity.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateUsersByEntity(Request $request)
+    {
+        $validatedData = $request->validate([
+            'entity_name' => 'required|in:rehab_service,phc_service',
+            'entity_id' => 'required|integer',
+            'region_id' => 'nullable|integer',
+            'province_id' => 'nullable|integer',
+        ]);
+
+        $entityColumnMap = [
+            'rehab_service' => 'clinic_id',
+            'phc_service' => 'phc_service_id',
+        ];
+
+        $column = $entityColumnMap[$validatedData['entity_name']];
+
+        $updateData = [];
+
+        if (isset($validatedData['region_id'])) {
+            $updateData['region_id'] = $validatedData['region_id'];
+        }
+
+        if (isset($validatedData['province_id'])) {
+            $updateData['province_id'] = $validatedData['province_id'];
+        }
+
+        if (empty($updateData)) {
+            return response()->json(['message' => 'No data to update.'], 422);
+        }
+
+        User::where($column, $validatedData['entity_id'])->update($updateData);
+
+        return response()->json(['message' => 'Users updated successfully.']);
+    }
 }
