@@ -40,6 +40,7 @@ class TreatmentPlanResource extends JsonResource
             'activities' => ActivityResource::collection($activities),
             'total_of_weeks' => $this->total_of_weeks,
             'created_by' => $this->created_by,
+            'creator_name' => $this->creator_name,
             'health_condition_id' => $this->health_condition_id,
         ];
     }

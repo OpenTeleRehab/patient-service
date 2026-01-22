@@ -58,6 +58,7 @@ class TreatmentPlanController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
+        $authUser = Auth::user();
 
         $query = TreatmentPlan::query();
 
@@ -72,7 +73,7 @@ class TreatmentPlanController extends Controller
             $therapistId = intval($data['therapist_id']);
             $patientQuery->where(function ($q) use ($therapistId) {
                 $q->where('therapist_id', $therapistId)
-                ->orWhereJsonContains('secondary_therapists', $therapistId);
+                    ->orWhereJsonContains('secondary_therapists', $therapistId);
             });
         }
         $patientIds = $patientQuery->exists() ? $patientQuery->pluck('id') : null;
@@ -128,6 +129,34 @@ class TreatmentPlanController extends Controller
         }
 
         $treatmentPlans = $query->paginate($data['page_size']);
+
+        $createdByIds = collect($treatmentPlans->items())
+            ->pluck('created_by')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        // Retrieve only the therapist records needed for the current paginated results
+        $therapistUsersRes = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+            ->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-ids', [
+                'ids' => json_encode($createdByIds),
+                'user_type' => $authUser->user_type,
+            ]);
+
+        if (!$therapistUsersRes->successful()) {
+            return response()->json(['success' => false, 'message' => $therapistUsersRes->body()]);
+        }
+
+        $therapistUsers = collect($therapistUsersRes->json('data', []))->keyBy('id');
+
+        $treatmentPlans->transform(function ($treatmentPlan) use ($therapistUsers) {
+            $createdBy = $therapistUsers[$treatmentPlan->created_by];
+            $treatmentPlan->creator_name = $createdBy ? ($createdBy['first_name'] . ' ' . $createdBy['last_name']) : null;
+
+            return $treatmentPlan;
+        });
+
         $info = [
             'current_page' => $treatmentPlans->currentPage(),
             'total_count' => $treatmentPlans->total(),
