@@ -21,6 +21,7 @@ use App\Models\TreatmentPlan;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -950,7 +951,7 @@ class PatientController extends Controller
             ->whereNotNull('therapist_id')
             ->select('therapist_id', 'secondary_therapists')
             ->get()
-            ->flatMap(fn($user) => [$user->therapist_id, ...$user->secondary_therapists])
+            ->flatMap(fn($user) => [$user->therapist_id, ...Arr::wrap($user->secondary_therapists)])
             ->unique()
             ->values()
             ->toArray();
@@ -974,7 +975,7 @@ class PatientController extends Controller
             ->whereNotNull('phc_worker_id')
             ->select('phc_worker_id', 'supplementary_phc_workers')
             ->get()
-            ->flatMap(fn($user) => [$user->phc_worker_id, ...$user->supplementary_phc_workers])
+            ->flatMap(fn($user) => [$user->phc_worker_id, ...Arr::wrap($user->supplementary_phc_workers)])
             ->unique()
             ->values()
             ->toArray();
