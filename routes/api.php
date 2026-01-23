@@ -84,6 +84,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     // Data clean up across service
     Route::get('data-clean-up/users/count', [DataCleanUpController::class, 'countUsersByEntity'])->middleware('role:internal');
     Route::post('data-clean-up/users/delete', [DataCleanUpController::class, 'deleteUsersByEntity'])->middleware('role:internal');
+    Route::post('data-clean-up/users/update', [DataCleanUpController::class, 'updateUsersByEntity'])->middleware('role:internal');
 
     // Activities
     Route::get('patient-activities/list/by-filters', [ActivityController::class, 'getActivities'])->middleware('role:internal');
