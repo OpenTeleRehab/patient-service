@@ -36,7 +36,8 @@ class TreatmentPlan extends Model
         'status',
         'total_of_weeks',
         'created_by',
-        'health_condition_id'
+        'health_condition_id',
+        'health_condition_group_id'
     ];
 
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Services\AdminService;
 
 class PatientListResource extends JsonResource
 {
@@ -30,6 +31,27 @@ class PatientListResource extends JsonResource
             ->orderBy('end_date', 'desc')
             ->first();
 
+        $treatmentPlans = $this->treatmentPlans;
+        $groupIds = $treatmentPlans->pluck('health_condition_group_id')->filter()->unique()->all();
+        $conditionIds = $treatmentPlans->pluck('health_condition_id')->filter()->unique()->all();
+
+        $adminData = app(AdminService::class)->getHealthConditions($groupIds, $conditionIds);
+
+        // Map IDs to titles
+        $healthConditionGroups = $treatmentPlans->pluck('health_condition_group_id')
+            ->map(fn($id) => $adminData['groups'][$id]['title'] ?? null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $healthConditions = $treatmentPlans->pluck('health_condition_id')
+            ->map(fn($id) => $adminData['conditions'][$id]['title'] ?? null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
         $responseData = [
             'id' => $this->id,
             'identity' => $this->identity,
@@ -46,6 +68,8 @@ class PatientListResource extends JsonResource
             'referred_by' => $this->referred_by,
             'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
             'referral_therapists' => $this->referral_therapists,
+            'healthConditionGroups' => implode(',', $healthConditionGroups),
+            'healthConditions' => implode(',', $healthConditions),
         ];
 
         if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {

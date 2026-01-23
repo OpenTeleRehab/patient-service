@@ -183,6 +183,7 @@ class TreatmentPlanController extends Controller
         $patientId = $request->get('patient_id');
         $therapistId = $request->get('therapist_id');
         $healthConditionId = $request->get('health_condition_id');
+        $healthConditionGroupId = $request->get('health_condition_group_id');
 
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
@@ -215,6 +216,7 @@ class TreatmentPlanController extends Controller
             'total_of_weeks' => $request->get('total_of_weeks', 1),
             'created_by' => $therapistId,
             'health_condition_id' => $healthConditionId,
+            'health_condition_group_id' => $healthConditionGroupId,
         ]);
 
         if (!$treatmentPlan) {
@@ -241,6 +243,7 @@ class TreatmentPlanController extends Controller
         $startDate = date_create_from_format(config('settings.date_format'), $request->get('start_date'))->format('Y-m-d');
         $endDate = date_create_from_format(config('settings.date_format'), $request->get('end_date'))->format('Y-m-d');
         $healthConditionId = $request->get('health_condition_id');
+        $healthConditionGroupId = $request->get('health_condition_group_id');
 
         // Check if there is any overlap schedule.
         $overlapRecords = TreatmentPlan::where('patient_id', $patientId)
@@ -269,6 +272,7 @@ class TreatmentPlanController extends Controller
             'end_date' => $endDate,
             'total_of_weeks' => $request->get('total_of_weeks', 1),
             'health_condition_id' => $healthConditionId,
+            'health_condition_group_id' => $healthConditionGroupId,
         ]);
 
         $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
