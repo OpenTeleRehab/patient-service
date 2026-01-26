@@ -132,12 +132,9 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     // Admin Service
     Route::name('admin.')->group(function () {
         Route::get('profession', [ForwarderController::class, 'index'])->middleware('role:mobile');
-    });
-
-    // Global Admin Service
-    Route::name('global_admin.')->group(function () {
         Route::post('survey/skip', [ForwarderController::class, 'store'])->middleware('role:mobile');
         Route::post('survey/submit', [ForwarderController::class, 'store'])->middleware('role:mobile');
+        Route::get('survey/list/publish-survey', [ForwarderController::class, 'index'])->middleware('role:mobile');
     });
 
     // Report
