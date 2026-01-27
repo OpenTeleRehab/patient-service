@@ -77,6 +77,7 @@ class PatientRawDataTreatmentPlanResource extends JsonResource
             'created_by' => $this->created_by,
             'disease_id' => $this->disease_id,
             'questionnaires' => $questionnaires,
+            'health_condition_id' => $this->health_condition_id,
 
             // Average calculations using pre-filtered collections
             'averageWeeklyGoal' => $weeklyGoalActivities->avg('satisfaction'),
