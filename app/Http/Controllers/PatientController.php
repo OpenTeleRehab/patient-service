@@ -30,6 +30,7 @@ use Mpdf\Output\Destination;
 use Twilio\Jwt\AccessToken;
 use Twilio\Jwt\Grants\VideoGrant;
 use App\Helpers\CryptHelper;
+use App\Models\Appointment;
 
 class PatientController extends Controller
 {
@@ -281,7 +282,19 @@ class PatientController extends Controller
         $phcWorkers = collect($phcWorkersResponse)->keyBy('id');
         $therapists = collect($therapistResponse)->keyBy('id');
 
-        $mapped = collect($patientsCollection)->map(function ($patient) use ($phcWorkers, $therapists) {
+        $therapistUnreadAppointmentCountByPatient = Appointment::where('therapist_id', $user->therapist_user_id)
+            ->whereIn('patient_status', [
+                Appointment::STATUS_CANCELLED,
+                Appointment::STATUS_REJECTED,
+                Appointment::STATUS_ACCEPTED
+            ])
+            ->where('unread', true)
+            ->selectRaw('patient_id, COUNT(*) as total')
+            ->groupBy('patient_id')
+            ->get()
+            ->keyBy('patient_id');
+
+        $mapped = collect($patientsCollection)->map(function ($patient) use ($phcWorkers, $therapists, $therapistUnreadAppointmentCountByPatient) {
             $leadPhcWorker = $phcWorkers[$patient->phc_worker_id] ?? null;
             $leadTherapist = $therapists[$patient->therapist_id] ?? null;
             $leadPhcWorkerData = [];
@@ -339,6 +352,8 @@ class PatientController extends Controller
                     ($leadPhcWorkerData[0]['first_name'] ?? '') . ' ' .
                     ($leadPhcWorkerData[0]['last_name'] ?? '');
             }
+
+            $patient->unread_appointments_count = $therapistUnreadAppointmentCountByPatient[$patient->id]?->total ?? 0;
 
             return $patient;
         });
@@ -1900,11 +1915,25 @@ class PatientController extends Controller
             );
 
 
-        $patients->transform(function ($patient) use ($screeningQuestionnairesByUser) {
+        $therapistUnreadAppointmentCountByPatient = Appointment::where('therapist_id', $user->therapist_user_id)
+            ->whereIn('patient_status', [
+                Appointment::STATUS_CANCELLED,
+                Appointment::STATUS_REJECTED,
+                Appointment::STATUS_ACCEPTED
+            ])
+            ->where('unread', true)
+            ->selectRaw('patient_id, COUNT(*) as total')
+            ->groupBy('patient_id')
+            ->get()
+            ->keyBy('patient_id');
+
+        $patients->transform(function ($patient) use ($screeningQuestionnairesByUser, $therapistUnreadAppointmentCountByPatient) {
             $patient->interviewed_questionnaires = $screeningQuestionnairesByUser
                 ->get($patient->id, collect())
                 ->pluck('id')
                 ->values();
+
+            $patient->unread_appointments_count = $therapistUnreadAppointmentCountByPatient[$patient->id]?->total ?? 0;
 
             return $patient;
         });
