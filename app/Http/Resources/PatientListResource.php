@@ -85,6 +85,8 @@ class PatientListResource extends JsonResource
                 'supplementary_phc_workers' => $this->supplementary_phc_workers ?: [],
                 'lead_and_supplementary_phc_workers' => $this->lead_and_supplementary_phc_workers,
                 'lead_and_supplementary_therapists' => $this->lead_and_supplementary_therapists,
+                'total_pain_threshold' => $this->total_pain_threshold,
+                'chat_user_id' => $this->chat_user_id,
                 'invited_appointment_count' => $this->appointments()
                     ->where('start_date', '>', Carbon::now())
                     ->where('therapist_status', '>', Appointment::STATUS_INVITED)
