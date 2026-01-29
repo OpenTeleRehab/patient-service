@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PatientReferralMail;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
 use App\Models\ReferralAssignment;
@@ -11,6 +12,7 @@ use App\Http\Resources\ReferralAssignmentResource;
 use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ReferralAssignmentController extends Controller
 {
@@ -82,6 +84,7 @@ class ReferralAssignmentController extends Controller
         $validatedData = $request->validate([
             'therapist_id' => 'required|integer',
             'referral_id' => 'required|exists:referrals,id',
+            'accepted_by' => 'required|integer',
         ]);
 
         $exists = ReferralAssignment::where('referral_id', $validatedData['referral_id'])
@@ -184,6 +187,35 @@ class ReferralAssignmentController extends Controller
         }
 
         DB::transaction(function () use ($patient) {
+            $adminAccessToken = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
+            $therapistAccessToken = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+
+            Http::withToken($adminAccessToken)->post(env('ADMIN_SERVICE_URL') . '/notifications/patient-counter-referral', [
+                'clinic_id' => $patient->clinic_id,
+                'therapist_id' => $patient->therapist_id,
+            ])->throw();
+
+            $healthcareWorker = Http::withToken($therapistAccessToken)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+                'id' => $patient->phc_worker_id,
+            ])->throw();
+
+            $therapist = Http::withToken($therapistAccessToken)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+                'id' => $patient->therapist_id,
+            ])->throw();
+
+            if ($healthcareWorker->successful()) {
+                $healthcareWorker = $healthcareWorker->json();
+
+                Mail::to($healthcareWorker['email'])->send(
+                    new PatientReferralMail(
+                        'therapist-counter-refers-a-patient-for-healthcare-worker',
+                        $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
+                        $therapist['last_name'] . ' ' . $therapist['first_name'],
+                        $healthcareWorker['language_id'],
+                    )
+                );
+            }
+
             $patient->update([
                 'therapist_id' => null,
                 'clinic_id' => null,

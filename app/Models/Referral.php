@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Mail\PatientReferralMail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class Referral extends Model
 {
@@ -62,6 +65,38 @@ class Referral extends Model
 
             if ($authUser->user_type === User::GROUP_PHC_WORKER && $authUser->therapist_user_id !== null) {
                 $referral->phc_worker_id = $authUser->therapist_user_id;
+            }
+        });
+
+        self::creating(function ($referral) {
+            // Send notification to rehab service admin.
+            Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))->post(env('ADMIN_SERVICE_URL') . '/notifications/patient-referral', [
+                'clinic_id' => $referral->to_clinic_id,
+                'phc_worker_id' => $referral->phc_worker_id,
+            ])->throw();
+        });
+
+        self::updated(function ($referral) {
+            if ($referral->status === self::STATUS_DECLINED) {
+                $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+
+                $healthcareWorker = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+                    'id' => $referral->phc_worker_id,
+                ])->throw();
+
+                // TODO: Fetch rehab service admin name.
+                if ($healthcareWorker->successful()) {
+                    $healthcareWorker = $healthcareWorker->json();
+
+                    Mail::to($healthcareWorker['email'])->send(
+                        new PatientReferralMail(
+                            'rehab-service-admin-declines-the-patient-referral-request',
+                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
+                            '[Rehab Service Admin Name]',
+                            $healthcareWorker['language_id'],
+                        )
+                    );
+                }
             }
         });
     }
