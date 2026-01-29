@@ -55,6 +55,8 @@ class PatientListMobileResource extends JsonResource
             'ongoingTreatmentPlan' => $ongoingTreatmentPlan,
             'lastTreatmentPlan' => $lastTreatmentPlan,
             'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
+            'referral_request_reason'=> $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->request_reason),
+            'referral_reject_reason'=> $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->reject_reason),
             'referral_therapists' => $this->referral_therapists,
             'interviewed_questionnaires' => $this->interviewed_questionnaires,
             'completed_percent' => $this->completed_percent,
