@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\User;
+use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Services\AdminService;
@@ -70,6 +71,7 @@ class PatientListResource extends JsonResource
             'referral_therapists' => $this->referral_therapists,
             'healthConditionGroups' => implode(',', $healthConditionGroups),
             'healthConditions' => implode(',', $healthConditions),
+            'completed_percent' => $this->completed_percent,
         ];
 
         if ($request->get('type') !== User::ADMIN_GROUP_GLOBAL_ADMIN) {
@@ -83,7 +85,13 @@ class PatientListResource extends JsonResource
                 'supplementary_phc_workers' => $this->supplementary_phc_workers ?: [],
                 'lead_and_supplementary_phc_workers' => $this->lead_and_supplementary_phc_workers,
                 'lead_and_supplementary_therapists' => $this->lead_and_supplementary_therapists,
-                'appointments' => $this->appointments()->where('start_date', '>', Carbon::now())->orderBy('start_date')->get(),
+                'invited_appointment_count' => $this->appointments()
+                    ->where('start_date', '>', Carbon::now())
+                    ->where('therapist_status', '>', Appointment::STATUS_INVITED)
+                    ->where('patient_status', '>', Appointment::STATUS_ACCEPTED)
+                    ->orderBy('start_date')
+                    ->count(),
+                'unread_appointment_count' => $this->unread_appointments_count,
             ]);
         }
 

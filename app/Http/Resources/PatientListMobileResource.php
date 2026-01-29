@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Appointment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -37,7 +38,7 @@ class PatientListMobileResource extends JsonResource
             'last_name' => $this->last_name,
             'gender' => $this->gender,
             'phone' => $this->phone,
-            'location'=> $this->location,
+            'location' => $this->location,
             'dial_code' => $this->dial_code,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
@@ -56,6 +57,14 @@ class PatientListMobileResource extends JsonResource
             'referral_status' => $this->whenLoaded('lastReferral', fn() => $this->lastReferral?->status),
             'referral_therapists' => $this->referral_therapists,
             'interviewed_questionnaires' => $this->interviewed_questionnaires,
+            'completed_percent' => $this->completed_percent,
+            'invited_appointment_count' => $this->appointments()
+                ->where('start_date', '>', Carbon::now())
+                ->where('therapist_status', '>', Appointment::STATUS_INVITED)
+                ->where('patient_status', '>', Appointment::STATUS_ACCEPTED)
+                ->orderBy('start_date')
+                ->count(),
+            'unread_appointment_count' => $this->unread_appointments_count,
         ];
 
         return $responseData;
