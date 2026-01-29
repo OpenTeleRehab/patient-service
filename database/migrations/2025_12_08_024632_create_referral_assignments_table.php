@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('referral_id');
             $table->unsignedBigInteger('therapist_id')->index();
+            $table->unsignedBigInteger('accepted_by')->index();
             $table->enum('status', ['invited', 'declined']);
             $table->string('reason')->nullable();
             $table->timestamps();

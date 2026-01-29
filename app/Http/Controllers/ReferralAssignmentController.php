@@ -206,14 +206,16 @@ class ReferralAssignmentController extends Controller
             if ($healthcareWorker->successful()) {
                 $healthcareWorker = $healthcareWorker->json();
 
-                Mail::to($healthcareWorker['email'])->send(
-                    new PatientReferralMail(
-                        'therapist-counter-refers-a-patient-for-healthcare-worker',
-                        $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
-                        $therapist['last_name'] . ' ' . $therapist['first_name'],
-                        $healthcareWorker['language_id'],
-                    )
-                );
+                if ($healthcareWorker['notify_email']) {
+                    Mail::to($healthcareWorker['email'])->send(
+                        new PatientReferralMail(
+                            'therapist-counter-refers-a-patient-for-healthcare-worker',
+                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
+                            $therapist['last_name'] . ' ' . $therapist['first_name'],
+                            $healthcareWorker['language_id'],
+                        )
+                    );
+                }
             }
 
             $patient->update([
