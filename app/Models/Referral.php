@@ -24,6 +24,7 @@ class Referral extends Model
     protected $fillable = [
         'patient_id',
         'phc_worker_id',
+        'to_region_id',
         'to_clinic_id',
         'status',
         'request_reason',
@@ -72,6 +73,7 @@ class Referral extends Model
             // Send notification to rehab service admin.
             Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))->post(env('ADMIN_SERVICE_URL') . '/notifications/patient-referral', [
                 'clinic_id' => $referral->to_clinic_id,
+                'region_id' => $referral->to_region_id,
                 'phc_worker_id' => $referral->phc_worker_id,
             ])->throw();
         });

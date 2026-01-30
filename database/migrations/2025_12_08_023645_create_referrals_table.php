@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('patient_id');
             $table->unsignedBigInteger('phc_worker_id');
+            $table->unsignedBigInteger('to_region_id')->index();
             $table->unsignedBigInteger('to_clinic_id')->index();
             $table->enum('status', ['invited', 'declined']);
             $table->string('reason')->nullable();
