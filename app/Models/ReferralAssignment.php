@@ -60,7 +60,7 @@ class ReferralAssignment extends Model
                             'new-assigned-patient-referral-request-from-a-rehab-service-admin',
                             $therapist['last_name'] . ' ' . $therapist['first_name'],
                             $rehabServiceAdmin['data']['last_name'] . ' ' . $rehabServiceAdmin['data']['first_name'],
-                            $therapist['language_id'],
+                            $therapist['language_id'] ?? null,
                         )
                     );
                 }
@@ -75,7 +75,7 @@ class ReferralAssignment extends Model
                             'rehab-service-admin-assigns-the-patient-referral-request',
                             $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
                             $rehabServiceAdmin['data']['last_name'] . ' ' . $rehabServiceAdmin['data']['first_name'],
-                            $healthcareWorker['language_id'],
+                            $healthcareWorker['language_id'] ?? null,
                         )
                     );
                 }
@@ -107,7 +107,7 @@ class ReferralAssignment extends Model
                             $prefix,
                             $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
                             $therapist['last_name'] . ' ' . $therapist['first_name'],
-                            $healthcareWorker['language_id'],
+                            $healthcareWorker['language_id'] ?? null,
                         )
                     );
                 }
