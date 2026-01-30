@@ -60,6 +60,8 @@ class PatientListMobileResource extends JsonResource
             'referral_therapists' => $this->referral_therapists,
             'interviewed_questionnaires' => $this->interviewed_questionnaires,
             'completed_percent' => $this->completed_percent,
+            'total_pain_threshold' => $this->total_pain_threshold,
+            'chat_user_id' => $this->chat_user_id,
             'invited_appointment_count' => $this->appointments()
                 ->where('start_date', '>', Carbon::now())
                 ->where('therapist_status', '>', Appointment::STATUS_INVITED)
