@@ -18,6 +18,7 @@ class ReferralResource extends JsonResource
         return [
             'id' => $this->id,
             'patient_identity' => $this->patient->identity,
+            'patient_id'=>$this->patient->id,
             'first_name' => $this->patient->first_name,
             'last_name' => $this->patient->last_name,
             'date_of_birth' => $this->patient->date_of_birth,
