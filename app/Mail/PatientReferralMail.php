@@ -20,7 +20,7 @@ class PatientReferralMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(string $prefix, string $recipientName, string $actionName, int $languageId)
+    public function __construct(string $prefix, string $recipientName, string $actionName, ?int $languageId = null)
     {
         $endpoint = env('ADMIN_SERVICE_URL') . '/email-templates/'. $prefix .'/get-by-prefix';
         $accessToken = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
