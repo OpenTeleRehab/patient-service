@@ -80,6 +80,7 @@ class ReferralController extends Controller
                 }),
             ],
             'to_clinic_id' => 'required|integer|min:0',
+            'to_region_id' => 'required|integer|min:0',
             'request_reason' => 'required|string'
         ], [
             'patient_id.exists' => 'this_patient.not_belong_to.you',
