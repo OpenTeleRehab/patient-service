@@ -36,47 +36,49 @@ class ReferralAssignment extends Model
         parent::boot();
 
         self::created(function ($assignment) {
-            $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+            $therapistAccessToken = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+            $adminAccessToken = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
 
-            $therapist = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+            $therapist = Http::withToken($therapistAccessToken)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
                 'id' => $assignment->therapist_id,
             ])->throw();
 
-            $healthcareWorker = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+            $healthcareWorker = Http::withToken($therapistAccessToken)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
                 'id' => $assignment->referral->phc_worker_id,
             ])->throw();
 
-            // TODO: Fetch rehab service admin info.
-            $rehabServiceAdmin = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
-                'id' => $assignment->therapist_id,
-            ])->throw();
+            $rehabServiceAdmin = Http::withToken($adminAccessToken)
+                ->get(env('ADMIN_SERVICE_URL') . '/internal/user/' . $assignment->accepted_by)
+                ->throw();
 
-            if ($therapist->successful() && $rehabServiceAdmin->successful()) {
+            if ($therapist->successful()) {
                 $therapist = $therapist->json();
 
-                // TODO: check user notifiable
-                Mail::to($therapist['email'])->send(
-                    new PatientReferralMail(
-                        'new-assigned-patient-referral-request-from-a-rehab-service-admin',
-                        $therapist['last_name'] . ' ' . $therapist['first_name'],
-                        $rehabServiceAdmin['last_name'] . ' ' . $rehabServiceAdmin['first_name'],
-                        $therapist['language_id'],
-                    )
-                );
+                if ($therapist['notify_email']) {
+                    Mail::to($therapist['email'])->send(
+                        new PatientReferralMail(
+                            'new-assigned-patient-referral-request-from-a-rehab-service-admin',
+                            $therapist['last_name'] . ' ' . $therapist['first_name'],
+                            $rehabServiceAdmin['data']['last_name'] . ' ' . $rehabServiceAdmin['data']['first_name'],
+                            $therapist['language_id'],
+                        )
+                    );
+                }
             }
 
-            if ($healthcareWorker->successful() && $rehabServiceAdmin->successful()) {
+            if ($healthcareWorker->successful() && $rehabServiceAdmin['data']) {
                 $healthcareWorker = $healthcareWorker->json();
 
-                // TODO: check user notifiable.
-                Mail::to($healthcareWorker['email'])->send(
-                    new PatientReferralMail(
-                        'rehab-service-admin-assigns-the-patient-referral-request',
-                        $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
-                        $rehabServiceAdmin['last_name'] . ' ' . $rehabServiceAdmin['first_name'],
-                        $healthcareWorker['language_id'],
-                    )
-                );
+                if ($healthcareWorker['notify_email']) {
+                    Mail::to($healthcareWorker['email'])->send(
+                        new PatientReferralMail(
+                            'rehab-service-admin-assigns-the-patient-referral-request',
+                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
+                            $rehabServiceAdmin['data']['last_name'] . ' ' . $rehabServiceAdmin['data']['first_name'],
+                            $healthcareWorker['language_id'],
+                        )
+                    );
+                }
             }
         });
 
@@ -95,18 +97,20 @@ class ReferralAssignment extends Model
             if ($healthcareWorker->successful() && $therapist->successful()) {
                 $healthcareWorker = $healthcareWorker->json();
 
-                $prefix = $assignment === self::STATUS_ACCEPTED
-                    ? 'therapist-accepts-the-assigned-patient-referral-request-for-healthcare-worker'
-                    : 'therapist-declines-the-assigned-patient-referral-request-for-healthcare-worker';
+                if ($healthcareWorker['notify_email']) {
+                    $prefix = $assignment === self::STATUS_ACCEPTED
+                        ? 'therapist-accepts-the-assigned-patient-referral-request-for-healthcare-worker'
+                        : 'therapist-declines-the-assigned-patient-referral-request-for-healthcare-worker';
 
-                Mail::to($healthcareWorker['email'])->send(
-                    new PatientReferralMail(
-                        $prefix,
-                        $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
-                        $therapist['last_name'] . ' ' . $therapist['first_name'],
-                        $healthcareWorker['language_id'],
-                    )
-                );
+                    Mail::to($healthcareWorker['email'])->send(
+                        new PatientReferralMail(
+                            $prefix,
+                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
+                            $therapist['last_name'] . ' ' . $therapist['first_name'],
+                            $healthcareWorker['language_id'],
+                        )
+                    );
+                }
             }
 
             // Send notification to rehab service admin.
