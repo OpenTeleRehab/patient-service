@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\AppointmentEvent;
 use App\Helpers\TranslationHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -118,7 +119,7 @@ class Appointment extends Model
             // TODO: Remove appointment if patient deleted.
             $builder->has('patient');
         });
-    
+
         self::created(function ($appointment) {
             try {
                 $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
@@ -169,17 +170,16 @@ class Appointment extends Model
     /**
      * @param \App\Models\User $user
      * @param \App\Models\Appointment $appointment
-     * @param string $heading
+     * @param string $title
      *
      * @return bool
      */
-    public static function notification($appointment, $heading)
+    public static function notification($appointment, $title)
     {
-        if ($appointment->patient) {
-            $token = $appointment->patient->firebase_token;
-            $body = $appointment->start_date . '|' . $appointment->end_date;
+        if ($appointment?->patient?->firebase_token) {
+            $fcmToken = $appointment->patient->firebase_token;
 
-            event(new PodcastNotificationEvent($token, null, null, $heading, $body, true));
+            event(new AppointmentEvent($fcmToken, $title, $appointment->start_date, $appointment->end_date));
         }
         return true;
     }

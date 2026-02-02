@@ -7,24 +7,14 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PodcastNotificationEvent
+class AppointmentEvent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * @var string
      */
-    public $token;
-
-    /**
-     * @var string
-     */
-    public $id;
-
-    /**
-     * @var string
-     */
-    public $rid;
+    public $fcmToken;
 
     /**
      * @var string
@@ -34,26 +24,29 @@ class PodcastNotificationEvent
     /**
      * @var string
      */
-    public $body;
+    public $startDate;
+
+    /**
+     * @var string
+     */
+    public $endDate;
 
     /**
      * Create a new event instance.
      *
-     * @param string $token
-     * @param string $id
-     * @param string $rid
+     * @param string $fcmToken
      * @param string $title
-     * @param string $body
+     * @param string $startDate
+     * @param string $endDate
      *
      * @return void
      */
-    public function __construct($token, $id, $rid, $title, $body)
+    public function __construct($fcmToken, $title, $startDate, $endDate)
     {
-        $this->token = $token;
-        $this->id = $id;
-        $this->rid = $rid;
+        $this->fcmToken = $fcmToken;
         $this->title = $title;
-        $this->body = $body;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     /**
