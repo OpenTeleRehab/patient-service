@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\AppointmentEvent;
 use App\Events\LoginEvent;
 use App\Events\PodcastCalculatorEvent;
 use App\Events\PodcastNotificationEvent;
+use App\Listeners\Appointment;
 use App\Listeners\Calculator;
 use App\Listeners\InitBadge;
 use App\Listeners\SendPodcastNotification;
@@ -25,6 +27,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         LoginEvent::class => [
             InitBadge::class,
+        ],
+        AppointmentEvent::class => [
+            Appointment::class,
         ],
         PodcastCalculatorEvent::class => [
             Calculator::class
