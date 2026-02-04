@@ -201,6 +201,7 @@ class AppointmentController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             'note' => $request->get('note'),
+            'type' => $request->get('type'),
         ]);
 
         return ['success' => true, 'message' => 'success_message.appointment_add'];
@@ -275,6 +276,7 @@ class AppointmentController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             'note' => $request->get('note'),
+            'type'=> $request->get('type'),
         ];
 
         // Update patient status if appointment data changed.
