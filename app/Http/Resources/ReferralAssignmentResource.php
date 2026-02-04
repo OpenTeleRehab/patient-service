@@ -19,6 +19,7 @@ class ReferralAssignmentResource extends JsonResource
             'first_name' => $this->referral->patient->first_name,
             'last_name' => $this->referral->patient->last_name,
             'patient_identity' => $this->referral->patient->identity,
+            'patient_id' => $this->referral->patient->id,
             'date_of_birth' => $this->referral->patient->date_of_birth,
             'lead_and_supplementary_phc' => $this->lead_and_supplementary_phc,
             'referred_by' => $this->referred_by,
