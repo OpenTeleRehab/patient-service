@@ -7,10 +7,8 @@ use App\Helpers\TranslationHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Events\PodcastNotificationEvent;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity as ActivityLog;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -74,36 +72,18 @@ class Appointment extends Model
      * @param \Spatie\Activitylog\Models\Activity $activity
      * @return void
      */
-    public function tapActivity(ActivityLog $activity, string $eventName)
+    public function tapActivity(ActivityLog $activity)
     {
-        $this->refresh();
-        $request = request();
-        $therapist = null;
-        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
-        $response = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
-            'id' => $this->therapist_id,
-        ]);
-        if (!empty($response) && $response->successful()) {
-            $therapist = json_decode($response);
+        $authUser = Auth::user();
+        if ($authUser->therapist_user_id || $authUser->admin_user_id) {
+            $activity->causer_id = $authUser->therapist_user_id ?? $authUser->admin_user_id;
+            $activity->log_name = $authUser->therapist_user_id ? ExtendActivity::THERAPIST_SERVICE : ExtendActivity::ADMIN_SERVICE;
+            $activity->country_id = $authUser->country_id;
+            $activity->clinic_id = $authUser->clinic_id ?: null;
+            $activity->phc_service_id = $authUser->phc_service_id ?: null;
+            $activity->province_id = $authUser->province_id;
+            $activity->region_id = $authUser->region_id;
         }
-
-        if ($eventName === 'updated') {
-            if ($this->created_by_therapist && ($this->therapist_status == self::STATUS_ACCEPTED || $this->therapist_status == self::STATUS_REJECTED || $this->therapist_status == self::STATUS_CANCELLED) && !$request->has('status')) {
-                $activity->causer_id = $this->therapist_id;
-                $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null;
-                $activity->group = User::GROUP_THERAPIST;
-            } else {
-                $activity->causer_id = $request->has('therapist_status') ? $this->therapist_id : $this->patient_id;
-                $activity->full_name = $request->has('therapist_status') ? ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null) : $this->patient->identity;
-                $activity->group = $request->has('therapist_status') ? User::GROUP_THERAPIST : User::GROUP_PATIENT;
-            }
-        } else {
-            $activity->causer_id = $this->created_by_therapist ? $this->therapist_id : $this->patient_id;
-            $activity->full_name = $this->created_by_therapist ? ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null) : $this->patient->identity;
-            $activity->group = $this->created_by_therapist ? User::GROUP_THERAPIST : User::GROUP_PATIENT;
-        }
-        $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
-        $activity->country_id = $therapist ? $therapist->country_id : null;
     }
 
     /**

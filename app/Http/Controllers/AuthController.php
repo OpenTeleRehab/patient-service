@@ -92,10 +92,6 @@ class AuthController extends Controller
                         'causer_id' => $user->id,
                         'causer_type' => User::class,
                         'description' => 'login',
-                        'full_name' => $user->identity,
-                        'clinic_id' => $user->clinic_id,
-                        'country_id' => $user->country_id,
-                        'group' => User::GROUP_PATIENT,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);

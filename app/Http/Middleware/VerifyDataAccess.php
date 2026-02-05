@@ -65,6 +65,10 @@ class VerifyDataAccess
             if (!empty($request->header('int-admin-user-id'))) {
                 $user->admin_user_id = (int)$request->header('int-admin-user-id');
             }
+
+            if (!empty($request->header('int-region-ids'))) {
+                $user->region_ids = $request->header('int-region-ids');
+            }
         }
 
         $deny = fn() => response()->json(['message' => 'Access denied'], 403);

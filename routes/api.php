@@ -20,6 +20,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\TherapistController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -155,6 +156,9 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::put('patient-referral-assignments/{id}/decline', [ReferralAssignmentController::class, 'decline'])->middleware('role:internal');
     Route::put('patient-referral-assignments/{patientId}/counter-referral', [ReferralAssignmentController::class, 'counterReferral'])->middleware('role:internal');
     Route::apiResource('patient-referral-assignments', ReferralAssignmentController::class)->middleware('role:internal');
+
+    // Audit log
+    Route::get('patient-audit-logs', [AuditLogController::class, 'index'])->middleware('role:internal');
 });
 
 // Public
