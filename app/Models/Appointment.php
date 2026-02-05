@@ -39,6 +39,7 @@ class Appointment extends Model
         'note',
         'created_by_therapist',
         'unread',
+        'type',
     ];
 
     /**

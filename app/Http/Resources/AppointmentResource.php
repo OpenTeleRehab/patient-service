@@ -30,6 +30,7 @@ class AppointmentResource extends JsonResource
             'note' => $this->note,
             'created_by_therapist' => $this->created_by_therapist,
             'assistive_technology' => $this->assistiveTechnology,
+            'type' => $this->type,
         ];
     }
 }
