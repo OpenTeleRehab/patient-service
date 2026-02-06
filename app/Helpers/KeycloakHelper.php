@@ -51,6 +51,9 @@ class KeycloakHelper
     public static function getAdminKeycloakAccessToken()
     {
         $access_token = Cache::get(self::ADMIN_ACCESS_TOKEN);
+        $adminClientId = env('ADMIN_KEYCLOAK_BACKEND_CLIENT');
+        $adminUsername = env('ADMIN_KEYCLOAK_BACKEND_USERNAME');
+        $adminPassword = env('ADMIN_KEYCLOAK_BACKEND_PASSWORD');
 
         if ($access_token) {
             $token_arr = explode('.', $access_token);
@@ -59,13 +62,13 @@ class KeycloakHelper
             $current_timestamp = Carbon::now()->timestamp;
 
             if ($current_timestamp > $token_exp_at) {
-                return self::generateKeycloakToken(ADMIN_KEYCLOAK_TOKEN_URL, env('ADMIN_KEYCLOAK_BACKEND_SECRET'), self::ADMIN_ACCESS_TOKEN);
+                return self::generateKeycloakToken(ADMIN_KEYCLOAK_TOKEN_URL, env('ADMIN_KEYCLOAK_BACKEND_SECRET'), self::ADMIN_ACCESS_TOKEN, $adminClientId, $adminUsername, $adminPassword);
             }
 
             return $access_token;
         }
 
-        return self::generateKeycloakToken(ADMIN_KEYCLOAK_TOKEN_URL, env('ADMIN_KEYCLOAK_BACKEND_SECRET'), self::ADMIN_ACCESS_TOKEN);
+        return self::generateKeycloakToken(ADMIN_KEYCLOAK_TOKEN_URL, env('ADMIN_KEYCLOAK_BACKEND_SECRET'), self::ADMIN_ACCESS_TOKEN, $adminClientId, $adminUsername, $adminPassword);
     }
 
     /**
@@ -74,7 +77,9 @@ class KeycloakHelper
     public static function getTherapistKeycloakAccessToken()
     {
         $access_token = Cache::get(self::THERAPIST_ACCESS_TOKEN);
-
+        $therapistClientId = env('THERAPIST_KEYCLOAK_BACKEND_CLIENT');
+        $therapistUsername = env('THERAPIST_KEYCLOAK_BACKEND_USERNAME');
+        $therapistPassword = env('THERAPIST_KEYCLOAK_BACKEND_PASSWORD');
         if ($access_token) {
             $token_arr = explode('.', $access_token);
             $token_obj = json_decode(JWT::urlsafeB64Decode($token_arr[1]), true);
@@ -82,13 +87,13 @@ class KeycloakHelper
             $current_timestamp = Carbon::now()->timestamp;
 
             if ($current_timestamp > $token_exp_at) {
-                return self::generateKeycloakToken(THERAPIST_KEYCLOAK_TOKEN_URL, env('THERAPIST_KEYCLOAK_BACKEND_SECRET'), self::THERAPIST_ACCESS_TOKEN);
+                return self::generateKeycloakToken(THERAPIST_KEYCLOAK_TOKEN_URL, env('THERAPIST_KEYCLOAK_BACKEND_SECRET'), self::THERAPIST_ACCESS_TOKEN, $therapistClientId, $therapistUsername, $therapistPassword);
             }
 
             return $access_token;
         }
 
-        return self::generateKeycloakToken(THERAPIST_KEYCLOAK_TOKEN_URL, env('THERAPIST_KEYCLOAK_BACKEND_SECRET'), self::THERAPIST_ACCESS_TOKEN);
+        return self::generateKeycloakToken(THERAPIST_KEYCLOAK_TOKEN_URL, env('THERAPIST_KEYCLOAK_BACKEND_SECRET'), self::THERAPIST_ACCESS_TOKEN, $therapistClientId, $therapistUsername, $therapistPassword);
     }
 
     /**
@@ -98,14 +103,14 @@ class KeycloakHelper
      *
      * @return void
      */
-    private static function generateKeycloakToken($url, $client_secret, $cache_key)
+    private static function generateKeycloakToken($url, $client_secret, $cache_key, $clientId = null, $username = null, $password = null)
     {
         $response = Http::asForm()->post($url, [
             'grant_type' => 'password',
-            'client_id' => env('KEYCLOAK_BACKEND_CLIENT'),
+            'client_id' => $clientId ?? env('KEYCLOAK_BACKEND_CLIENT'),
             'client_secret' => $client_secret,
-            'username' => env('KEYCLOAK_BACKEND_USERNAME'),
-            'password' => env('KEYCLOAK_BACKEND_PASSWORD')
+            'username' => $username ?? env('KEYCLOAK_BACKEND_USERNAME'),
+            'password' => $password ?? env('KEYCLOAK_BACKEND_PASSWORD')
         ]);
 
         if ($response->successful()) {
