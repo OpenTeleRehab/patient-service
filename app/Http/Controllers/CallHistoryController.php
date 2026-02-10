@@ -51,7 +51,12 @@ class CallHistoryController extends Controller
         foreach ($rooms as $room) {
             $participants = $twilio->video->rooms($room->sid)->participants->read();
             foreach ($participants as $participant) {
-                $identity = explode('_', $participant->identity);
+                if (str_contains($participant->identity, '###')) {
+                    $identity = explode('###', $participant->identity);
+                } else {
+                    $identity = explode('_', $participant->identity);
+                }
+
                 if (count($identity) > 1) {
                     // For other patient service host
                     if ($request->get('country_id') && $identity[1] === $request->get('country_id')) {
