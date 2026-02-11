@@ -25,8 +25,6 @@ class FirebaseService
     {
         $data = json_encode(['message' => $message]);
 
-        Log::debug($data);
-
         $headers = [
             'Authorization: Bearer ' . self::getAccessToken(),
             'Content-Type: application/json',
