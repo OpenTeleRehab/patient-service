@@ -150,12 +150,14 @@ class TreatmentPlanController extends Controller
 
         $therapistUsers = collect($therapistUsersRes->json('data', []))->keyBy('id');
 
-        $treatmentPlans->transform(function ($treatmentPlan) use ($therapistUsers) {
-            $createdBy = $therapistUsers[$treatmentPlan->created_by];
-            $treatmentPlan->creator_name = $createdBy ? ($createdBy['first_name'] . ' ' . $createdBy['last_name']) : null;
+        if ($therapistUsers->isNotEmpty()) {
+            $treatmentPlans->transform(function ($treatmentPlan) use ($therapistUsers) {
+                $createdBy = $therapistUsers[$treatmentPlan->created_by];
+                $treatmentPlan->creator_name = trim(($createdBy['first_name'] ?? '') . ' ' . ($createdBy['last_name'] ?? ''));
 
-            return $treatmentPlan;
-        });
+                return $treatmentPlan;
+            });
+        }
 
         $info = [
             'current_page' => $treatmentPlans->currentPage(),
