@@ -89,8 +89,8 @@ class PatientListResource extends JsonResource
                 'chat_user_id' => $this->chat_user_id,
                 'invited_appointment_count' => $this->appointments()
                     ->where('start_date', '>', Carbon::now())
-                    ->where('therapist_status', '>', Appointment::STATUS_INVITED)
-                    ->where('patient_status', '>', Appointment::STATUS_ACCEPTED)
+                    ->where('therapist_status', Appointment::STATUS_INVITED)
+                    ->where('patient_status', Appointment::STATUS_ACCEPTED)
                     ->orderBy('start_date')
                     ->count(),
                 'unread_appointment_count' => $this->unread_appointments_count,
