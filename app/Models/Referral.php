@@ -55,6 +55,16 @@ class Referral extends Model
     }
 
     /**
+     * Get the latest referral assignment for this referral.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function latestReferralAssignment()
+    {
+        return $this->hasOne(ReferralAssignment::class)->latestOfMany();
+    }
+
+    /**
      * Bootstrap the model and its traits.
      *
      * @return void
