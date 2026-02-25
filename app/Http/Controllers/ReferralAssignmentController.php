@@ -161,7 +161,10 @@ class ReferralAssignmentController extends Controller
     {
         $authUser = Auth::user();
 
-        $counts = ReferralAssignment::where('therapist_id', $authUser->therapist_user_id)->where('status', ReferralAssignment::STATUS_INVITED)->count();
+        $counts = ReferralAssignment::where('therapist_id', $authUser->therapist_user_id)
+                ->where('status', ReferralAssignment::STATUS_INVITED)
+                ->whereHas('referral')
+                ->count();
 
         return response()->json(['data' => $counts], 200);
     }
@@ -224,7 +227,7 @@ class ReferralAssignmentController extends Controller
                 'secondary_therapists' => null,
             ]);
 
-            $patient->referrals()->delete();
+            $patient->referrals()->forceDelete();
         });
 
         return response()->json(['message' => 'success_message.counter_referral'], 200);

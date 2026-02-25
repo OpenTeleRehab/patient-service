@@ -1208,6 +1208,7 @@ class PatientController extends Controller
             $user->forceDelete();
         } else {
             $this->obfuscatedUserData($user);
+            $user->referrals()->delete();
             $user->delete();
         }
 
