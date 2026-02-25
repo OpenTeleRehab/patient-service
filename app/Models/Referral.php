@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Mail\PatientReferralMail;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 class Referral extends Model
 {
+    use SoftDeletes;
+
     const STATUS_INVITED = 'invited';
     const STATUS_DECLINED = 'declined';
     const STATUS_ACCEPTED = 'accepted';
