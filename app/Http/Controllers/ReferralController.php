@@ -17,12 +17,65 @@ class ReferralController extends Controller
      * Display a list of referrals for the authenticated user's clinic.
      *
      * @return \Illuminate\Http\JsonResponse JSON response containing the collection of referrals.
+     *
+     * @param Request $request The incoming HTTP request.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $referrals = Referral::where('to_clinic_id', Auth::user()?->clinic_id)
-            ->where('status', Referral::STATUS_INVITED)
-            ->get();
+        $data = $request->all();
+        $query = Referral::where('to_clinic_id', Auth::user()?->clinic_id)->where('status', Referral::STATUS_INVITED);
+
+        if (isset($data['search_value'])) {
+            $query->whereHas('patient', function ($q) use ($data) {
+                $q->where('identity', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
+            });
+        }
+
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    if ($filterObj->columnName === 'date_of_birth') {
+                        $dates = explode(' - ', $filterObj->value);
+                        $startDate = date_create_from_format('d/m/Y', $dates[0]);
+                        $endDate = date_create_from_format('d/m/Y', $dates[1]);
+                        $query->whereHas('patient', function ($q) use ($startDate, $endDate) {
+                            $q->whereBetween('date_of_birth', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+                        });
+                    } elseif ($filterObj->columnName === 'referral_status') {
+                        $query->whereHas('latestReferralAssignment', function ($q) use ($filterObj) {
+                            $q->where('status', $filterObj->value);
+                        });
+                    } elseif ($filterObj->columnName === 'last_name') {
+                        $query->whereHas('patient', function ($q) use ($filterObj) {
+                            $q->where('last_name', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } elseif ($filterObj->columnName === 'first_name') {
+                        $query->whereHas('patient', function ($q) use ($filterObj) {
+                            $q->where('first_name', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } elseif ($filterObj->columnName === 'request_reason' && $filterObj->value !== '') {
+                        $query->where('request_reason', 'like', '%' . $filterObj->value . '%');
+                    } elseif ($filterObj->columnName === 'therapist_reason' && $filterObj->value !== '') {
+                        $query->whereHas('latestReferralAssignment', function ($q) use ($filterObj) {
+                            $q->where('reason', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $referrals = $query->paginate($data['page_size']);
+        $info = [
+            'current_page' => $referrals->currentPage(),
+            'last_page' => $referrals->lastPage(),
+            'total_count' => $referrals->total(),
+        ];
 
         $phcWorkerResponse = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
             ->get(env('THERAPIST_SERVICE_URL') . '/phc-workers/all')
@@ -30,7 +83,9 @@ class ReferralController extends Controller
 
         $phcWorkers = collect($phcWorkerResponse)->keyBy('id');
 
-        $referrals->transform(function ($referral) use ($phcWorkers) {
+        $referralsCollection = collect($referrals->items());
+
+        $mappedReferrals = collect($referralsCollection)->map(function ($referral) use ($phcWorkers) {
             $phcNames = [];
 
             $leadWorkerId = $referral->patient->phc_worker_id;
@@ -55,7 +110,7 @@ class ReferralController extends Controller
             return $referral;
         });
 
-        return response()->json(['data' => ReferralResource::collection($referrals)], 200);
+        return response()->json(['data' => ReferralResource::collection($mappedReferrals), 'info' => $info], 200);
     }
 
     /**
