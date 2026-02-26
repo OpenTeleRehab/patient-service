@@ -193,10 +193,11 @@ class PatientController extends Controller
                     } elseif ($filterObj->columnName === 'transfer') {
                         $response = Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
                             ->get(env('THERAPIST_SERVICE_URL') . '/transfer/retrieve', [
-                                'user_id' => $therapist_id,
+                                'user_id' => $therapist_id ?: $phcWorkerId,
                                 'status' => $filterObj->value,
                                 'therapist_type' => 'lead',
                             ]);
+
                         if ($response->successful()) {
                             $transferPatients = $response->json();
                             $data = $transferPatients['data'] ?? [];
@@ -217,10 +218,10 @@ class PatientController extends Controller
                             ->get(env('ADMIN_SERVICE_URL') . '/health-condition-groups/find', [
                                 'title' => $filterObj->value
                             ]);
-                        if ($response->successful() && count($response->json()['data']) > 0) {
-                            $id = $response->json()['data'][0]['id'];
-                            $query->whereHas('treatmentPlans', function (Builder $q) use ($id) {
-                                $q->where('health_condition_group_id', $id);
+                        if ($response->successful()) {
+                            $ids = collect($response->json()['data'])->pluck('id')->toArray();
+                            $query->whereHas('treatmentPlans', function (Builder $q) use ($ids) {
+                                $q->whereIn('health_condition_group_id', $ids);
                             });
                         }
                     } elseif ($filterObj->columnName === 'health_conditions' && $filterObj->value !== '') {
@@ -228,10 +229,11 @@ class PatientController extends Controller
                             ->get(env('ADMIN_SERVICE_URL') . '/health-conditions/find', [
                                 'title' => $filterObj->value
                             ]);
-                        if ($response->successful() && count($response->json()['data']) > 0) {
-                            $id = $response->json()['data'][0]['id'];
-                            $query->whereHas('treatmentPlans', function (Builder $q) use ($id) {
-                                $q->where('health_condition_id', $id);
+
+                        if ($response->successful()) {
+                            $ids = collect($response->json()['data'])->pluck('id')->toArray();
+                            $query->whereHas('treatmentPlans', function (Builder $q) use ($ids) {
+                                $q->whereIn('health_condition_id', $ids);
                             });
                         }
                     } else {

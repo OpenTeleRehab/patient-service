@@ -282,6 +282,6 @@ class User extends Authenticatable
 
     public function lastReferral()
     {
-        return $this->hasOne(Referral::class, 'patient_id')->latest();
+        return $this->hasOne(Referral::class, 'patient_id')->latestOfMany();
     }
 }
