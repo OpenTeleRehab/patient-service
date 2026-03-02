@@ -27,7 +27,9 @@ class ReferralAssignmentController extends Controller
         $pageSize = $request->get('page_size', 10);
 
         $referralAssignments = ReferralAssignment::where('status', ReferralAssignment::STATUS_INVITED)
-            ->where('therapist_id', $user->therapist_user_id)->paginate($pageSize);
+            ->whereHas('referral')
+            ->where('therapist_id', $user->therapist_user_id)
+            ->paginate($pageSize);
 
         $info = [
             'current_page' => $referralAssignments->currentPage(),
