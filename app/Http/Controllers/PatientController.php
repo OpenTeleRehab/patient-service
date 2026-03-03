@@ -961,17 +961,20 @@ class PatientController extends Controller
      */
     public function getTherapistIdsByPhcWorkerId(int $id)
     {
-        $therapistIds = User::where(function ($q) use ($id) {
-            $q->where('phc_worker_id', $id)
-                ->orWhereJsonContains('supplementary_phc_workers', $id);
-        })
+        // Get therapist IDs where PHC worker is a main PHC worker
+        $allTherapists = User::where('phc_worker_id', $id)
             ->whereNotNull('therapist_id')
             ->select('therapist_id', 'secondary_therapists')
             ->get()
-            ->flatMap(fn($user) => [$user->therapist_id, ...Arr::wrap($user->secondary_therapists)])
-            ->unique()
-            ->values()
-            ->toArray();
+            ->flatMap(fn($user) => [$user->therapist_id, ...Arr::wrap($user->secondary_therapists)]);
+
+        // Get therapist IDs where PHC worker is a supplementary PHC worker
+        $mainTherapists = User::whereJsonContains('supplementary_phc_workers', $id)
+            ->whereNotNull('therapist_id')
+            ->pluck('therapist_id');
+
+        // Merge and remove duplicates
+        $therapistIds = $allTherapists->merge($mainTherapists)->unique()->values()->toArray();
 
         return response()->json([
             'success' => true,
@@ -985,17 +988,21 @@ class PatientController extends Controller
      */
     public function getPhcWorkerIdsByTherapistId(int $id)
     {
-        $phcWorkerIds = User::where(function ($q) use ($id) {
-            $q->where('therapist_id', $id)
-                ->orWhereJsonContains('secondary_therapists', $id);
-        })
+
+        // Get PHC worker IDs where therapist is a main therapist
+        $allPhcWorkers = User::where('therapist_id', $id)
             ->whereNotNull('phc_worker_id')
             ->select('phc_worker_id', 'supplementary_phc_workers')
             ->get()
-            ->flatMap(fn($user) => [$user->phc_worker_id, ...Arr::wrap($user->supplementary_phc_workers)])
-            ->unique()
-            ->values()
-            ->toArray();
+            ->flatMap(fn($user) => [$user->phc_worker_id, ...Arr::wrap($user->supplementary_phc_workers)]);
+
+        // Get PHC worker IDs where therapist is a supplementary therapist
+        $mainPhcWorkers = User::whereJsonContains('secondary_therapists', $id)
+            ->whereNotNull('phc_worker_id')
+            ->pluck('phc_worker_id');
+
+        // Merge and remove duplicates
+        $phcWorkerIds = $allPhcWorkers->merge($mainPhcWorkers)->unique()->values()->toArray();
 
         return response()->json([
             'success' => true,
