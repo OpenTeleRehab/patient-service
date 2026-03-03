@@ -24,12 +24,51 @@ class ReferralAssignmentController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $data = $request->all();
         $pageSize = $request->get('page_size', 10);
 
-        $referralAssignments = ReferralAssignment::where('status', ReferralAssignment::STATUS_INVITED)
+        $query = ReferralAssignment::where('status', ReferralAssignment::STATUS_INVITED)
             ->whereHas('referral')
-            ->where('therapist_id', $user->therapist_user_id)
-            ->paginate($pageSize);
+            ->where('therapist_id', $user->therapist_user_id);
+
+        if (isset($data['search_value'])) {
+            $query->whereHas('referral.patient', function ($q) use ($data) {
+                $q->where('identity', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('first_name', 'like', '%' . $data['search_value'] . '%')
+                ->orWhere('last_name', 'like', '%' . $data['search_value'] . '%');
+            });
+        }
+
+        if (isset($data['filters'])) {
+            $filters = $request->get('filters');
+            $query->where(function ($query) use ($filters) {
+                foreach ($filters as $filter) {
+                    $filterObj = json_decode($filter);
+                    if ($filterObj->columnName === 'date_of_birth') {
+                        $date = date_create_from_format('d/m/Y', $filterObj->value);
+                        $query->whereHas('referral.patient', function ($q) use ($date) {
+                            $q->where('date_of_birth', $date->format('Y-m-d'));
+                        });
+                    } elseif ($filterObj->columnName === 'last_name') {
+                        $query->whereHas('referral.patient', function ($q) use ($filterObj) {
+                            $q->where('last_name', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } elseif ($filterObj->columnName === 'first_name') {
+                        $query->whereHas('referral.patient', function ($q) use ($filterObj) {
+                            $q->where('first_name', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } elseif ($filterObj->columnName === 'request_reason' && $filterObj->value !== '') {
+                        $query->whereHas('referral', function ($q) use ($filterObj) {
+                            $q->where('request_reason', 'like', '%' . $filterObj->value . '%');
+                        });
+                    } else {
+                        $query->where($filterObj->columnName, 'like', '%' .  $filterObj->value . '%');
+                    }
+                }
+            });
+        }
+
+        $referralAssignments = $query->paginate($pageSize);
 
         $info = [
             'current_page' => $referralAssignments->currentPage(),

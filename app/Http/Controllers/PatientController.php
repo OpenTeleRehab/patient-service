@@ -125,7 +125,8 @@ class PatientController extends Controller
             $filters = $request->get('filters');
             $therapist_id = $data['therapist_id'] ?? '';
             $phcWorkerId = $user->user_type === User::GROUP_PHC_WORKER ? $user->therapist_user_id : '';
-            $query->where(function ($query) use ($filters, $therapist_id, $phcWorkerId) {
+            $laguageId = $user->language_id;
+            $query->where(function ($query) use ($filters, $therapist_id, $phcWorkerId, $laguageId) {
                 foreach ($filters as $filter) {
                     $filterObj = json_decode($filter);
                     if ($filterObj->columnName === 'date_of_birth') {
@@ -216,7 +217,8 @@ class PatientController extends Controller
                         // Fetch ID from AdminService
                         $response = Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))
                             ->get(env('ADMIN_SERVICE_URL') . '/health-condition-groups/find', [
-                                'title' => $filterObj->value
+                                'title' => $filterObj->value,
+                                'language_id' => $laguageId,
                             ]);
                         if ($response->successful()) {
                             $ids = collect($response->json()['data'])->pluck('id')->toArray();
@@ -227,7 +229,8 @@ class PatientController extends Controller
                     } elseif ($filterObj->columnName === 'health_conditions' && $filterObj->value !== '') {
                         $response = Http::withToken(Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE))
                             ->get(env('ADMIN_SERVICE_URL') . '/health-conditions/find', [
-                                'title' => $filterObj->value
+                                'title' => $filterObj->value,
+                                'language_id' => $laguageId,
                             ]);
 
                         if ($response->successful()) {

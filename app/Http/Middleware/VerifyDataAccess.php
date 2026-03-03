@@ -57,6 +57,10 @@ class VerifyDataAccess
             if (!empty($request->header('int-user-type'))) {
                 $user->user_type = $request->header('int-user-type');
             }
+
+            if (!empty($request->header('int-language-id'))) {
+                $user->language_id = (int)$request->header('int-language-id');
+            }
         }
 
         $deny = fn() => response()->json(['message' => 'Access denied'], 403);
