@@ -38,6 +38,7 @@ class ForwarderController extends Controller
                 'int-phc-service-id' => $user?->phc_service_id,
                 'int-clinic-id' => $user?->clinic_id,
                 'int-province-id' => $user?->province_id,
+                'int-phc-worker-id' => $user?->phc_worker_id,
             ])
             ->get(env('ADMIN_SERVICE_URL') . $endpoint, $request->all());
         }
