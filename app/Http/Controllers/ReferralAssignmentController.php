@@ -53,6 +53,10 @@ class ReferralAssignmentController extends Controller
                         $query->whereHas('referral.patient', function ($q) use ($filterObj) {
                             $q->where('last_name', 'like', '%' . $filterObj->value . '%');
                         });
+                    } elseif ($filterObj->columnName === 'identity') {
+                        $query->whereHas('referral.patient', function ($q) use ($filterObj) {
+                            $q->where('identity', 'like', '%' . $filterObj->value . '%');
+                        });
                     } elseif ($filterObj->columnName === 'first_name') {
                         $query->whereHas('referral.patient', function ($q) use ($filterObj) {
                             $q->where('first_name', 'like', '%' . $filterObj->value . '%');
