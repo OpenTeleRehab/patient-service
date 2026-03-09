@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use App\Helpers\UserHelper;
 
 class Referral extends Model
 {
@@ -93,21 +94,26 @@ class Referral extends Model
 
         self::updated(function ($referral) {
             if ($referral->status === self::STATUS_DECLINED) {
-                $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+                $therapistAccessToken = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+                $adminAccessToken = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
 
-                $healthcareWorker = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
+                $healthcareWorker = Http::withToken($therapistAccessToken)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
                     'id' => $referral->phc_worker_id,
                 ])->throw();
 
-                // TODO: Fetch rehab service admin name.
-                if ($healthcareWorker->successful()) {
+                $rehabServiceAdmin = Http::withToken($adminAccessToken)
+                    ->get(env('ADMIN_SERVICE_URL') . '/internal/user/' . Auth::user()->admin_user_id)
+                    ->throw();
+
+                if ($healthcareWorker->successful() && $rehabServiceAdmin->successful()) {
                     $healthcareWorker = $healthcareWorker->json();
+                    $rehabServiceAdmin = $rehabServiceAdmin->json();
 
                     Mail::to($healthcareWorker['email'])->send(
                         new PatientReferralMail(
                             'rehab-service-admin-declines-the-patient-referral-request',
-                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
-                            '[Rehab Service Admin Name]',
+                            UserHelper::getFullName($healthcareWorker['last_name'], $healthcareWorker['first_name'], $healthcareWorker['language_id']),
+                            UserHelper::getFullName($rehabServiceAdmin['data']['last_name'], $rehabServiceAdmin['data']['first_name'], $healthcareWorker['language_id']),
                             $healthcareWorker['language_id'],
                         )
                     );
