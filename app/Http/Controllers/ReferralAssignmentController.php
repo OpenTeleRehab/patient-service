@@ -13,6 +13,7 @@ use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use App\Helpers\UserHelper;
 
 class ReferralAssignmentController extends Controller
 {
@@ -239,7 +240,7 @@ class ReferralAssignmentController extends Controller
             $therapistAccessToken = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
 
             Http::withToken($adminAccessToken)->post(env('ADMIN_SERVICE_URL') . '/notifications/patient-counter-referral', [
-                'clinic_id' => $patient->clinic_id,
+                'phc_service_id' => $patient->phc_service_id,
                 'therapist_id' => $patient->therapist_id,
             ])->throw();
 
@@ -258,8 +259,8 @@ class ReferralAssignmentController extends Controller
                     Mail::to($healthcareWorker['email'])->send(
                         new PatientReferralMail(
                             'therapist-counter-refers-a-patient-for-healthcare-worker',
-                            $healthcareWorker['last_name'] . ' ' . $healthcareWorker['first_name'],
-                            $therapist['last_name'] . ' ' . $therapist['first_name'],
+                            UserHelper::getFullName($healthcareWorker['last_name'], $healthcareWorker['first_name'], $healthcareWorker['language_id']),
+                            UserHelper::getFullName($therapist['last_name'], $therapist['first_name'], $healthcareWorker['language_id']),
                             $healthcareWorker['language_id'],
                         )
                     );
