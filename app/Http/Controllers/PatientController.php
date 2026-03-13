@@ -1352,7 +1352,7 @@ class PatientController extends Controller
             $updateData['chat_rooms'] = array_values(array_unique(array_merge($chatRooms, [$chatRoomId])));
         } else {
             // Remove chat room of previous therapist.
-            $intersectChatRooms = array_intersect($oldTherapistChatRooms, $chatRooms);
+            $intersectChatRooms = array_intersect($oldTherapistChatRooms ?? [], $chatRooms ?? []);
             if (($key = array_search(reset($intersectChatRooms), $chatRooms)) !== false) {
                 unset($chatRooms[$key]);
             }
@@ -1388,7 +1388,7 @@ class PatientController extends Controller
             }
 
             // Check if chat rooms of new therapist exist.
-            $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms, $chatRooms);
+            $chatRoomOfNewTherapists = array_intersect($newTherapistChatRooms ?? [], $chatRooms ?? []);
             if (!$chatRoomOfNewTherapists) {
                 // Create chat room for new therapist and patient.
                 $chatRoomId = RocketChatHelper::createChatRoom($therapistId, $user->identity);

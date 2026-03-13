@@ -34,6 +34,8 @@ class PatientOfRemovePhcWorkerResource extends JsonResource
 
         $responseData = [
             'id' => $this->id,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
             'phc_service_id' => $this->phc_service_id,
             'country_id' => $this->country_id,
             'enabled' => $this->enabled,
