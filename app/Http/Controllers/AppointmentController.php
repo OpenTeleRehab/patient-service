@@ -424,6 +424,13 @@ class AppointmentController extends Controller
     {
         if ($appointment->created_by_therapist) {
             $appointment->update(['therapist_status' => Appointment::STATUS_CANCELLED]);
+            try {
+                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
+                $message = ($translations['appointment.cancelled_appointment_with'] ?? '') . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name;
+                Appointment::notification($appointment, trim($message));
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+            }
         } else {
             $appointment->update([
                 'patient_status' => Appointment::STATUS_CANCELLED,
