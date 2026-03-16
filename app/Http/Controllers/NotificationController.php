@@ -21,22 +21,15 @@ class NotificationController extends Controller
         $rid = $request->get('rid');
         $title = $request->get('title');
 
-        if (str_starts_with($identity, 'PHC') && $request->get('fcm_token')) {
-            $token = $request->get('fcm_token');
-            $body = $request->get('body');
+        $user = User::where('identity', $identity)->firstOrFail();
+
+        $translations = TranslationHelper::getTranslations($user->language_id);
+
+        if ($user) {
+            $token = $user->firebase_token;
+            $body = $request->boolean('translatable') ? $translations[$request->get('body')] : $request->get('body');
 
             return event(new PodcastNotificationEvent($token, $id, $rid, $title, $body));
-        } else {
-            $user = User::where('identity', $request->get('identity'))->firstOrFail();
-
-            $translations = TranslationHelper::getTranslations($user->language_id);
-
-            if ($user) {
-                $token = $user->firebase_token;
-                $body = $request->boolean('translatable') ? $translations[$request->get('body')] : $request->get('body');
-
-                return event(new PodcastNotificationEvent($token, $id, $rid, $title, $body));
-            }
         }
     }
 }
