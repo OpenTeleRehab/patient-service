@@ -40,7 +40,14 @@ class ProcessUserDeletion implements ShouldQueue
 
         $column = $entityColumnMap[$this->entityName];
 
-        $deletedRows = User::where($column, $this->entityId)->forceDelete();
+        $deletedRows = 0;
+
+        User::where($column, $this->entityId)
+            ->get()
+            ->each(function ($user) use (&$deletedRows) {
+                $user->forceDelete();
+                $deletedRows++;
+            });
 
         if ($deletedRows > 0) {
             Log::info('Successfully deleted ' . $deletedRows . ' patients belonging to ' . $this->entityName . ' id ' . $this->entityId);
