@@ -47,7 +47,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::get('chart/get-data-for-clinic-admin', [ChartController::class, 'getDataForClinicAdmin']); // deprecated
 
     // Notifications
-    Route::get('/push-notification', [NotificationController::class, 'pushNotification'])->middleware('role:internal');
+    Route::get('/push-notification', [NotificationController::class, 'pushNotification'])->middleware('role:internal,mobile');
 
     // Patients
     Route::get('patient/id/{id}', [PatientController::class, 'getById'])->middleware('role:internal');
