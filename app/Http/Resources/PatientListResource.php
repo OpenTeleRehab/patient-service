@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Services\AdminService;
+use Illuminate\Support\Facades\Auth;
 
 class PatientListResource extends JsonResource
 {
@@ -89,6 +90,7 @@ class PatientListResource extends JsonResource
                 'chat_user_id' => $this->chat_user_id,
                 'invited_appointment_count' => $this->appointments()
                     ->where('start_date', '>', Carbon::now())
+                    ->where('therapist_id', Auth::user()?->therapist_user_id)
                     ->where('therapist_status', Appointment::STATUS_INVITED)
                     ->where('patient_status', Appointment::STATUS_ACCEPTED)
                     ->orderBy('start_date')
