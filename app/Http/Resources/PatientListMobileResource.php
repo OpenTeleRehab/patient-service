@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 
 class PatientListMobileResource extends JsonResource
 {
@@ -38,6 +39,7 @@ class PatientListMobileResource extends JsonResource
             'gender' => $this->gender,
             'phone' => $this->phone,
             'location' => $this->location,
+            'note' => $this->note,
             'dial_code' => $this->dial_code,
             'clinic_id' => $this->clinic_id,
             'country_id' => $this->country_id,
@@ -63,6 +65,7 @@ class PatientListMobileResource extends JsonResource
             'chat_user_id' => $this->chat_user_id,
             'invited_appointment_count' => $this->appointments()
                 ->where('start_date', '>', Carbon::now())
+                ->where('therapist_id', Auth::user()?->therapist_user_id)
                 ->where('therapist_status', Appointment::STATUS_INVITED)
                 ->where('patient_status', Appointment::STATUS_ACCEPTED)
                 ->orderBy('start_date')
