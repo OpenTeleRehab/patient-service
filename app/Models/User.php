@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
@@ -22,7 +21,9 @@ class User extends Authenticatable
 
     const ADMIN_GROUP_GLOBAL_ADMIN = 'global_admin';
     const ADMIN_GROUP_COUNTRY_ADMIN = 'country_admin';
+    const ADMIN_GROUP_REGIONAL_ADMIN = 'regional_admin';
     const ADMIN_GROUP_CLINIC_ADMIN = 'clinic_admin';
+    const ADMIN_GROUP_PHC_SERVICE_ADMIN = 'phc_service_admin';
     const GROUP_THERAPIST = 'therapist';
     const GROUP_PATIENT = 'patient';
     const GROUP_PHC_WORKER = 'phc_worker';
@@ -142,57 +143,42 @@ class User extends Authenticatable
     * @param \Spatie\Activitylog\Models\Activity $activity
     * @return void
     */
-    public function tapActivity(ActivityLog $activity, string $eventName)
+    public function tapActivity(ActivityLog $activity, $eventName)
     {
-        $therapist = null;
-        $therapistId = $this->therapist_id;
         $request = request();
         $authUser = Auth::user();
 
-        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
-        $response = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
-            'id' => $therapistId,
-        ]);
-        if (!empty($response) && $response->successful()) {
-            $therapist = json_decode($response);
-        }
-        if (!empty($response) && $response->successful()) {
-            $therapist = json_decode($response);
+        if ($authUser?->therapist_user_id || $authUser?->admin_user_id) {
+            $activity->causer_id = $authUser->therapist_user_id ?? $authUser->admin_user_id;
+            $activity->log_name = $authUser->therapist_user_id ? ExtendActivity::THERAPIST_SERVICE : ExtendActivity::ADMIN_SERVICE;
+            $activity->country_id = $authUser->country_id;
+            $activity->clinic_id = $authUser->clinic_id ?: null;
+            $activity->phc_service_id = $authUser->phc_service_id ?: null;
+            $activity->province_id = $authUser->province_id;
+            $activity->region_id = $authUser->region_id;
+        } elseif($request->has('user_id') && $request->has('user_type')) {
+            $activity->causer_id = $request['user_id'];
+            $activity->log_name = $request['user_type'] === self::GROUP_THERAPIST ? ExtendActivity::THERAPIST_SERVICE : ExtendActivity::ADMIN_SERVICE;
+            $activity->country_id = $request->input('country_id') ?: null;
+            $activity->clinic_id = $request->input('clinic_id') ?: null;
+            $activity->phc_service_id = $request->input('phc_service_id') ?: null;
+            $activity->province_id = $request->input('province_id') ?: null;
+            $activity->region_id = $request->input('region_id') ?: null;
         }
 
         if ($eventName === 'updated') {
-            $activity->causer_id = $request['user_id'] ? $request['user_id'] : ($authUser?->id === $this->id ? $this->id : $therapistId);
-            $activity->full_name = $request['user_name'] ? $request['user_name'] : ($authUser?->id === $this->id ? $this->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null));
-            $activity->group =  $request['group'] ? $request['group'] : ($authUser?->id === $this->id ? User::GROUP_PATIENT : User::GROUP_THERAPIST);
             $activity->properties = [
                 'old' => ['identity' => $this->identity],
                 'attributes' => ['identity' => $this->identity],
             ];
-            $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
-            $activity->country_id = $therapist ? $therapist->country_id : null;
-        } else if ($eventName === 'deleted') {
-            $activity->causer_id = $request['user_id'] ? $request['user_id'] : ($authUser?->id === $this->id ? $this->id : $therapistId);
-            $activity->full_name = $request['user_name'] ? $request['user_name'] : ($authUser?->id === $this->id ? $this->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null));
-            $activity->group =  $request['group'] ? $request['group'] : ($authUser?->id === $this->id ? User::GROUP_PATIENT : User::GROUP_THERAPIST);
+        } elseif ($eventName === 'deleted') {
             $activity->properties = [
                 'old' => ['identity' => $this->identity],
             ];
-            $activity->clinic_id = $request->has('clinic_id')
-            ? (is_null($request->input('clinic_id')) ? null : $request->input('clinic_id'))
-            : ($therapist ? $therapist->clinic_id : null);
-
-            $activity->country_id = $request->has('country_id')
-                ? (is_null($request->input('country_id')) ? null : $request->input('country_id'))
-                : ($therapist ? $therapist->country_id : null);
-        }else {
-            $activity->causer_id = $therapist ? $therapist->id : null;
-            $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null;
-            $activity->group = $therapist ? User::GROUP_THERAPIST : null;
+        } else {
             $activity->properties = [
                 'attributes' => ['identity' => $this->identity],
             ];
-            $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
-            $activity->country_id = $therapist ? $therapist->country_id : null;
         }
     }
 

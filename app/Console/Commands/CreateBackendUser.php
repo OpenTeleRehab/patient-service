@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Activitylog\Facades\Activity;
 
 class CreateBackendUser extends Command
 {
@@ -39,6 +40,9 @@ class CreateBackendUser extends Command
      */
     public function handle()
     {
+        // Disable activity logging for backend user creation
+        Activity::disableLogging();
+
         User::updateOrCreate(
             [
                 'email' => env('KEYCLOAK_BACKEND_CLIENT'),
@@ -58,6 +62,10 @@ class CreateBackendUser extends Command
         );
 
         $this->info('Backend user has been created successfully');
+
+        // Re-enable activity logging after backend user creation
+        Activity::enableLogging();
+
         return true;
     }
 }

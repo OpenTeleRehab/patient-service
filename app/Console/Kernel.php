@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('hi:daily-reminder')->everyMinute()->runInBackground();
         $schedule->command('hi:clean-up-exported-files')->daily();
         $schedule->command('hi:update-treatment-plan-status')->daily()->runInBackground();
+        $schedule->command('hi:clean-up-old-audit-log')->dailyAt('0:00')->runInBackground();
     }
 
     /**

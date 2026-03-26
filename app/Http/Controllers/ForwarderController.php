@@ -61,6 +61,7 @@ class ForwarderController extends Controller
     {
         $service_name = $request->route()->getName();
         $endpoint = str_replace('api/', '/', $request->path());
+        $user = Auth::user();
 
         if ($service_name !== null && str_contains($service_name, Forwarder::GADMIN_SERVICE)) {
             $access_token = Forwarder::getAccessToken(Forwarder::GADMIN_SERVICE);
@@ -69,7 +70,16 @@ class ForwarderController extends Controller
 
         if ($service_name !== null && str_contains($service_name, Forwarder::ADMIN_SERVICE)) {
             $access_token = Forwarder::getAccessToken(Forwarder::ADMIN_SERVICE);
-            return Http::withToken($access_token)->post(env('ADMIN_SERVICE_URL') . $endpoint, $request->all());
+            return Http::withToken($access_token)->withHeaders([
+                'int-country-id' => $user?->country_id,
+                'int-region-id' => $user?->region_id,
+                'int-user-type' => User::GROUP_PATIENT,
+                'int-patient-user-id' => $user?->id,
+                'int-phc-service-id' => $user?->phc_service_id,
+                'int-clinic-id' => $user?->clinic_id,
+                'int-province-id' => $user?->province_id,
+                'int-phc-worker-id' => $user?->phc_worker_id,
+            ])->post(env('ADMIN_SERVICE_URL') . $endpoint, $request->all());
         }
     }
 }

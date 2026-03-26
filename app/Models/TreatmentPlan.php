@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity as ActivityLog;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -73,20 +73,16 @@ class TreatmentPlan extends Model
      */
     public function tapActivity(ActivityLog $activity)
     {
-        $therapist = null;
-        $therapistId = $this->user->therapist_id;
-        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
-        $response = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
-            'id' => $therapistId,
-        ]);
-        if (!empty($response) && $response->successful()) {
-            $therapist = json_decode($response);
+        $authUser = Auth::user();
+        if ($authUser->therapist_user_id || $authUser->admin_user_id) {
+            $activity->causer_id = $authUser->therapist_user_id ?? $authUser->admin_user_id;
+            $activity->log_name = $authUser->therapist_user_id ? ExtendActivity::THERAPIST_SERVICE : ExtendActivity::ADMIN_SERVICE;
+            $activity->country_id = $authUser->country_id;
+            $activity->clinic_id = $authUser->clinic_id ?: null;
+            $activity->phc_service_id = $authUser->phc_service_id ?: null;
+            $activity->province_id = $authUser->province_id;
+            $activity->region_id = $authUser->region_id;
         }
-        $activity->causer_id = $therapist ? $therapist->id : null;
-        $activity->full_name = $therapist ? $therapist->last_name . ' ' . $therapist->first_name : null;
-        $activity->clinic_id = $therapist ? $therapist->clinic_id : null;
-        $activity->country_id = $therapist ? $therapist->country_id : null;
-        $activity->group = $therapist ? User::GROUP_THERAPIST : null;
     }
 
     /**

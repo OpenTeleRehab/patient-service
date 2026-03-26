@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Http;
 use Spatie\Activitylog\Models\Activity as ActivityLog;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Support\Facades\Auth;
+use App\Models\ExtendActivity;
 
 class Activity extends Model
 {
@@ -78,29 +79,18 @@ class Activity extends Model
      * @param \Spatie\Activitylog\Models\Activity $activity
      * @return void
      */
-    public function tapActivity(ActivityLog $activity, string $eventName)
+    public function tapActivity(ActivityLog $activity)
     {
-        $this->refresh();
-        $therapist = null;
-        $patient = $this->treatmentPlan->user;
-        $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
-        $response = Http::withToken($access_token)->get(env('THERAPIST_SERVICE_URL') . '/therapist/by-id', [
-            'id' => $this->created_by,
-        ]);
-        if (!empty($response) && $response->successful()) {
-            $therapist = json_decode($response);
+        $authUser = Auth::user();
+        if ($authUser->therapist_user_id || $authUser->admin_user_id) {
+            $activity->causer_id = $authUser->therapist_user_id ?? $authUser->admin_user_id;
+            $activity->log_name = $authUser->therapist_user_id ? ExtendActivity::THERAPIST_SERVICE : ExtendActivity::ADMIN_SERVICE;
+            $activity->country_id = $authUser->country_id;
+            $activity->clinic_id = $authUser->clinic_id ?: null;
+            $activity->phc_service_id = $authUser->phc_service_id ?: null;
+            $activity->province_id = $authUser->province_id;
+            $activity->region_id = $authUser->region_id;
         }
-        if ($eventName === 'updated') {
-            $activity->causer_id = $this->completed ? $patient->id : $this->created_by;
-            $activity->full_name = $this->completed ? $patient->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null);
-            $activity->group = $this->completed ? User::GROUP_PATIENT : User::GROUP_THERAPIST;
-        } else {
-            $activity->causer_id = $this->type === self::ACTIVITY_TYPE_GOAL ? $patient->id : $this->created_by;
-            $activity->full_name = $this->type === self::ACTIVITY_TYPE_GOAL ? $patient->identity : ($therapist ? $therapist->last_name . ' ' . $therapist->first_name : null); 
-            $activity->group = $this->type === self::ACTIVITY_TYPE_GOAL ? User::GROUP_PATIENT : User::GROUP_THERAPIST;
-        }
-        $activity->clinic_id = $this->type === self::ACTIVITY_TYPE_GOAL ? $patient->clinic_id : ($therapist ? $therapist->clinic_id : null);
-        $activity->country_id = self::ACTIVITY_TYPE_GOAL ? $patient->country_id : ($therapist ? $therapist->country_id : null);
     }
 
     /**
