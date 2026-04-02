@@ -103,8 +103,7 @@ class Appointment extends Model
 
         self::created(function ($appointment) {
             try {
-                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
-                self::notification($appointment, $translations['appointment.invitation_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
+                self::notification($appointment, 'invitation');
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
             }
@@ -118,13 +117,6 @@ class Appointment extends Model
         });
 
         self::deleted(function ($appointment) {
-            try {
-                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
-                self::notification($appointment, $translations['appointment.deleted_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
-
             if ($appointment->assistiveTechnology) {
                 $assistiveTechnology = AssistiveTechnology::where('appointment_id', $appointment->id)->first();
                 $assistiveTechnology->update(['follow_up_date' => null, 'appointment_id' => null]);
@@ -138,6 +130,29 @@ class Appointment extends Model
     public function patient()
     {
         return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    /**
+     * Get healthcare worker devices
+     *
+     * @param $id
+     * @return array|mixed
+     * @throws \Illuminate\Http\Client\ConnectionException
+     */
+    public function phcWorker($id)
+    {
+        $accessToken = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+
+        $userResponse = Http::withToken($accessToken)->get(env('THERAPIST_SERVICE_URL') . '/phc-workers/by-id', [
+            'id' => $id
+        ]);
+
+        if ($userResponse->successful()) {
+            $userResponse = $userResponse->json();
+            return $userResponse['data'];
+        }
+
+        return null;
     }
 
     /**
@@ -155,13 +170,53 @@ class Appointment extends Model
      *
      * @return bool
      */
-    public static function notification($appointment, $title)
+    public static function notification($appointment, $status)
     {
-        if ($appointment?->patient?->firebase_token) {
-            $fcmToken = $appointment->patient->firebase_token;
+        if (in_array($status, ['accepted', 'rejected'])) {
+            if ($appointment->created_by_therapist) {
+                $user = $appointment->phcWorker($appointment->therapist_id);
+                $patient = $appointment->patient;
+                $participantName = sprintf('%s %s', $patient->last_name, $patient->first_name);
+            } else {
+                $user = $appointment->patient;
+                $phcWorker = $appointment->phcWorker($appointment->therapist_id);
+                $participantName = sprintf('%s %s', $phcWorker['last_name'], $phcWorker['first_name']);
+            }
 
+            $translations = TranslationHelper::getTranslations($user['language_id']);
+
+            $title = $translations['appointment.updated_appointment_with'] ?? '';
+            $title .= sprintf(' %s', $participantName);
+            $title .= sprintf(' %s', $translations['appointment.invitation.' . $status] ?? '');
+        } else {
+            if ($appointment->created_by_therapist) {
+                $user = $appointment->patient;
+                $phcWorker = $appointment->phcWorker($appointment->therapist_id);
+                $participantName = sprintf('%s %s', $phcWorker['last_name'], $phcWorker['first_name']);
+            } else {
+                $user = $appointment->phcWorker($appointment->therapist_id);
+                $patient = $appointment->patient;
+                $participantName = sprintf('%s %s', $patient->last_name, $patient->first_name);
+            }
+
+            $translations = TranslationHelper::getTranslations($user['language_id']);
+
+            $title = $translations['appointment.' . $status . '_appointment_with'] ?? '';
+            $title .= sprintf(' %s', $participantName);
+        }
+
+        if (isset($user['devices'])) {
+            foreach ($user['devices'] as $device) {
+                $fcmToken = $device['fcm_token'];
+                $fcmToken && event(new AppointmentEvent($fcmToken, $title, $appointment->start_date, $appointment->end_date));
+            }
+        }
+
+        if (isset($user['firebase_token'])) {
+            $fcmToken = $user['firebase_token'];
             event(new AppointmentEvent($fcmToken, $title, $appointment->start_date, $appointment->end_date));
         }
+
         return true;
     }
 }
