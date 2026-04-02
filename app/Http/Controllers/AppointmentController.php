@@ -286,8 +286,7 @@ class AppointmentController extends Controller
         $appointment->update($updateFile);
 
         try {
-            $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
-            Appointment::notification($appointment, $translations['appointment.updated_appointment_with'] . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name);
+            Appointment::notification($appointment, 'updated');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -367,12 +366,7 @@ class AppointmentController extends Controller
         ]);
 
         try {
-            $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
-
-            $statusTranslation = $translations['appointment.invitation.' . $request->get('therapist_status')];
-            $patientName = $appointment->patient->first_name . ' ' . $appointment->patient->last_name;
-
-            Appointment::notification($appointment, $translations['appointment.updated_appointment_with'] . ' ' . $patientName . ' ' . $statusTranslation);
+            Appointment::notification($appointment, $request->get('therapist_status'));
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -416,7 +410,7 @@ class AppointmentController extends Controller
      * @param \App\Models\Appointment $appointment
      *
      *  @param \Illuminate\Http\Request $request
-     * 
+     *
      * @return array
      * @throws \Exception
      */
@@ -424,18 +418,17 @@ class AppointmentController extends Controller
     {
         if ($appointment->created_by_therapist) {
             $appointment->update(['therapist_status' => Appointment::STATUS_CANCELLED]);
-            try {
-                $translations = TranslationHelper::getTranslations($appointment->patient->language_id);
-                $message = ($translations['appointment.cancelled_appointment_with'] ?? '') . ' ' . $appointment->patient->first_name . ' ' . $appointment->patient->last_name;
-                Appointment::notification($appointment, trim($message));
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-            }
         } else {
             $appointment->update([
                 'patient_status' => Appointment::STATUS_CANCELLED,
                 'unread' => true,
             ]);
+        }
+
+        try {
+            Appointment::notification($appointment, 'cancelled');
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
         }
 
         return ['success' => true, 'message' => 'success_message.appointment_cancel'];
@@ -463,7 +456,7 @@ class AppointmentController extends Controller
              return ['success' => false, 'message' => 'error_message.appointment_overlap'];
         }
 
-        Appointment::updateOrCreate(
+        $appointment = Appointment::updateOrCreate(
             [
                 'id' => $request->get('id'),
             ],
@@ -477,6 +470,14 @@ class AppointmentController extends Controller
                 'created_by_therapist' => false,
             ],
         );
+
+        try {
+            if ($request->get('id')) {
+                Appointment::notification($appointment, 'updated');
+            }
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
 
         return ['success' => true];
     }
@@ -497,6 +498,12 @@ class AppointmentController extends Controller
 
         $appointment->update($arr);
 
+        try {
+            Appointment::notification($appointment, $status);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
+
         $message = 'success_message.appointment_update';
         return ['success' => true, 'message' => $message, 'data' => new AppointmentResource($appointment)];
     }
@@ -513,7 +520,6 @@ class AppointmentController extends Controller
 
         return ['success' => true, 'message' => 'success_message.unread_update'];
     }
-
 
     /**
      * Count overlap appointments for therapist or phc worker
