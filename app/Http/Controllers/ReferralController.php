@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UserHelper;
 use App\Models\Referral;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
@@ -23,7 +24,8 @@ class ReferralController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $query = Referral::where('to_clinic_id', Auth::user()?->clinic_id)->where('status', Referral::STATUS_INVITED);
+        $authUser = Auth::user();
+        $query = Referral::where('to_clinic_id', $authUser?->clinic_id)->where('status', Referral::STATUS_INVITED);
 
         if (isset($data['search_value'])) {
             $query->whereHas('patient', function ($q) use ($data) {
@@ -85,14 +87,14 @@ class ReferralController extends Controller
 
         $referralsCollection = collect($referrals->items());
 
-        $mappedReferrals = collect($referralsCollection)->map(function ($referral) use ($phcWorkers) {
+        $mappedReferrals = collect($referralsCollection)->map(function ($referral) use ($phcWorkers, $authUser) {
             $phcNames = [];
 
             $leadWorkerId = $referral->patient->phc_worker_id;
             $leadWorker = $phcWorkers[$leadWorkerId] ?? null;
 
             if ($leadWorker) {
-                $phcNames[] = $leadWorker['first_name'] . ' ' . $leadWorker['last_name'];
+                $phcNames[] = UserHelper::getFullName($leadWorker['last_name'], $leadWorker['first_name'], $authUser?->language_id);
             }
 
             $supplementaryWorkerIds = (array) ($referral->patient->supplementary_phc_workers ?? []);
@@ -100,7 +102,7 @@ class ReferralController extends Controller
             $supplementaryPhcWorkerNames = collect($supplementaryWorkerIds)
                 ->map(fn($id) => $phcWorkers[$id] ?? null)
                 ->filter()
-                ->map(fn($worker) => $worker['first_name'] . ' ' . $worker['last_name'])
+                ->map(fn($worker) => UserHelper::getFullName($worker['last_name'], $worker['first_name'], $authUser?->language_id))
                 ->toArray();
 
             $referral->lead_and_supplementary_phc = array_merge($phcNames, $supplementaryPhcWorkerNames);

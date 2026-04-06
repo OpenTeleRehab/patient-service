@@ -86,14 +86,14 @@ class ReferralAssignmentController extends Controller
 
         $phcWorkers = collect($phcWorkerResponse)->keyBy('id');
 
-        $referralAssignments->transform(function ($assignment) use ($phcWorkers) {
+        $referralAssignments->transform(function ($assignment) use ($phcWorkers, $user) {
             $phcNames = [];
 
             $leadWorkerId = $assignment->referral->patient->phc_worker_id;
             $leadWorker = $phcWorkers[$leadWorkerId] ?? null;
 
             if ($leadWorker) {
-                $phcNames[] = $leadWorker['first_name'] . ' ' . $leadWorker['last_name'];
+                $phcNames[] = UserHelper::getFullName($leadWorker['last_name'], $leadWorker['first_name'], $user?->language_id);
             }
 
             $supplementaryWorkerIds = (array) ($assignment->referral->patient->supplementary_phc_workers ?? []);
@@ -101,7 +101,7 @@ class ReferralAssignmentController extends Controller
             $supplementaryPhcWorkerNames = collect($supplementaryWorkerIds)
                 ->map(fn($id) => $phcWorkers[$id] ?? null)
                 ->filter()
-                ->map(fn($worker) => $worker['first_name'] . ' ' . $worker['last_name'])
+                ->map(fn($worker) => UserHelper::getFullName($worker['last_name'], $worker['first_name'], $user?->language_id))
                 ->toArray();
 
             $assignment->lead_and_supplementary_phc = array_merge($phcNames, $supplementaryPhcWorkerNames);
