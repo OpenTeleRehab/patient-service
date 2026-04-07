@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\PodcastCalculatorEvent;
 use App\Exports\TreatmentPlanExport;
 use App\Helpers\TreatmentActivityHelper;
+use App\Helpers\UserHelper;
 use App\Http\Resources\GoalResource;
 use App\Http\Resources\TreatmentPlanResource;
 use App\Models\Activity;
@@ -149,11 +150,10 @@ class TreatmentPlanController extends Controller
         }
 
         $therapistUsers = collect($therapistUsersRes->json('data', []))->keyBy('id');
-
         if ($therapistUsers->isNotEmpty()) {
-            $treatmentPlans->transform(function ($treatmentPlan) use ($therapistUsers) {
-                $createdBy = $therapistUsers[$treatmentPlan->created_by];
-                $treatmentPlan->creator_name = trim(($createdBy['first_name'] ?? '') . ' ' . ($createdBy['last_name'] ?? ''));
+            $treatmentPlans->transform(function ($treatmentPlan) use ($therapistUsers, $authUser) {
+                $createdBy = $therapistUsers->get($treatmentPlan->created_by);
+                $treatmentPlan->creator_name = UserHelper::getFullName(data_get($createdBy, 'last_name', ''), data_get($createdBy, 'first_name', ''), $authUser->language_id);
 
                 return $treatmentPlan;
             });
