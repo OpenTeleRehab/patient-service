@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\RocketChatHelper;
 use App\Mail\PatientReferralMail;
 use App\Models\Forwarder;
 use Illuminate\Http\Request;
@@ -166,6 +167,8 @@ class ReferralAssignmentController extends Controller
             $referralAssignment->referral()->update(['status' => Referral::STATUS_ACCEPTED]);
 
             $referralAssignment->update(['status' => ReferralAssignment::STATUS_ACCEPTED]);
+
+            RocketChatHelper::createChatRoom($authUser->therapist_user_id, $referralAssignment->referral->patient->identity);
 
             Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
                 ->post(env('THERAPIST_SERVICE_URL') . '/chat/create-room-for-users', [
