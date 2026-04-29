@@ -190,7 +190,7 @@ class Appointment extends Model
             $title .= sprintf(' %s', $participantName);
             $title .= sprintf(' %s', $translations['appointment.invitation.' . $status] ?? '');
         } else {
-            if ($appointment->created_by_therapist) {
+            if ($appointment->created_by_therapist || $appointment->therapist_status === self::STATUS_ACCEPTED) {
                 $user = $appointment->patient;
                 $phcWorker = $appointment->phcWorker($appointment->therapist_id);
                 $participantName = sprintf('%s %s', $phcWorker['last_name'], $phcWorker['first_name']);
