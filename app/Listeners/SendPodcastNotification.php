@@ -20,7 +20,8 @@ class SendPodcastNotification
         if (str_contains(Message::JITSI_CALL_AUDIO_STARTED, $event->body) ||
             str_contains(Message::JITSI_CALL_VIDEO_STARTED, $event->body) ||
             str_contains(Message::JITSI_CALL_AUDIO_MISSED, $event->body) ||
-            str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body)
+            str_contains(Message::JITSI_CALL_VIDEO_MISSED, $event->body) ||
+            str_contains(Message::JITSI_CALL_ACCEPTED, $event->body)
         ) {
             $message = [
                 'token' => $event->token,
