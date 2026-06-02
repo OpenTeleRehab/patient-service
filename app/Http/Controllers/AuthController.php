@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Events\LoginEvent;
 use App\Http\Resources\ProfileResource;
+use App\Models\Forwarder;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity as ActivityLog;
@@ -233,9 +236,28 @@ class AuthController extends Controller
     public function createFirebaseToken(Request $request)
     {
         $user = Auth::user();
-        $user->update([
-            'firebase_token' => $request->get('firebase_token'),
-        ]);
+
+        $fcmToken = $request->get('firebase_token');
+        $deviceId = $request->get('device_id');
+
+        // Delete the existing device tokens with the same FCM token or device ID in the therapist service to prevent duplicates.
+        try {
+            Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                ->delete(env('THERAPIST_SERVICE_URL') . '/auth/delete-firebase-token', [
+                    'firebase_token' => $fcmToken,
+                    'device_id' => $deviceId,
+                ]);
+        } catch (Exception $e) {
+            Log::error('Error deleting existing device tokens', ['error' => $e->getMessage()]);
+        }
+
+        // Update the user's firebase token.
+        $user->update(['firebase_token' => $fcmToken]);
+
+        // Remove the FCM token from any user that currently has it to prevent duplicates.
+        User::where('firebase_token', $fcmToken)
+            ->whereNot('id', $user->id)
+            ->update(['firebase_token' => null]);
 
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
     }
