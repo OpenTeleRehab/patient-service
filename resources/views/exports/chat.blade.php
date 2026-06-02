@@ -21,23 +21,23 @@
     }
 </style>
 
-<img width="190" src="http://localhost/images/logo-horizontal.svg">
+<img width="190" src="http://localhost/images/logo-horizontal.svg" alt="Logo">
 
 <h1>{{ $translations['chat_message.history'] ?? 'User Chat/Video Call History' }}</h1>
 
 <table>
     <thead>
         <tr>
-            <th align="left">{{ $translations['common.name'] ?? 'Name' }}</th>
-            <th align="left">{{ $translations['common.message'] ?? 'Message' }}</th>
-            <th align="left">{{ $translations['common.datetime'] ?? 'Date Time' }}</th>
+            <th scope="col" align="left">{{ $translations['common.name'] ?? 'Name' }}</th>
+            <th scope="col" align="left">{{ $translations['common.message'] ?? 'Message' }}</th>
+            <th scope="col" align="left">{{ $translations['common.datetime'] ?? 'Date Time' }}</th>
         </tr>
     </thead>
 
     <tbody>
         @foreach ($messages as $message)
             <tr>
-                <th align="left">{{ strpos($message['u']['username'], 'P') !== false ? $patient['name'] : $therapist['name'] }}</th>
+                <th scope="row" align="left">{{ strpos($message['u']['username'], 'P') !== false ? $patient['name'] : $therapist['name'] }}</th>
                 <td align="left">
                     @switch($message)
                         @case($message['msg'] === \App\Models\Message::JITSI_CALL_AUDIO_ENDED || $message['msg'] === \App\Models\Message::JITSI_CALL_VIDEO_ENDED)

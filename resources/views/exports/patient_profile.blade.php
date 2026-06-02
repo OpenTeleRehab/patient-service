@@ -27,7 +27,7 @@
     }
 </style>
 
-<img width="190" src="http://localhost/images/logo-horizontal.svg">
+<img width="190" src="http://localhost/images/logo-horizontal.svg" alt="Logo">
 
 <h1>{{ $translations['menu.user.profile'] ?? 'User Profile' }}</h1>
 
