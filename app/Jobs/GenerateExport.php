@@ -60,7 +60,7 @@ class GenerateExport implements ShouldQueue
      */
     public function failed($exception)
     {
-        self::updateDownloadTracker(ExportStatus::FAILED->value, $filePath ?? null);
+        self::updateDownloadTracker(ExportStatus::FAILED->value);
     }
 
     /**
