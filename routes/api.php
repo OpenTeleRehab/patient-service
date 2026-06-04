@@ -42,6 +42,7 @@ Route::group(['middleware' => ['auth:api', 'user', 'verify.data.access']], funct
     Route::post('auth/accept-privacy-policy', [AuthController::class, 'acceptPrivacyPolicy'])->middleware('role:mobile');
     Route::post('auth/enable-kid-theme', [AuthController::class, 'enableKidTheme'])->middleware('role:mobile');
     Route::post('auth/create-firebase-token', [AuthController::class, 'createFirebaseToken'])->middleware('role:mobile');
+    Route::delete('auth/delete-firebase-token', [AuthController::class, 'deleteFirebaseToken'])->middleware('role:internal');
 
     Route::get('chart/get-data-for-global-admin', [ChartController::class, 'getDataForGlobalAdmin']); // deprecated
     Route::get('chart/get-data-for-country-admin', [ChartController::class, 'getDataForCountryAdmin']); // deprecated
