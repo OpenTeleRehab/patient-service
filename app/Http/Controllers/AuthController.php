@@ -240,6 +240,14 @@ class AuthController extends Controller
         $fcmToken = $request->get('firebase_token');
         $deviceId = $request->get('device_id');
 
+        // Update the user's firebase token.
+        $user->update(['firebase_token' => $fcmToken]);
+
+        // Remove the FCM token from any user that currently has it to prevent duplicates.
+        User::where('firebase_token', $fcmToken)
+            ->whereNot('id', $user->id)
+            ->update(['firebase_token' => null]);
+
         // Delete the existing device tokens with the same FCM token or device ID in the therapist service to prevent duplicates.
         try {
             Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
@@ -251,15 +259,21 @@ class AuthController extends Controller
             Log::error('Error deleting existing device tokens', ['error' => $e->getMessage()]);
         }
 
-        // Update the user's firebase token.
-        $user->update(['firebase_token' => $fcmToken]);
-
-        // Remove the FCM token from any user that currently has it to prevent duplicates.
-        User::where('firebase_token', $fcmToken)
-            ->whereNot('id', $user->id)
-            ->update(['firebase_token' => null]);
-
         return ['success' => true, 'data' => ['firebase_token' => $request->get('firebase_token')]];
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return array
+     */
+    public function deleteFirebaseToken(Request $request)
+    {
+        $fcmToken = $request->get('firebase_token');
+
+        User::where('firebase_token', $fcmToken)->update(['firebase_token' => null]);
+
+        return response()->json(['success' => true]);
     }
 
     /**
