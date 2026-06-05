@@ -160,15 +160,28 @@ class ReferralAssignmentController extends Controller
         $authUser = Auth::user();
 
         DB::transaction(function () use ($authUser, $referralAssignment) {
-            $referralAssignment->referral->patient->update([
+            $patient = $referralAssignment->referral->patient;
+
+            $patient->update([
                 'therapist_id' => $authUser->therapist_user_id,
                 'clinic_id' => $authUser->clinic_id,
             ]);
+
             $referralAssignment->referral()->update(['status' => Referral::STATUS_ACCEPTED]);
 
             $referralAssignment->update(['status' => ReferralAssignment::STATUS_ACCEPTED]);
 
-            RocketChatHelper::createChatRoom($authUser->therapist_user_id, $referralAssignment->referral->patient->identity);
+            RocketChatHelper::createChatRoom($authUser->therapist_user_id, $patient->identity);
+
+            foreach ($patient->supplementary_phc_workers as $supplementaryPhcWorkerId) {
+                RocketChatHelper::createChatRoom($supplementaryPhcWorkerId, $patient->identity);
+
+                Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                    ->post(env('THERAPIST_SERVICE_URL') . '/chat/create-room-for-users', [
+                        'therapist_id' => $supplementaryPhcWorkerId,
+                        'phc_worker_id' => $referralAssignment->therapist_id,
+                    ]);
+            }
 
             Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
                 ->post(env('THERAPIST_SERVICE_URL') . '/chat/create-room-for-users', [
