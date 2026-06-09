@@ -89,4 +89,27 @@ class TherapistController extends Controller
             ]);
         }
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse|void
+     * @throws \Illuminate\Http\Client\ConnectionException
+     */
+    public function getPhcWorkerByIds(Request $request)
+    {
+        if ($request->get('ids')) {
+            $access_token = Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE);
+
+            $response = Http::withToken($access_token)
+                ->get(env('THERAPIST_SERVICE_URL') . '/patient/phc-worker-by-ids', [
+                    'ids' => $request->get('ids'),
+                ])
+                ->json();
+
+            return response()->json([
+                'success' => true,
+                ...$response,
+            ]);
+        }
+    }
 }

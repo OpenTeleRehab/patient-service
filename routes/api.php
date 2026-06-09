@@ -176,6 +176,8 @@ Route::get('achievement/get-badge-icon/{filename}', [PatientController::class, '
 
 Route::get('therapist/by-ids', [TherapistController::class, 'getByIds']); // @deprecated
 
+Route::get('phc-worker/by-ids', [TherapistController::class, 'getPhcWorkerByIds']);
+
 Route::name('admin.')->group(function () {
     Route::get('country/list/by-clinic', [ForwarderController::class, 'index']);
 });
