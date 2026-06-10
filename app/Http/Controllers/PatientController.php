@@ -768,7 +768,7 @@ class PatientController extends Controller
             }
 
             if (isset($data['secondary_therapists'])) {
-                $newTherapistIds = array_diff($data['secondary_therapists'], $user->secondary_therapists);
+                $newTherapistIds = array_diff($data['secondary_therapists'], $user->secondary_therapists ?? []);
 
                 if ($newTherapistIds) {
                     foreach ($newTherapistIds as $therapistId) {
@@ -795,7 +795,7 @@ class PatientController extends Controller
             }
 
             if (isset($data['supplementary_phc_workers'])) {
-                $newPhcWorkerIds = array_diff($data['supplementary_phc_workers'], $user->supplementary_phc_workers);
+                $newPhcWorkerIds = array_diff($data['supplementary_phc_workers'], $user->supplementary_phc_workers ?? []);
 
                 if ($newPhcWorkerIds) {
                     foreach ($newPhcWorkerIds as $phcWorkerId) {
@@ -1341,9 +1341,9 @@ class PatientController extends Controller
 
         if ($request->get('therapist_type') === 'supplementary') {
             if ($user->phc_worker_id && $authUserType === User::GROUP_PHC_WORKER) {
-                $updateData['supplementary_phc_workers'] = array_unique(array_merge($user->supplementary_phc_workers, [$therapistId]));
+                $updateData['supplementary_phc_workers'] = array_unique(array_merge($user->supplementary_phc_workers ?? [], [$therapistId]));
             } else {
-                $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists, [$therapistId]));
+                $updateData['secondary_therapists'] = array_unique(array_merge($user->secondary_therapists ?? [], [$therapistId]));
             }
 
             $chatRoomId = RocketChatHelper::createChatRoom($therapistId, $user->identity);
