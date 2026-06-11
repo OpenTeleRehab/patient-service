@@ -1412,11 +1412,13 @@ class PatientController extends Controller
         $user->update($updateData);
         $user->save();
 
-        // Remove all active requests of patient transfer
-        Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
-            ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
-                'patient_id' => $user->id,
-            ]);
+        if ($request->get('therapist_type') === 'lead') {
+            // Remove all active requests of patient transfer
+            Http::withToken(Forwarder::getAccessToken(Forwarder::THERAPIST_SERVICE))
+                ->delete(env('THERAPIST_SERVICE_URL') . '/transfer/delete/by-patient', [
+                    'patient_id' => $user->id,
+                ]);
+        }
 
         return ['success' => true, 'message' => 'success_message.transfered_account'];
     }
