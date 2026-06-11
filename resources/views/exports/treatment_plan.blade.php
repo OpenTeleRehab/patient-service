@@ -86,14 +86,16 @@
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_EXERCISE)
                             @php
-                                $file = $activity['files'][0];
+                                $file = $activity['files'][0] ?? null;
                             @endphp
-                            @if($file['fileType'] === 'audio/mpeg')
-                                <img width="190" src="http://localhost/images/music.png">
-                            @elseif($file['fileType'] === 'video/mp4')
-                                <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
-                            @else
-                                <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                            @if($file)
+                                @if($file['fileType'] === 'audio/mpeg')
+                                    <img width="190" src="http://localhost/images/music.png">
+                                @elseif($file['fileType'] === 'video/mp4')
+                                    <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
+                                @else
+                                    <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                                @endif
                             @endif
 
                             <h4>{{ $activity['title'] }}</h4>
@@ -161,14 +163,16 @@
 
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_EXERCISE)
                         @php
-                            $file = $activity['files'][0];
+                            $file = $activity['files'][0] ?? null;
                         @endphp
-                        @if($file['fileType'] === 'audio/mpeg')
-                            <img width="390" src="http://localhost/images/music.png">
-                        @elseif($file['fileType'] === 'video/mp4')
-                            <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
-                        @else
-                            <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                        @if($file)
+                            @if($file['fileType'] === 'audio/mpeg')
+                                <img width="390" src="http://localhost/images/music.png">
+                            @elseif($file['fileType'] === 'video/mp4')
+                                <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
+                            @else
+                                <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                            @endif
                         @endif
 
                         @if($activity['sets'] > 0)
