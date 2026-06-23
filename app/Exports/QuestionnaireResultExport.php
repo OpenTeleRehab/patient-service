@@ -47,6 +47,15 @@ class QuestionnaireResultExport
                 'country_admin_id' => $payload['country_admin_id'],
                 'lang' => $payload['lang'],
             ]);
+        } else if (isset($payload['regional_admin_id'])) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-regional-admin', [
+                'regional_admin_id' => $payload['regional_admin_id'],
+                'lang' => $payload['lang'],
+            ]);
+        } else if (isset($payload['phc_service_admin_id'])) {
+            $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-phc-service-admin', [
+                'lang' => $payload['lang'],
+            ]);
         } else {
             $response = Http::withToken($access_token)->get(env('ADMIN_SERVICE_URL') . '/get-questionnaire-by-therapist', [
                 'therapist_id' => $payload['therapist_id'],
@@ -205,13 +214,14 @@ class QuestionnaireResultExport
                 $country = self::getCountry($patient->country_id, $countries)['name'];
                 $healthCondition = null;
                 if ($treatmentPlan->health_condition_id) {
-                    $healthCondition = $healthConditions[$treatmentPlan->health_condition_id] ?? null;
+                    $healthCondition = collect($healthConditions)->firstWhere('id', $treatmentPlan->health_condition_id);
                 }
 
                 $healthConditionGroup = null;
                 if ($healthCondition) {
-                    $healthConditionGroup = $healthConditionGroups[$healthCondition['parent_id']] ?? null;
+                    $healthConditionGroup = collect($healthConditionGroups)->firstWhere('id', $healthCondition['parent_id']);
                 }
+
                 $data = [
                     $patient?->identity,
                     $country,
@@ -220,8 +230,8 @@ class QuestionnaireResultExport
                     $age,
                     $status,
                     $location,
-                    $healthCondition['title'] ?? '',
                     $healthConditionGroup['title'] ?? '',
+                    $healthCondition['title'] ?? '',
                     $treatmentPlan?->name,
                     $treatmentPlan?->start_date->format('Y-m-d'),
                     $treatmentPlan?->end_date->format('Y-m-d'),
