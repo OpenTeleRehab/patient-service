@@ -104,10 +104,12 @@ class QuestionnaireResultExport
             }
 
             $sheet = $spreadsheet->createSheet();
-            $title = trim(mb_substr($questionnaire['title'] ?? '', 0, 29)) ?: 'Unknown';
+            $questionnaireTitle = $questionnaire['title'] ?? '';
+            $invalidCharacter = ['*', ':', '/', '\\', '?', '[', ']'];
             // Remove invalid characters from the title
-            $title = preg_replace('/[?]/', '', $title);
-            $sheet->setTitle($title);
+            $title = str_replace($invalidCharacter, '', $questionnaireTitle);
+            $sheetTitle = trim(mb_substr($title, 0, 29)) ?: 'Unknown';
+            $sheet->setTitle($sheetTitle);
             $sheet->mergeCells('A1:A2');
             $sheet->mergeCells('B1:B2');
             $sheet->mergeCells('C1:C2');
@@ -205,9 +207,10 @@ class QuestionnaireResultExport
                 if ($treatmentPlan->health_condition_id) {
                     $healthCondition = $healthConditions[$treatmentPlan->health_condition_id] ?? null;
                 }
+
                 $healthConditionGroup = null;
                 if ($healthCondition) {
-                    $healthConditionGroup = $healthConditionGroups[$healthCondition->parennt_id] ?? null;
+                    $healthConditionGroup = $healthConditionGroups[$healthCondition['parent_id']] ?? null;
                 }
                 $data = [
                     $patient?->identity,
@@ -217,8 +220,8 @@ class QuestionnaireResultExport
                     $age,
                     $status,
                     $location,
-                    $healthCondition['name'] ?? '',
-                    $healthConditionGroup['name'] ?? '',
+                    $healthCondition['title'] ?? '',
+                    $healthConditionGroup['title'] ?? '',
                     $treatmentPlan?->name,
                     $treatmentPlan?->start_date->format('Y-m-d'),
                     $treatmentPlan?->end_date->format('Y-m-d'),
