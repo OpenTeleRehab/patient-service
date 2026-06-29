@@ -223,6 +223,7 @@ class AssistiveTechnologyController extends Controller
                 'users.identity',
                 'users.clinic_id',
                 'users.country_id',
+                'users.phc_service_id',
                 'users.therapist_id',
                 'users.date_of_birth',
                 'users.enabled',
