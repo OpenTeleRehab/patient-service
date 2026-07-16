@@ -42,8 +42,13 @@ class ProcessUserDeletion implements ShouldQueue
 
         $deletedRows = 0;
 
-        User::where($column, $this->entityId)
-            ->get()
+        $query = User::where($column, $this->entityId);
+
+        // Get only rehab service patients excluding the referral patients
+        if ($this->entityName === 'rehab_service') {
+            $query->whereNull('phc_worker_id')->whereNull('phc_service_id');
+        }
+        $query->get()
             ->each(function ($user) use (&$deletedRows) {
                 $user->forceDelete();
                 $deletedRows++;

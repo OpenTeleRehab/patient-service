@@ -49,8 +49,14 @@ class DataCleanUpController extends Controller
         ];
 
         $column = $entityColumnMap[$entityName];
+        $query = User::where($column, $entityId);
 
-        $userCount = User::where($column, $entityId)->count();
+        // Get number of rehab service patients excluding the referral patients
+        if ($entityName === 'rehab_service') {
+            $query->whereNull('phc_worker_id')->whereNull('phc_service_id');
+        }
+
+        $userCount = $query->count();
 
         return response()->json(['data' => $userCount]);
     }
