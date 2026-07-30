@@ -33,7 +33,7 @@
     }
 </style>
 
-<img width="190" src="http://localhost/images/logo-horizontal.svg">
+<img width="190" src="http://localhost/images/logo-horizontal.svg" alt="Logo">
 
 <h1>{{ $treatmentPlan->name }}</h1>
 <h2>{{ $diseaseName }}</h2>
@@ -88,13 +88,14 @@
                             @php
                                 $file = $activity['files'][0] ?? null;
                             @endphp
+
                             @if($file)
                                 @if($file['fileType'] === 'audio/mpeg')
-                                    <img width="190" src="http://localhost/images/music.png">
+                                    <img width="190" alt="" src="http://localhost/images/music.png">
                                 @elseif($file['fileType'] === 'video/mp4')
-                                    <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
+                                    <img width="190" alt="" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
                                 @else
-                                    <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                                    <img width="190" alt="" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
                                 @endif
                             @endif
 
@@ -106,9 +107,9 @@
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                             @if($activity['file'] && ($activity['file']['hasThumbnail'] || $activity['file']['fileGroupType'] === 'common.type.image'))
-                                <img width="190" src="{{ config('app.admin_api_url') . '/file/' . $activity['file']['id'] . '?thumbnail=' . $activity['file']['hasThumbnail'] }}">
+                                <img width="190" alt="" src="{{ config('app.admin_api_url') . '/file/' . $activity['file']['id'] . '?thumbnail=' . $activity['file']['hasThumbnail'] }}">
                             @else
-                                <img width="190" src="http://localhost/images/material.png">
+                                <img width="190" alt="" src="http://localhost/images/material.png">
                             @endif
 
                             <h4>{{ $activity['title'] }}</h4>
@@ -119,13 +120,13 @@
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_QUESTIONNAIRE)
-                            <img width="190" src="http://localhost/images/questionnaire.png">
+                            <img width="190" alt="" src="http://localhost/images/questionnaire.png">
                             <h4>{{ $activity['title'] }}</h4>
                             <b>{{ count($activity['questions'])  }}</b> {{ $translations['activity.questions'] ?? 'questions' }}
                         @endif
 
                         @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_GOAL)
-                            <img width="190" src="http://localhost/images/satisfaction.png">
+                            <img width="190" alt="" src="http://localhost/images/satisfaction.png">
                             <h4>{{ $activity['title'] }}</h4>
                             <span>{{ $translations['activity.goal.' . $activity['frequency']] ?? '' }}</span>
                         @endif
@@ -167,11 +168,11 @@
                         @endphp
                         @if($file)
                             @if($file['fileType'] === 'audio/mpeg')
-                                <img width="390" src="http://localhost/images/music.png">
+                                <img width="390" alt="" src="http://localhost/images/music.png">
                             @elseif($file['fileType'] === 'video/mp4')
-                                <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
+                                <img width="390" alt="" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . '?thumbnail=1' }}">
                             @else
-                                <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
+                                <img width="390" alt="" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] }}">
                             @endif
                         @endif
 
@@ -187,7 +188,7 @@
 
                     @if($activity && $activity['type'] === \App\Models\Activity::ACTIVITY_TYPE_MATERIAL)
                         @if($activity['file'] && $activity['file']['fileGroupType'] == 'common.type.image')
-                            <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . $activity['file']['id'] }}">
+                            <img width="390" alt="" src="{{ config('app.admin_api_url') . '/file/' . $file['id'] . $activity['file']['id'] }}">
                         @elseif($activity['file'])
                             <span>{{ $translations['activity.file_attachment'] ?? 'File attachment' }}: <i>{{ $activity['title'] }}_{{ $activity['file']['fileName'] }}</i></span>
                         @endif
@@ -202,7 +203,7 @@
                             <div class="mb-1">
                                 <h5>{{ $translations['activity.question'] ?? 'Question' }} {{ $loop->iteration }}</h5>
                                 @if($question['file'])
-                                    <img width="390" src="{{ config('app.admin_api_url') . '/file/' . $question['file']['id'] }}">
+                                    <img width="390" alt="" src="{{ config('app.admin_api_url') . '/file/' . $question['file']['id'] }}">
                                 @endif
                                 <p>{{ $question['title'] }}</p>
                                 @if($question['type'] === 'open-text' || $question['type'] === 'open-number')
@@ -226,9 +227,7 @@
                                                 <input type="radio" {{ $questionAnswer && $questionAnswer['answer'] === $answer['id'] ? 'checked=checked' : '' }}>
                                             @endif
 
-                                            <label>
-                                                {{ $answer['description'] }}
-                                            </label>
+                                            <span>{{ $answer['description'] }}</span>
                                             @if($answer['value'] && !$isPatient)
                                                 <span class="text-warning">{{$translations['question.answer_value']}}: {{$answer['value']}}</span>
                                             @endif
