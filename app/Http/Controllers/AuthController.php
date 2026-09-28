@@ -61,7 +61,9 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
-            $this->checkTooManyFailedAttempts();
+            if (RateLimiter::tooManyAttempts($this->throttleKey(), 10)) {
+                return ['success' => false, 'message' => 'error.login.attempts'];
+            }
 
             if ($request->has('email')) {
                 $credentials = [
@@ -118,7 +120,9 @@ class AuthController extends Controller
                 return ['success' => false, 'message' => 'error.invalid_credentials'];
             }
         } catch (Exception $error) {
-            return ['success' => false, 'message' => 'error.login.attempts'];
+            // Not a credential rejection: 5xx so the app keeps its offline session
+            Log::error($error->getMessage());
+            return response()->json(['success' => false], 500);
         }
     }
 
@@ -286,19 +290,5 @@ class AuthController extends Controller
         $username = request('email') ? request('email') : request('phone');
 
         return Str::lower($username) . '|' . request()->ip();
-    }
-
-    /**
-     * Ensure the login request is not rate limited.
-     *
-     * @return void
-     */
-    private function checkTooManyFailedAttempts()
-    {
-        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 10)) {
-            return;
-        }
-
-        throw new Exception('Too many failed login attempts.');
     }
 }
