@@ -6,10 +6,12 @@ use App\Events\AppointmentEvent;
 use App\Events\LoginEvent;
 use App\Events\PodcastCalculatorEvent;
 use App\Events\PodcastNotificationEvent;
+use App\Events\TreatmentPlanEvent;
 use App\Listeners\Appointment;
 use App\Listeners\Calculator;
 use App\Listeners\InitBadge;
 use App\Listeners\SendPodcastNotification;
+use App\Listeners\TreatmentPlan;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -36,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         PodcastNotificationEvent::class => [
             SendPodcastNotification::class
+        ],
+        TreatmentPlanEvent::class => [
+            TreatmentPlan::class
         ],
     ];
 

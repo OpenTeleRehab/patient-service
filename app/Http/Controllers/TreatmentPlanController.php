@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\PodcastCalculatorEvent;
+use App\Events\TreatmentPlanEvent;
 use App\Exports\TreatmentPlanExport;
+use App\Helpers\TranslationHelper;
 use App\Helpers\TreatmentActivityHelper;
 use App\Helpers\UserHelper;
 use App\Http\Resources\GoalResource;
@@ -20,6 +22,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TreatmentPlanController extends Controller
 {
@@ -227,6 +230,8 @@ class TreatmentPlanController extends Controller
 
         $this->updateOrCreateGoals($treatmentPlan->id, $request->get('goals', []));
         $this->updateOrCreateActivities($treatmentPlan->id, $request->get('activities', []), $therapistId);
+        $this->notifyPatient($treatmentPlan, TreatmentPlanEvent::ACTION_CREATED);
+
         return ['success' => true, 'message' => 'success_message.treatment_plan_assign_to_patient', 'data' => $treatmentPlan];
     }
 
@@ -267,6 +272,7 @@ class TreatmentPlanController extends Controller
         }
 
         $treatmentPlan = TreatmentPlan::find($id);
+        $previousEndDate = $treatmentPlan->end_date;
         $treatmentPlan->update([
             'name' => $request->get('name'),
             'description' => $description,
@@ -279,8 +285,47 @@ class TreatmentPlanController extends Controller
 
         $this->updateOrCreateActivities($id, $request->get('activities', []), $therapistId);
         $this->updateOrCreateGoals($id, $request->get('goals', []));
+        $this->notifyPatient($treatmentPlan, TreatmentPlanEvent::ACTION_UPDATED, $previousEndDate);
 
         return ['success' => true, 'message' => 'success_message.treatment_plan_update'];
+    }
+
+    /**
+     * Push the change to the patient's app, so it fetches the latest treatment plan without waiting to be reopened.
+     *
+     * @param \App\Models\TreatmentPlan $treatmentPlan
+     * @param string $action
+     * @param \Carbon\Carbon|null $previousEndDate
+     *
+     * @return void
+     */
+    private function notifyPatient(TreatmentPlan $treatmentPlan, string $action, $previousEndDate = null)
+    {
+        $patient = User::find($treatmentPlan->patient_id);
+
+        // The app only shows the ongoing treatment plan, so a change to a finished one has nothing to refresh.
+        // Ending an ongoing plan early still does: the app has to drop it.
+        $endDate = $previousEndDate && $previousEndDate->gt($treatmentPlan->end_date) ? $previousEndDate : $treatmentPlan->end_date;
+        if (!$patient || !$patient->firebase_token || $endDate->copy()->endOfDay()->isPast()) {
+            return;
+        }
+
+        try {
+            $translations = TranslationHelper::getTranslations($patient->language_id);
+        } catch (\Exception $e) {
+            // Translation service down: still notify, in English.
+            Log::warning('Treatment plan notification translations failed', ['error' => $e->getMessage()]);
+            $translations = [];
+        }
+
+        $defaults = [
+            TreatmentPlanEvent::ACTION_CREATED => 'New treatment plan',
+            TreatmentPlanEvent::ACTION_UPDATED => 'Treatment plan updated',
+        ];
+        $title = $translations['treatment_plan.notification.' . $action] ?? $defaults[$action];
+        $body = $translations['treatment_plan.notification.body'] ?? 'Open the app to see your latest activities.';
+
+        event(new TreatmentPlanEvent($patient->firebase_token, $title, $body, $treatmentPlan->id, $action));
     }
 
     /**
